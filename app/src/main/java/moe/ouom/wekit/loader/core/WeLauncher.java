@@ -1,6 +1,6 @@
 package moe.ouom.wekit.loader.core;
 
-import static moe.ouom.wekit.constants.Constants.WECHAT_LAUNCHER_UI;
+import static moe.ouom.wekit.constants.Constants.CLAZZ_WECHAT_LAUNCHER_UI;
 import static moe.ouom.wekit.util.common.SyncUtils.postDelayed;
 
 import android.app.Activity;
@@ -32,10 +32,6 @@ public class WeLauncher {
     public void init(@NonNull ClassLoader cl, @NonNull ApplicationInfo ai, @NonNull String modulePath, Context context) {
         Initiator.init(context.getClassLoader());
 
-        HookItemLoader hookItemLoader = new HookItemLoader();
-        hookItemLoader.loadHookItem(SyncUtils.getProcessType());
-
-
         try {
             PackageManager pm = context.getPackageManager();
             // 获取宿主包名的详细信息
@@ -63,7 +59,7 @@ public class WeLauncher {
 
         // onResume
         try {
-            Class<?> launcherUIClass = XposedHelpers.findClass(WECHAT_LAUNCHER_UI, cl);
+            Class<?> launcherUIClass = XposedHelpers.findClass(CLAZZ_WECHAT_LAUNCHER_UI, cl);
 
             XposedHelpers.findAndHookMethod(launcherUIClass, "onResume", new XC_MethodHook() {
                 @Override
@@ -72,20 +68,6 @@ public class WeLauncher {
                     CacheConfig.setLauncherUIActivity(activity);
 
                     ModuleRes.init(activity, PackageConstants.PACKAGE_NAME_SELF);
-
-                    postDelayed(0, () -> {
-//                        if (!TargetManager.isNeedFindTarget()){
-//                            return;
-//                        }
-
-                        Context fixContext = CommonContextWrapper.createAppCompatContext(activity);
-                        try {
-                            MethodFinderDialog dialog = new MethodFinderDialog(fixContext, activity, cl, ai);
-                            dialog.show();
-                        } catch (Exception e) {
-                            Logger.e("WeLauncher: Failed to show dialog: " + e);
-                        }
-                    });
                 }
             });
 
@@ -95,9 +77,10 @@ public class WeLauncher {
 
         // onCreate
         try {
-            XposedHelpers.findAndHookMethod(XposedHelpers.findClass("com.tencent.mm.ui.LauncherUI", cl), "onCreate", Bundle.class, new XC_MethodHook() {
+            XposedHelpers.findAndHookMethod(XposedHelpers.findClass(CLAZZ_WECHAT_LAUNCHER_UI, cl), "onCreate", Bundle.class, new XC_MethodHook() {
                 protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                    SharedPreferences sharedPreferences = ((Activity) param.thisObject).getSharedPreferences("com.tencent.mm_preferences", 0);
+                    Activity activity = (Activity) param.thisObject;
+                    SharedPreferences sharedPreferences = activity.getSharedPreferences("com.tencent.mm_preferences", 0);
                     String login_weixin_username = sharedPreferences.getString("login_weixin_username", "null");
                     String last_login_nick_name = sharedPreferences.getString("last_login_nick_name", "null");
                     String login_user_name = sharedPreferences.getString("login_user_name", "null");
@@ -113,6 +96,20 @@ public class WeLauncher {
                     CacheConfig.setLast_login_uin(last_login_uin);
 //                    Logger.d("login_weixin_username: " + login_weixin_username + "\nlast_login_nick_name: " + last_login_nick_name + "\nlogin_user_name: " + login_user_name + "\nlast_login_uin: " + last_login_uin);
 
+                    postDelayed(0, () -> {
+//                        if (!TargetManager.isNeedFindTarget()){
+//                            return;
+//                        }
+
+                        Context fixContext = CommonContextWrapper.createAppCompatContext(activity);
+                        Logger.i("need find target!");
+                        try {
+                            MethodFinderDialog dialog = new MethodFinderDialog(fixContext, activity, cl, ai);
+                            dialog.show();
+                        } catch (Exception e) {
+                            Logger.e("WeLauncher: Failed to show dialog: " + e);
+                        }
+                    });
 
                 }
             });
@@ -122,5 +119,9 @@ public class WeLauncher {
         }
 
         /////  -----------------------   /////
+
+        HookItemLoader hookItemLoader = new HookItemLoader();
+        hookItemLoader.loadHookItem(SyncUtils.getProcessType());
+
     }
 }

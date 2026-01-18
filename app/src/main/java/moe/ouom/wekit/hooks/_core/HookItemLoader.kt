@@ -1,8 +1,8 @@
 package moe.ouom.wekit.hooks._core
 
 import moe.ouom.wekit.config.ConfigManager
-import moe.ouom.wekit.constants.Constants.PrekClickableXXX
-import moe.ouom.wekit.constants.Constants.PrekXXX
+import moe.ouom.wekit.constants.Constants.Companion.PrekClickableXXX
+import moe.ouom.wekit.constants.Constants.Companion.PrekXXX
 import moe.ouom.wekit.hooks._base.ApiHookItem
 import moe.ouom.wekit.hooks._base.BaseClickableFunctionHookItem
 import moe.ouom.wekit.hooks._base.BaseSwitchFunctionHookItem

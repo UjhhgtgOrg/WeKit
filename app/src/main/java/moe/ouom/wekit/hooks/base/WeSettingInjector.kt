@@ -42,7 +42,7 @@ class WeSettingInjector : ApiHookItem() {
             "initView",
             *arrayOf<Class<*>>()
         )
-        
+
         hookAfter(mInitView) { param: XC_MethodHook.MethodHookParam ->
             val activity = param.thisObject as Activity
             val context = activity as Context
@@ -72,8 +72,8 @@ class WeSettingInjector : ApiHookItem() {
             clsIPreferenceScreen,
             clsPreference
         )
-        
-        
+
+
         hookBefore(mOnTreeClick) { param: XC_MethodHook.MethodHookParam ->
             val preference = param.args[1] ?: return@hookBefore
 

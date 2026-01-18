@@ -6,7 +6,7 @@ class Constants private constructor() {
     }
 
     companion object {
-        const val WECHAT_LAUNCHER_UI: String = "com.tencent.mm.ui.LauncherUI"
+        const val CLAZZ_WECHAT_LAUNCHER_UI: String = "com.tencent.mm.ui.LauncherUI"
         const val CLAZZ_BASE_APPLICATION: String = "com.tencent.mm.app.Application"
         const val CLAZZ_SETTINGS_UI = "com.tencent.mm.plugin.setting.ui.setting.SettingsUI"
         const val CLAZZ_ICON_PREFERENCE = "com.tencent.mm.ui.base.preference.IconPreference"
