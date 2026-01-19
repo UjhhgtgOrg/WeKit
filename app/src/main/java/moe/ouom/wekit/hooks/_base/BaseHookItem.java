@@ -14,6 +14,7 @@ import de.robv.android.xposed.XposedBridge;
 import moe.ouom.wekit.config.ConfigManager;
 import moe.ouom.wekit.hooks._core.factory.ExceptionFactory;
 import moe.ouom.wekit.loader.startup.HybridClassLoader;
+import moe.ouom.wekit.util.log.Logger;
 
 /**
  * 所有 hook 功能的基础类, 都应该要继承这个类
@@ -80,19 +81,22 @@ public abstract class BaseHookItem {
             }
         } catch (Throwable e) {
             XposedBridge.log(e);
+            Logger.e("BaseHookItem Load Failed", e);
             ExceptionFactory.add(this, e);
         }
     }
 
     /**
-     * 在loadHook前执行一次 返回true表示继续执行loadHook
-     * 如果返回false 表示由initOnce自行处理loadHook事件
+     * 在 loadHook 前执行一次 返回true表示继续执行loadHook
+     * 如果返回 false 表示由 initOnce 自行处理 loadHook 事件
      */
     public boolean initOnce() {
         return true;
     }
 
     public abstract void entry(@NonNull ClassLoader classLoader) throws Throwable;
+
+    public abstract void unload(@NonNull ClassLoader classLoader) throws Throwable;
 
     /**
      * 标准hook方法执行前

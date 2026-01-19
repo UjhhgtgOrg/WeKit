@@ -22,6 +22,8 @@ class WeRedPacketAuto : BaseClickableFunctionHookItem() {
 
     }
 
+    override fun unload(classLoader: ClassLoader) {}
+
     override fun onClick(context: Context?) {
         super.onClick(context)
         val dialog = context?.let { WeRedPacketConfigDialog(it) }

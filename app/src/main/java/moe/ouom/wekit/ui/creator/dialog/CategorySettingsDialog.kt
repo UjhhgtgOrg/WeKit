@@ -11,6 +11,7 @@ import moe.ouom.wekit.hooks._base.BaseClickableFunctionHookItem
 import moe.ouom.wekit.hooks._base.BaseSwitchFunctionHookItem
 import moe.ouom.wekit.hooks._core.factory.HookItemFactory
 import moe.ouom.wekit.util.common.ModuleRes
+import moe.ouom.wekit.util.log.Logger
 
 class CategorySettingsDialog(
     context: Context,
@@ -85,7 +86,13 @@ class CategorySettingsDialog(
         switchWidget.setOnCheckedChangeListener { _, checked ->
             ConfigManager.getDefaultConfig().edit().putBoolean(configKey, checked).apply()
             item.isEnabled = checked
-            if (checked) item.startLoad()
+            if (checked) {
+                Logger.i("[CategorySettings] Loading HookItem: ${item.path}")
+                item.startLoad()
+            } else {
+                Logger.i("[CategorySettings] Unloading HookItem: ${item.path}")
+                item.unload(context.classLoader)
+            }
         }
 
         root.setOnClickListener {

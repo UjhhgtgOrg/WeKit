@@ -94,4 +94,6 @@ class WeSettingInjector : ApiHookItem() {
 
         Logger.i("WeSettingInjector: Hooked onPreferenceTreeClick")
     }
+
+    override fun unload(classLoader: ClassLoader) {}
 }
