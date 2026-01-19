@@ -14,14 +14,23 @@ import moe.ouom.wekit.util.io.PathTool;
 
 
 public class LogUtils {
-    private static final String LOG_ROOT_DIRECTORY = PathTool.getModuleDataPath() + "/log/";
+    private static String getLogRootDirectory() {
+        try {
+            return PathTool.getModuleDataPath() + "/log/";
+        } catch (Exception e) {
+            // HostInfo not initialized yet, return null to skip logging
+            return null;
+        }
+    }
 
     private static String getRunLogDirectory() {
-        return LOG_ROOT_DIRECTORY + "RunLog" + File.separator;
+        String root = getLogRootDirectory();
+        return root != null ? root + "RunLog" + File.separator : null;
     }
 
     private static String getErrorLogDirectory() {
-        return LOG_ROOT_DIRECTORY + "ErrorLog" + File.separator;
+        String root = getLogRootDirectory();
+        return root != null ? root + "ErrorLog" + File.separator : null;
     }
 
 
@@ -94,7 +103,13 @@ public class LogUtils {
             }
         } catch (Exception ignored) {}
 
-        String path = (isError ? getErrorLogDirectory() : getRunLogDirectory()) + fileName + ".log";
+        String directory = isError ? getErrorLogDirectory() : getRunLogDirectory();
+        if (directory == null) {
+            // HostInfo not initialized yet, skip file logging
+            return;
+        }
+
+        String path = directory + fileName + ".log";
         StringBuilder stringBuffer = new StringBuilder(getTime());
         stringBuffer.append("\n").append(Description);
         if (content instanceof Exception) {
