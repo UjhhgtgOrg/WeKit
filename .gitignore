@@ -30,3 +30,4 @@ local.properties
 /.idea/inspectionProfiles/Project_Default.xml
 /app/.cxx/
 /app/debug/
+/.kotlin

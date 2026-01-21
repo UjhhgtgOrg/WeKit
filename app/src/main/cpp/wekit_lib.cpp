@@ -22,7 +22,7 @@
 
 #define LOG_TAG "[WeKit-TAG] wekit-native"
 
-#define ENABLE_WEKIT_LOGS
+//#define ENABLE_WEKIT_LOGS
 
 #if !defined(ENABLE_WEKIT_LOGS)
     #define LOG_SECURE_E(...)
@@ -63,7 +63,7 @@
 #define INTERNAL_FUNC __attribute__((visibility("hidden")))
 
 // 定义一个特殊的结构体，用于在编译后被Gradle脚本填充
-// 我们使用 0xCCCCCCCC 作为占位符，Gradle会寻找 MAGIC_TAG 并填充后面的 part
+// 使用 0xCCCCCCCC 作为占位符，Gradle会寻找 MAGIC_TAG 并填充后面的 part
 struct IntegrityStore {
     uint32_t magic_tag;      // 用于定位的魔数
     uint32_t hash_part_1;    // Hash 的第 1 部分 (如: Hash ^ 0xA5A5A5A5)
