@@ -606,7 +606,7 @@ fun Project.configureNativePatching(
     stripTask: Task,
     packageTask: Task
 ) {
-    // 1. 注册 SO Size Patch 任务 (不需要改动，保持原样)
+    // 注册 SO Size Patch 任务
     val patchSizeTaskName = "patchSoSize${variantName}"
     val patchSizeTask = if (tasks.findByName(patchSizeTaskName) == null) {
         tasks.register(patchSizeTaskName) {
