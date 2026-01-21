@@ -51,7 +51,6 @@ namespace skc
     class skCrypter
     {
     public:
-        // [修复点 2]：确保编译器能正确解析构造函数
         __forceinline constexpr skCrypter(T* data)
         {
             crypt(data);

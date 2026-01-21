@@ -22,7 +22,7 @@
 
 #define LOG_TAG "[WeKit-TAG] wekit-native"
 
-//#define ENABLE_WEKIT_LOGS
+#define ENABLE_WEKIT_LOGS
 
 #if !defined(ENABLE_WEKIT_LOGS)
     #define LOG_SECURE_E(...)
@@ -62,6 +62,22 @@
 #define API_EXPORT __attribute__((visibility("default")))
 #define INTERNAL_FUNC __attribute__((visibility("hidden")))
 
+// 定义一个特殊的结构体，用于在编译后被Gradle脚本填充
+// 我们使用 0xCCCCCCCC 作为占位符，Gradle会寻找 MAGIC_TAG 并填充后面的 part
+struct IntegrityStore {
+    uint32_t magic_tag;      // 用于定位的魔数
+    uint32_t hash_part_1;    // Hash 的第 1 部分 (如: Hash ^ 0xA5A5A5A5)
+    uint32_t hash_part_2;    // Hash 的第 2 部分 (如: Hash + 0x12345678)
+    uint32_t random_noise;   // 随机噪音，用于混淆
+};
+
+__attribute__((section(".data"), visibility("hidden"), used))
+volatile IntegrityStore g_integrity_store = {
+        0xFEEDDEAD,
+        0xCCCCCCCC,
+        0xCCCCCCCC,
+        0xCCCCCCCC
+};
 
 volatile const uint32_t NSIZE __attribute__((used)) = 0x1A2B3C4D;
 
@@ -69,6 +85,9 @@ volatile const uint32_t NSIZE __attribute__((used)) = 0x1A2B3C4D;
 INTERNAL_FUNC static bool g_signature_valid = false;
 INTERNAL_FUNC static bool g_dex_valid = false;
 INTERNAL_FUNC static int g_verification_score = 0;
+
+INTERNAL_FUNC static volatile uint8_t g_runtime_mask = 0x00;
+INTERNAL_FUNC static volatile uint64_t g_heartbeat = 0;
 
 const char* get_target_so_path() {
 #if defined(__aarch64__)
@@ -78,6 +97,29 @@ const char* get_target_so_path() {
 #else
     return "lib/x86_64/libwekit.so";
 #endif
+}
+
+// 计算内存区域 Hash (保持轻量)
+INTERNAL_FUNC static uint32_t calc_mem_hash(void* start, size_t len) {
+    auto* p = (uint8_t*)start;
+    uint32_t hash = 0x811C9DC5;
+    for (size_t i = 0; i < len; ++i) {
+        hash ^= p[i];
+        hash *= 0x01000193;
+    }
+    return hash;
+}
+
+// 动态重组并获取校验用的 Hash
+INTERNAL_FUNC static uint32_t get_expected_integrity_hash() {
+    uint32_t reconstructed = g_integrity_store.hash_part_1 ^ 0x5A5A5A5A;
+    uint32_t check_part2 = ~reconstructed;
+    if (g_integrity_store.hash_part_2 != check_part2) {
+        // 数据被篡改，返回一个必定错误的 Hash
+        return 0xDEAD0000;
+    }
+
+    return reconstructed;
 }
 
 INTERNAL_FUNC INTERNAL_FUNC static void process_string_data(const unsigned char *data, unsigned char key, char *output) {
@@ -303,7 +345,6 @@ INTERNAL_FUNC static bool find_entry_in_apk(int fd, const ZipEndOfCentralDir& eo
 INTERNAL_FUNC static bool verify_single_entry_crc(int fd, const ZipEndOfCentralDir& eocd, const char* filename, uint32_t expected_crc) {
     uint32_t offset, size;
 
-    // 使用你现有的通用查找函数
     if (!find_entry_in_apk(fd, eocd, filename, &offset, &size)) {
         LOG_SECURE_E("[!] Missing expected DEX file: %s", filename);
         return false;
@@ -485,11 +526,11 @@ INTERNAL_FUNC static bool verify_apk_signature_direct(const std::string& apk_pat
         return false;
     }
 
-    struct stat st;
+    struct stat st{};
     if (fstat(fd, &st) < 0) { close(fd); return false; }
     off_t file_size = st.st_size;
 
-    ZipEndOfCentralDir eocd;
+    ZipEndOfCentralDir eocd{};
     if (!find_eocd(fd, file_size, &eocd)) {
         close(fd);
         LOG_SECURE_E("EOCD not found");
@@ -594,6 +635,7 @@ INTERNAL_FUNC static int perform_multi_dimensional_verification(JNIEnv* env, con
     g_signature_valid = true;
     g_dex_valid = true;
     g_verification_score = 100;
+    g_runtime_mask = 0x00;
     return 100;
 #endif
 
@@ -676,48 +718,284 @@ INTERNAL_FUNC static int perform_multi_dimensional_verification(JNIEnv* env, con
 }
 
 // Java_moe_ouom_wekit_loader_core_WeKitNative_doInit
-INTERNAL_FUNC static jboolean n_init(JNIEnv* env, jobject thiz, jstring signatureHash) {
-    if (signatureHash == nullptr) { onFailed(env); return JNI_FALSE; }
-    const char* hashStr = env->GetStringUTFChars(signatureHash, nullptr);
-    if (hashStr == nullptr) { onFailed(env); return JNI_FALSE; }
-    g_verification_score = perform_multi_dimensional_verification(env, hashStr);
-    env->ReleaseStringUTFChars(signatureHash, hashStr);
-    return JNI_TRUE;
-}
+INTERNAL_FUNC static jboolean ni(JNIEnv* env, jobject thiz, jstring signatureHash) {
+    if (signatureHash == nullptr) return JNI_FALSE;
 
-// Java_moe_ouom_wekit_loader_core_WeKitNative_nativeCheck
-INTERNAL_FUNC static jboolean n_check(JNIEnv* env, jobject thiz) {
-    if (!g_signature_valid || !g_dex_valid) {
-        onFailed(env);
-        return JNI_FALSE;
+    uint32_t state = 100;
+    jboolean result = JNI_FALSE;
+    const char* hashStr = nullptr;
+
+    // 初始化为锁定
+    g_runtime_mask = 0xFF;
+
+    while (state != 0) {
+        switch (state) {
+            case 100:
+                hashStr = env->GetStringUTFChars(signatureHash, nullptr);
+                if (hashStr != nullptr) state = 200;
+                else state = 999;
+                break;
+
+            case 200:
+                g_verification_score = perform_multi_dimensional_verification(env, hashStr);
+                env->ReleaseStringUTFChars(signatureHash, hashStr);
+                if (g_verification_score >= 80) state = 300;
+                else state = 400;
+                break;
+
+            case 300: // 成功解锁逻辑
+            {
+#if !defined(NDEBUG) || defined(DEBUG)
+                // [Debug] 强制跳过完整性检查
+                // 因为 Debug 包没有经过 Gradle Patch，数据是错的，检查必挂
+                LOG_SECURE_W("[WeKit-Debug] Skipping Integrity Store check in doInit.");
+                g_runtime_mask = 0x00;
+                result = JNI_TRUE;
+                state = 0;
+#else
+                // [Release] 检查 Gradle 注入的完整性锚点
+                if (get_expected_integrity_hash() == 0xDEAD0000) {
+                    state = 500; // 自毁路径
+                } else {
+                    g_runtime_mask = 0x00;
+                    result = JNI_TRUE;
+                    state = 0; // 结束
+                }
+#endif
+            }
+                break;
+            case 400: g_runtime_mask = 0xFF; result = JNI_FALSE; state = 0; break;
+            case 500: onFailed(env); state = 0; break;
+            case 999: onFailed(env); result = JNI_FALSE; state = 0; break;
+        }
     }
-    if (g_verification_score < 80) {
-        onFailed(env);
-        return JNI_FALSE;
-    }
-    return JNI_TRUE;
-}
-
-// Java_moe_ouom_wekit_loader_core_WeKitNative_getHiddenDex
-INTERNAL_FUNC static jbyteArray n_get_dex(JNIEnv* env, jobject thiz) {
-    jbyteArray result = env->NewByteArray(HIDDEN_DEX_SIZE);
-    if (result == nullptr) return nullptr;
-
-    std::vector<jbyte> temp_buffer(HIDDEN_DEX_SIZE);
-    for (int i = 0; i < HIDDEN_DEX_SIZE; i++) {
-        temp_buffer[i] = HIDDEN_DEX_DATA[i] ^ HIDDEN_DEX_KEY;
-    }
-
-    env->SetByteArrayRegion(result, 0, HIDDEN_DEX_SIZE, temp_buffer.data());
     return result;
 }
 
-INTERNAL_FUNC static int registerNativeMethods(JNIEnv* env, const char* className, const JNINativeMethod* methods, int numMethods) {
+// Java_moe_ouom_wekit_loader_core_WeKitNative_nativeCheck
+extern "C" __attribute__((visibility("hidden"), used, noinline))
+jlong nc(JNIEnv* env, jobject thiz) {
+#if !defined(NDEBUG) || defined(DEBUG)
+    LOG_SECURE_W("[WeKit-Debug] nc check BYPASSED.");
+    // 防止逻辑差异太大
+    g_heartbeat += 0x112233;
+    return 0xB00B1E5; // 返回一个特殊的通过码
+#endif
+
+    // 如果没有 init 运行过，直接返回错误码
+    if (g_runtime_mask == 0xFF) {
+        return 0xDEAD;
+    }
+
+    uint32_t state = 0x1A;
+    jlong result = 0;
+    volatile int check_score = 0;
+
+    // 更新心跳，证明我来过这里
+    // 攻击者如果直接 return 常量，这一行就不会执行，get_dex 就会发现
+    g_heartbeat ^= 0xCAFEBABE;
+
+    while (state != 0xFF) {
+        switch (state) {
+            case 0x1A: // 检查签名状态
+                check_score = g_verification_score;
+                if ((g_signature_valid ^ 1) == 0) {
+                    // g_signature_valid 为 true 时 (1^1=0)，进入下一步
+                    state = 0x2B;
+                } else {
+                    state = 0xEE;
+                }
+                break;
+
+            case 0x2B: // 检查 DEX 状态
+                if (g_dex_valid) {
+                    state = 0x3C;
+                } else {
+                    state = 0xEE;
+                }
+                break;
+
+            case 0x3C: // 检查分数和 Mask
+                // 逻辑：分数>=80 且 Mask已解锁
+                if (check_score >= 80 && g_runtime_mask == 0x00) {
+                    state = 0x4D;
+                } else {
+                    state = 0xEE;
+                }
+                break;
+
+            case 0x4D: // 成功生成 Magic Code
+                // 返回一个基于 score 计算出的复杂数值
+                // 只有 score 是 100 分时，结果才是正确的预期值
+                result = ((jlong)check_score * 0x1234) ^ 0xABCDEF;
+                // 如 100 * 0x1234 ^ 0xABCDEF = 0xB6180 ^ 0xABCDEF = 0xA1AD6F
+
+                state = 0xFF; // 结束
+                break;
+
+            case 0xEE: // 失败
+                // 返回一个具备迷惑性的随机值
+                result = (jlong)check_score ^ 0xDEADDEAD;
+                state = 0xFF; // 结束
+                break;
+
+            default:
+                state = 0x1A;
+                break;
+        }
+    }
+
+    // 再次更新心跳
+    g_heartbeat += 1;
+
+    return result;
+}
+// 定义一个空的结束标记函数，此函数必须紧跟在 nc 函数后面
+extern "C" __attribute__((visibility("hidden"), used, noinline))
+void nc_end() {
+    // 这是一个哨兵，什么都不做，只为了占位
+    volatile int x = 1;
+}
+
+// Java_moe_ouom_wekit_loader_core_WeKitNative_getHiddenDex
+INTERNAL_FUNC static jbyteArray ngd(JNIEnv* env, jobject thiz) {
+    uint32_t state = 1;
+    jbyteArray result = nullptr;
+    std::vector<jbyte> temp_buffer;
+
+    // 关键变量
+    uint32_t current_code_hash = 0;
+    uint32_t expected_hash = 0;
+    uint8_t final_mask = 0xFF;
+    int i = 0;
+
+    // 记录调用 nc 之前的心跳值
+    uint64_t last_heartbeat = g_heartbeat;
+
+    while (state != 0) {
+        switch (state) {
+            case 1: // 调用 nc 并验证
+            {
+                jlong check_val = nc(env, thiz);
+
+                // 心跳值必须改变
+                // 如果攻击者 Patch 了 nc 直接 return，heartbeat 不会变
+                if (g_heartbeat == last_heartbeat) {
+                    LOG_SECURE_E("[!] Integrity Trap: nc() logic bypassed (No heartbeat).");
+                    state = 99; // 失败
+                    break;
+                }
+
+                // 检查返回值逻辑
+#if !defined(NDEBUG) || defined(DEBUG)
+                bool logic_pass = (check_val == 0xB00B1E5);
+#else
+                // Release 模式下，期望值必须是 100分 * 0x1234 ^ 0xABCDEF
+                // 只要 nc 被 Patch 返回 true (1)，这里 check_val 就是 1，校验失败
+                jlong expected_val = ((jlong)100 * 0x1234) ^ 0xABCDEF;
+                bool logic_pass = (check_val == expected_val);
+#endif
+
+                if (logic_pass) state = 2;
+                else {
+                    LOG_SECURE_E("[!] Integrity Trap: nc() returned invalid magic code: %llx", check_val);
+                    state = 99;
+                }
+            }
+                break;
+
+            case 2:
+            {
+                // 动态计算 nc 的大小，解决 O3 优化带来的长度问题
+                uintptr_t start_addr = (uintptr_t)nc;
+                uintptr_t end_addr = (uintptr_t)nc_end;
+
+                size_t func_size = 0;
+                if (end_addr > start_addr) {
+                    func_size = end_addr - start_addr;
+                } else {
+                    LOG_SECURE_E("[!] FATAL: nc() logic broken!");
+                    func_size = 256;
+                }
+
+                // 限制一下最大值，防止读越界
+                if (func_size > 1024) func_size = 256;
+
+                // 计算内存 Hash
+                current_code_hash = calc_mem_hash((void *) nc, func_size);
+                state = 3;
+            }
+
+            case 3: // 获取 Gradle 注入的预期 Hash
+                expected_hash = get_expected_integrity_hash();
+                state = 4;
+                break;
+
+            case 4: // 计算最终解密 Mask
+            {
+#if !defined(NDEBUG) || defined(DEBUG)
+                // Debug 模式：因为 Gradle 可能没注入 Hash，强制放行
+                LOG_SECURE_W("[WeKit-Debug] Integrity mask FORCED to 0.");
+                final_mask = 0;
+#else
+                // [Release] CodeHash 必须一致，否则 diff != 0
+                uint32_t diff = current_code_hash ^ expected_hash;
+                uint8_t integrity_mask = diff & 0xFF;
+
+                // 融合 g_runtime_mask
+                final_mask = g_runtime_mask | integrity_mask;
+
+                // 发现代码被修改
+                if (integrity_mask != 0) {
+                    LOG_SECURE_E("[!] FATAL: Code Tampering Detected! Hash: %08x, Expected: %08x", current_code_hash, expected_hash);
+                }
+#endif
+
+                result = env->NewByteArray(HIDDEN_DEX_SIZE);
+                if (result) {
+                    temp_buffer.resize(HIDDEN_DEX_SIZE);
+                    i = 0;
+                    state = 5; // 进入解密循环
+                } else {
+                    state = 0;
+                }
+            }
+                break;
+
+            case 5: // 循环头
+                if (i < HIDDEN_DEX_SIZE) state = 6;
+                else state = 7;
+                break;
+
+            case 6: // 解密 payload
+                // 只要 final_mask != 0，数据即损毁
+                temp_buffer[i] = HIDDEN_DEX_DATA[i] ^ HIDDEN_DEX_KEY ^ final_mask;
+                i++;
+                state = 5;
+                break;
+
+            case 7: // 提交数据
+                env->SetByteArrayRegion(result, 0, HIDDEN_DEX_SIZE, temp_buffer.data());
+                state = 0;
+                break;
+
+            case 99: // 惩罚
+                onFailed(env);
+                result = nullptr;
+                state = 0;
+                break;
+        }
+    }
+    return result;
+}
+
+INTERNAL_FUNC static int
+registerNativeMethods(JNIEnv *env, const char *className, const JNINativeMethod *methods) {
     jclass clazz = env->FindClass(className);
     if (clazz == nullptr) {
         return JNI_FALSE;
     }
-    if (env->RegisterNatives(clazz, methods, numMethods) < 0) {
+    if (env->RegisterNatives(clazz, methods, 2) < 0) {
         return JNI_FALSE;
     }
     return JNI_TRUE;
@@ -726,10 +1004,8 @@ INTERNAL_FUNC static int registerNativeMethods(JNIEnv* env, const char* classNam
 
 // 映射表
 INTERNAL_FUNC static const JNINativeMethod gMethods[] = {
-        // Java方法名,   签名,                     函数指针
-        {"doInit",      "(Ljava/lang/String;)Z", (void*)n_init},
-        {"nativeCheck", "()Z",                   (void*)n_check},
-        {"getHiddenDex","()[B",                  (void*)n_get_dex}
+        {"doInit",      "(Ljava/lang/String;)Z", (void *) ni},
+        {"getHiddenDex","()[B", (void *) ngd}
 };
 
 API_EXPORT jint JNI_OnLoad(JavaVM* vm, void* reserved) {
@@ -738,7 +1014,7 @@ API_EXPORT jint JNI_OnLoad(JavaVM* vm, void* reserved) {
         return JNI_ERR;
     }
 
-    if (registerNativeMethods(env, skCrypt("moe/ouom/wekit/loader/core/WeKitNative"), gMethods, sizeof(gMethods) / sizeof(gMethods[0])) != JNI_TRUE) {
+    if (registerNativeMethods(env, skCrypt("moe/ouom/wekit/loader/core/WeKitNative"), gMethods) != JNI_TRUE) {
         return JNI_ERR;
     }
 

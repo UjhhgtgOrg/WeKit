@@ -18,6 +18,122 @@ val MAGIC_BYTES = ByteBuffer.allocate(4)
     .putInt(MAGIC_PLACEHOLDER_INT)
     .array()
 
+// 定义用于定位结构体的魔数
+val INTEGRITY_MAGIC_TAG = 0xFEEDDEAD.toInt()
+// 定义用于混淆的异或 Key
+val INTEGRITY_XOR_KEY = 0x5A5A5A5A
+
+class Elf64Parser(val file: File) {
+    private val buffer = file.readBytes()
+    private val byteBuffer = ByteBuffer.wrap(buffer).order(ByteOrder.LITTLE_ENDIAN)
+
+    // Key: Section Index, Value: Pair(sh_addr, sh_offset)
+    private val sectionMap = mutableMapOf<Int, Pair<Long, Long>>()
+    // Key: Symbol Section Index, Value: String Table Section Index
+    private val linkMap = mutableMapOf<Int, Int>()
+
+    init {
+        parseSections()
+    }
+
+    private fun parseSections() {
+        if (byteBuffer.getInt(0) != 0x464C457F) throw GradleException("Not an ELF file")
+        if (byteBuffer.get(4).toInt() != 2) throw GradleException("Not a 64-bit ELF file")
+
+        val shOff = byteBuffer.getLong(0x28)
+        val shEntSize = byteBuffer.getShort(0x3A).toInt()
+        val shNum = byteBuffer.getShort(0x3C).toInt()
+
+        for (i in 0 until shNum) {
+            val offset = (shOff + i * shEntSize).toInt()
+            val shType = byteBuffer.getInt(offset + 0x04)
+            val shAddr = byteBuffer.getLong(offset + 0x10)
+            val shOffset = byteBuffer.getLong(offset + 0x18)
+            val shLink = byteBuffer.getInt(offset + 0x28)
+
+            sectionMap[i] = Pair(shAddr, shOffset)
+
+            // SHT_SYMTAB (2) or SHT_DYNSYM (11)
+            if (shType == 2 || shType == 11) {
+                linkMap[i] = shLink
+            }
+        }
+    }
+
+    fun getSymbolFileOffset(symbolName: String): Pair<Long, Long>? {
+        val shOff = byteBuffer.getLong(0x28)
+        val shEntSize = byteBuffer.getShort(0x3A).toInt()
+        val shNum = byteBuffer.getShort(0x3C).toInt()
+
+        // 遍历所有 Section，寻找符号表，SHT_SYMTAB=2 或 SHT_DYNSYM=11
+        for (i in 0 until shNum) {
+            val secOffset = (shOff + i * shEntSize).toInt()
+            val type = byteBuffer.getInt(secOffset + 0x04)
+
+            if (type == 2 || type == 11) { // .symtab OR .dynsym
+                val symTabOff = byteBuffer.getLong(secOffset + 0x18)
+                val symTabSize = byteBuffer.getLong(secOffset + 0x20)
+                val symEntSize = byteBuffer.getLong(secOffset + 0x38)
+
+                // 获取对应的字符串表位置
+                val strTabIdx = linkMap[i] ?: continue
+                val strTabInfo = sectionMap[strTabIdx] ?: continue
+                val strTabFileOff = strTabInfo.second
+
+                val symCount = (symTabSize / symEntSize).toInt()
+
+                // 遍历该表中的符号
+                for (j in 0 until symCount) {
+                    val symOff = (symTabOff + j * symEntSize).toInt()
+                    val stNameIdx = byteBuffer.getInt(symOff)
+
+                    // 读取符号名
+                    val name = getString(strTabFileOff.toInt() + stNameIdx)
+
+                    if (name == symbolName) {
+                        val stShndx = byteBuffer.getShort(symOff + 0x06).toInt() and 0xFFFF
+                        val stValue = byteBuffer.getLong(symOff + 0x08)
+                        val stSize = byteBuffer.getLong(symOff + 0x10)
+
+                        val sectionInfo = sectionMap[stShndx]
+                        if (sectionInfo != null) {
+                            val (secAddr, secOffset) = sectionInfo
+                            // 虚拟地址 - Section 虚拟地址 + Section 文件偏移
+                            val fileOffset = stValue - secAddr + secOffset
+                            return Pair(fileOffset, stSize)
+                        }
+                    }
+                }
+            }
+        }
+        return null
+    }
+
+    private fun getString(offset: Int): String {
+        if (offset >= buffer.size) return ""
+        val sb = StringBuilder()
+        var idx = offset
+        while (idx < buffer.size) {
+            val c = buffer[idx].toInt().toChar()
+            if (c == '\u0000') break
+            sb.append(c)
+            idx++
+        }
+        return sb.toString()
+    }
+}
+
+// FNV-1a Hash 算法
+fun calcFnv1aHash(bytes: ByteArray): Int {
+    var hash = 0x811C9DC5.toInt()
+    for (b in bytes) {
+        hash = hash xor (b.toInt() and 0xFF)
+        hash = hash * 0x01000193
+    }
+    return hash
+}
+
+
 val sensitivePackagePath = "moe/ouom/wekit/hooks"
 
 plugins {
@@ -189,7 +305,7 @@ val killWeChat = tasks.register("kill-wechat") {
     onlyIf { hasConnectedDevice() }
     doLast {
         val adbFile = adbProvider.orNull?.asFile ?: return@doLast
-        for (i in 1..10) {
+        for (i in 1..10) {  // 貌似国内定制系统中的的微信一次杀不死？
             project.exec {
                 commandLine(adbFile, "shell", "am", "force-stop", packageName)
                 isIgnoreExitValue = true
@@ -438,108 +554,240 @@ tasks.register("protectSensitiveCode") {
     }
 }
 
-afterEvaluate {
-    android.applicationVariants.forEach { variant ->
-        if (variant.buildType.name.equals("release", ignoreCase = true)) {
-            val variantName = variant.name.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
-            println("⚙️ [WeKit] Hooking Release Build for: $variantName")
+// =========================================================================
 
-            val javacTask = tasks.findByName("compile${variantName}JavaWithJavac") as? JavaCompile
-            val r8Task = tasks.findByName("minify${variantName}WithR8")
-            val checksumTask = tasks.findByName("generateDexChecksum")
-            val stripTask = tasks.findByName("strip${variantName}DebugSymbols")
-            val packageTask = tasks.findByName("package${variantName}")
-            val protectTask = tasks.findByName("protectSensitiveCode")
+/**
+ * 模块 A: 配置 Java/Kotlin 层的保护
+ * 包含: 代码隐藏 (protectSensitiveCode), R8 混淆, DEX Checksum 生成, 以及 CMake 依赖绑定
+ */
+fun Project.configureJavaProtection(
+    variantName: String,
+    javacTask: Task?,
+    r8Task: Task?,
+    protectTask: Task?,
+    checksumTask: Task?
+) {
+    // 绑定 Protect Task 到编译流程
+    if (javacTask != null && protectTask != null) {
+        protectTask.dependsOn(javacTask)
+        r8Task?.mustRunAfter(protectTask)
+    }
 
-            if (javacTask != null && protectTask != null) {
-                // 必须在 Java 编译后立即执行，防止 Class 进入 R8 或主 DEX
-                protectTask.dependsOn(javacTask)
-                // 强制让 R8 必须在代码抽离之后运行
-                r8Task?.mustRunAfter(protectTask)
-            }
+    // 绑定 Checksum Task 并锁定 CMake 编译
+    if (r8Task != null && checksumTask != null) {
+        checksumTask.dependsOn(r8Task)
 
-            if (r8Task != null && checksumTask != null) {
-                checksumTask.dependsOn(r8Task)
-                tasks.configureEach {
-                    val taskName = this.name
-                    if (taskName.startsWith("buildCMake") && taskName.contains("Rel")) {
-                        if (protectTask != null) {
-                            this.dependsOn(protectTask)
-                            println("   🔒 Task '$taskName' now depends on protectSensitiveCode")
-                        }
-                        println("   🔒 Locking task '$taskName' to wait for Dex Checksum")
-                        this.dependsOn(checksumTask)
-                    }
-                    if (taskName.startsWith("configureCMake") && taskName.contains("Rel")) {
-                        if (protectTask != null) this.dependsOn(protectTask)
-                        this.dependsOn(checksumTask)
-                    }
+        // 让 CMake 任务依赖于 DEX Checksum (因为 C++ 需要生成的 generated_checksums.h)
+        tasks.configureEach {
+            val taskName = this.name
+            // 匹配 Release 版的 CMake 构建任务
+            if ((taskName.startsWith("buildCMake") || taskName.startsWith("configureCMake"))
+                && taskName.contains("Rel")) {
+
+                if (protectTask != null) {
+                    this.dependsOn(protectTask)
+                    println("   🔒 Task '$taskName' locked on protectSensitiveCode")
                 }
-            }
 
-            if (stripTask != null && packageTask != null) {
-                val patchTaskName = "patchSoSize${variantName}"
-
-                // 防止任务重复注册报错
-                if (tasks.findByName(patchTaskName) == null) {
-                    val patchTask = tasks.register(patchTaskName) {
-                        group = "wekit"
-                        description = "Injects SO size for $variantName"
-
-                        dependsOn(stripTask)
-
-                        doLast {
-                            println("💉 [WeKit-Patch] Starting patch process...")
-
-                            // 动态获取 strip 任务的输出目录
-                            val searchDirs = stripTask.outputs.files.files.filter { it.exists() && it.isDirectory }
-
-                            if (searchDirs.isEmpty()) {
-                                println("❌ [WeKit-Patch] No output directories found for strip task!")
-                                return@doLast
-                            }
-
-                            var patchedCount = 0
-                            searchDirs.forEach { dir ->
-                                dir.walk().filter { it.isFile && it.name == "libwekit.so" }.forEach { soFile ->
-                                    val fileSize = soFile.length().toInt()
-                                    val content = soFile.readBytes()
-
-                                    var patchOffset = -1
-                                    for (i in 0 until content.size - 4) {
-                                        if (content[i] == MAGIC_BYTES[0] &&
-                                            content[i + 1] == MAGIC_BYTES[1] &&
-                                            content[i + 2] == MAGIC_BYTES[2] &&
-                                            content[i + 3] == MAGIC_BYTES[3]) {
-                                            patchOffset = i
-                                            break
-                                        }
-                                    }
-
-                                    if (patchOffset != -1) {
-                                        println("   ✅ Patching: ${soFile.absolutePath}")
-                                        println("      Offset: $patchOffset, Size: $fileSize")
-                                        val sizeBytes = ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt(fileSize).array()
-                                        RandomAccessFile(soFile, "rw").use { raf ->
-                                            raf.seek(patchOffset.toLong())
-                                            raf.write(sizeBytes)
-                                        }
-                                        patchedCount++
-                                    }
-                                }
-                            }
-
-                            if (patchedCount == 0) {
-                                println("❌ [WeKit-Patch] Failed! No SO files were patched.")
-                            }
-                        }
-                    }
-                    packageTask.dependsOn(patchTask)
-                }
+                println("   🔒 Task '$taskName' locked on Dex Checksum")
+                this.dependsOn(checksumTask)
             }
         }
     }
 }
+
+/**
+ * 模块 B: 配置 Native (.so) 层的补丁
+ * 包含: SO Size 注入, 代码完整性 Hash 注入
+ * 顺序: Strip -> Patch Size -> Patch Integrity -> Package
+ */
+fun Project.configureNativePatching(
+    variantName: String,
+    stripTask: Task,
+    packageTask: Task
+) {
+    // 1. 注册 SO Size Patch 任务 (不需要改动，保持原样)
+    val patchSizeTaskName = "patchSoSize${variantName}"
+    val patchSizeTask = if (tasks.findByName(patchSizeTaskName) == null) {
+        tasks.register(patchSizeTaskName) {
+            group = "wekit-protection"
+            description = "Injects SO size for $variantName"
+            dependsOn(stripTask)
+
+            doLast {
+                println("💉 [Patch-Size] Starting...")
+                val searchDirs = stripTask.outputs.files.files.filter { it.exists() && it.isDirectory }
+                if (searchDirs.isEmpty()) return@doLast
+
+                var count = 0
+                searchDirs.forEach { dir ->
+                    dir.walk().filter { it.isFile && it.name == "libwekit.so" }.forEach { soFile ->
+                        val content = soFile.readBytes()
+                        var offset = -1
+                        for (i in 0 until content.size - 4) {
+                            if (content[i] == MAGIC_BYTES[0] && content[i+1] == MAGIC_BYTES[1] &&
+                                content[i+2] == MAGIC_BYTES[2] && content[i+3] == MAGIC_BYTES[3]) {
+                                offset = i; break
+                            }
+                        }
+                        if (offset != -1) {
+                            val sizeBytes = ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt(soFile.length().toInt()).array()
+                            RandomAccessFile(soFile, "rw").use { raf -> raf.seek(offset.toLong()); raf.write(sizeBytes) }
+                            count++
+                        }
+                    }
+                }
+                println(if (count > 0) "   ✅ Patched $count SO files." else "   ⚠️ No placeholders found.")
+            }
+        }
+    } else tasks.named(patchSizeTaskName)
+
+    // 注册 Integrity Hash Patch 任务
+    val patchIntegrityTaskName = "patchNativeIntegrity${variantName}"
+    val patchIntegrityTask = if (tasks.findByName(patchIntegrityTaskName) == null) {
+        tasks.register(patchIntegrityTaskName) {
+            group = "wekit-protection"
+            description = "Injects code hash for $variantName using Unstripped source"
+
+            dependsOn(stripTask)
+            mustRunAfter(patchSizeTask)
+
+            doLast {
+                println("🛡️ [Patch-Integrity] Starting...")
+
+                // 这里是 Strip 任务的输出目录，包含的是已经去符号的 Stripped SO
+                val strippedDirs = stripTask.outputs.files.files.filter { it.exists() && it.isDirectory }
+
+                strippedDirs.forEach { strippedDir ->
+                    strippedDir.walk().filter { it.isFile && it.name == "libwekit.so" }.forEach { strippedSoFile ->
+                        println("   -> Target (Stripped): ${strippedSoFile.absolutePath}")
+
+                        var unstrippedSoFile: File? = null
+                        val buildDir = layout.buildDirectory.get().asFile
+                        val archName = strippedSoFile.parentFile.name // e.g., arm64-v8a
+
+                        // 尝试在 merged_native_libs 中查找
+                        val candidate1 = File(strippedSoFile.absolutePath.replace("stripped_native_libs", "merged_native_libs"))
+                        if (candidate1.exists()) {
+                            unstrippedSoFile = candidate1
+                        } else {
+                            // 暴力在 build 目录找同名且体积比 stripped 大的文件
+                            val candidates = buildDir.walk()
+                                .filter { it.isFile && it.name == "libwekit.so" && it.parentFile.name == archName && it.length() > strippedSoFile.length() }
+                                .sortedByDescending { it.length() } // 最大的通常是 unstripped
+                                .toList()
+
+                            if (candidates.isNotEmpty()) {
+                                unstrippedSoFile = candidates.first()
+                            }
+                        }
+
+                        if (unstrippedSoFile == null || !unstrippedSoFile.exists()) {
+                            println("      ❌ Critical: Could not find Unstripped SO! Hash injection skipped.")
+                            return@forEach
+                        }
+
+                        println("      Source (Unstripped): ${unstrippedSoFile.absolutePath}")
+
+                        try {
+                            // 使用升级版 Parser 解析 Unstripped 文件 (包含 .symtab)
+                            val parser = Elf64Parser(unstrippedSoFile)
+
+                            val symbolInfo = parser.getSymbolFileOffset("nc")
+                            val endSymbolInfo = parser.getSymbolFileOffset("nc_end")
+
+                            if (symbolInfo != null) {
+                                val funcOffset = symbolInfo.first
+
+                                // 动态计算大小：使用 nc_end 的位置减去 nc 的位置
+                                var scanSize = 256L
+                                if (endSymbolInfo != null && endSymbolInfo.first > funcOffset) {
+                                    scanSize = endSymbolInfo.first - funcOffset
+                                    println("      Dynamic Size: $scanSize bytes (nc -> nc_end)")
+                                } else if (symbolInfo.second > 0) {
+                                    scanSize = symbolInfo.second
+                                    println("      Symbol Size: $scanSize bytes")
+                                } else {
+                                    println("      ⚠️ Warning: Using fixed size 256 bytes (nc_end not found)")
+                                }
+
+                                // 读取 Unstripped 文件的机器码计算 Hash
+                                // 虽然 Unstripped 包含符号，但 .text 段的机器码与 Stripped 文件是完全一致的
+                                val fileBytes = unstrippedSoFile.readBytes()
+
+                                if (funcOffset + scanSize <= fileBytes.size) {
+                                    val codeBytes = fileBytes.copyOfRange(funcOffset.toInt(), (funcOffset + scanSize).toInt())
+                                    val hash = calcFnv1aHash(codeBytes)
+                                    println("      Calculated Hash: 0x${Integer.toHexString(hash).uppercase()}")
+
+                                    // 将计算结果注入到 Stripped 文件中
+                                    val targetBytes = strippedSoFile.readBytes()
+
+                                    val magicBytes = ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt(INTEGRITY_MAGIC_TAG).array()
+                                    var placeOffset = -1
+                                    for (i in 0 until targetBytes.size - 16) {
+                                        if (targetBytes[i] == magicBytes[0] && targetBytes[i+1] == magicBytes[1] &&
+                                            targetBytes[i+2] == magicBytes[2] && targetBytes[i+3] == magicBytes[3]) {
+                                            placeOffset = i; break
+                                        }
+                                    }
+
+                                    if (placeOffset != -1) {
+                                        val part1 = hash xor INTEGRITY_XOR_KEY
+                                        val part2 = hash.inv()
+                                        val noise = (System.currentTimeMillis() % 0xFFFFFFFF).toInt()
+                                        val buffer = ByteBuffer.allocate(16).order(ByteOrder.LITTLE_ENDIAN)
+                                        buffer.putInt(INTEGRITY_MAGIC_TAG); buffer.putInt(part1); buffer.putInt(part2); buffer.putInt(noise)
+
+                                        RandomAccessFile(strippedSoFile, "rw").use { raf -> raf.seek(placeOffset.toLong()); raf.write(buffer.array()) }
+                                        println("      ✅ Injected hash successfully.")
+                                    } else println("      ❌ Placeholder 0xFEEDDEAD not found in target.")
+                                } else println("      ❌ Offset out of bounds.")
+                            } else println("      ⚠️ Symbol 'nc' not found in Unstripped file (Check if 'hidden' is compiled correctly).")
+                        } catch (e: Exception) {
+                            println("      ❌ Error: ${e.message}")
+                            e.printStackTrace()
+                        }
+                    }
+                }
+            }
+        }
+    } else tasks.named(patchIntegrityTaskName)
+
+    // 绑定顺序
+    packageTask.dependsOn(patchSizeTask)
+    packageTask.dependsOn(patchIntegrityTask)
+}
+
+afterEvaluate {
+    android.applicationVariants.forEach { variant ->
+        // 只针对 Release 版本进行 Hook
+        if (variant.buildType.name.equals("release", ignoreCase = true)) {
+            val variantName = variant.name.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+            println("⚙️ [WeKit] Configuring tasks for: $variantName")
+
+            // 获取所有需要的 Task
+            val javacTask = tasks.findByName("compile${variantName}JavaWithJavac")
+            val r8Task = tasks.findByName("minify${variantName}WithR8")
+            val checksumTask = tasks.findByName("generateDexChecksum")
+            val protectTask = tasks.findByName("protectSensitiveCode")
+
+            val stripTask = tasks.findByName("strip${variantName}DebugSymbols")
+            val packageTask = tasks.findByName("package${variantName}")
+
+            // 配置 Java 层保护
+            configureJavaProtection(variantName, javacTask, r8Task, protectTask, checksumTask)
+
+            // 配置 Native 层补丁 (如果 Strip 和 Package 任务存在)
+            if (stripTask != null && packageTask != null) {
+                configureNativePatching(variantName, stripTask, packageTask)
+            }
+        }
+    }
+}
+
+// =========================================================================
+
 
 
 kotlin {

@@ -12,6 +12,7 @@ import moe.ouom.wekit.core.bridge.api.IHookFactoryDelegate;
 import moe.ouom.wekit.core.model.BaseClickableFunctionHookItem;
 import moe.ouom.wekit.core.model.BaseHookItem;
 import moe.ouom.wekit.core.model.BaseSwitchFunctionHookItem;
+// 如果下面这一行报错，请先 clean project
 import moe.ouom.wekit.hooks.gen.HookItemEntryList;
 
 public class HookItemFactory implements IHookFactoryDelegate {

@@ -79,12 +79,27 @@ public class SecretLoader {
 
     private static void tryFallbackLoad(int processType) {
         try {
-            // DEBUG 模式下类可能还在原来的位置
             Class<?> cls = Class.forName(TARGET_CLASS);
             Object instance = cls.newInstance();
             Method method = cls.getDeclaredMethod(TARGET_METHOD, int.class);
             method.setAccessible(true);
             method.invoke(instance, processType);
+
+            try {
+                Class<?> factoryClass = Class.forName("moe.ouom.wekit.hooks.core.factory.HookItemFactory");
+                java.lang.reflect.Field instanceField = factoryClass.getDeclaredField("INSTANCE");
+                Object factoryInstance = instanceField.get(null);
+
+                assert factoryInstance != null;
+                moe.ouom.wekit.core.bridge.HookFactoryBridge.INSTANCE.registerDelegate(
+                        (moe.ouom.wekit.core.bridge.api.IHookFactoryDelegate) factoryInstance
+                );
+
+                Logger.i("[Fallback] HookFactoryBridge registered successfully!");
+            } catch (Throwable e) {
+                Logger.e("[Fallback] Failed to register HookFactoryBridge", e);
+            }
+
             Logger.i("Fallback load success");
         } catch (Exception e) {
             Logger.e("Fallback load failed", e);
