@@ -1,0 +1,114 @@
+package moe.ouom.wekit.core.dsl
+
+import de.robv.android.xposed.XC_MethodHook
+import de.robv.android.xposed.XposedBridge
+import moe.ouom.wekit.config.ConfigManager
+import moe.ouom.wekit.constants.Constants
+import moe.ouom.wekit.hooks.core.factory.ExceptionFactory
+import moe.ouom.wekit.util.log.WeLogger
+import java.lang.reflect.Method
+
+/**
+ * Dex 方法 Hook 构建器
+ */
+class DexMethodHookBuilder(
+    private val method: Method,
+    private val priority: Int?
+) {
+    private var beforeAction: ((XC_MethodHook.MethodHookParam) -> Unit)? = null
+    private var afterAction: ((XC_MethodHook.MethodHookParam) -> Unit)? = null
+    private var replaceAction: ((XC_MethodHook.MethodHookParam) -> Any?)? = null
+
+    /**
+     * DSL: 配置 Hook 行为
+     */
+    fun hook(block: HookConfigBuilder.() -> Unit) {
+        val builder = HookConfigBuilder()
+        builder.block()
+
+        this.beforeAction = builder.beforeAction
+        this.afterAction = builder.afterAction
+        this.replaceAction = builder.replaceAction
+    }
+
+    /**
+     * 执行 Hook
+     */
+    fun execute() {
+        val p = priority ?: ConfigManager.dGetInt(
+            "${Constants.PrekCfgXXX}wekit_hook_priority",
+            50
+        )
+
+
+        XposedBridge.hookMethod(method, object : XC_MethodHook(p) {
+            override fun beforeHookedMethod(param: MethodHookParam) {
+                try {
+                    // 如果有 replace 动作，在 before 中执行
+                    replaceAction?.let {
+                        param.result = it(param)
+                    }
+
+                    // 执行 before 动作
+                    beforeAction?.invoke(param)
+                } catch (e: Throwable) {
+                    WeLogger.e(e)
+                    ExceptionFactory.add(null, e)
+                }
+            }
+
+            override fun afterHookedMethod(param: MethodHookParam) {
+                try {
+                    afterAction?.invoke(param)
+                } catch (e: Throwable) {
+                    WeLogger.e(e)
+                    ExceptionFactory.add(null, e)
+                }
+            }
+        })
+    }
+
+    /**
+     * Hook 配置构建器
+     */
+    class HookConfigBuilder {
+        internal var beforeAction: ((XC_MethodHook.MethodHookParam) -> Unit)? = null
+        internal var afterAction: ((XC_MethodHook.MethodHookParam) -> Unit)? = null
+        internal var replaceAction: ((XC_MethodHook.MethodHookParam) -> Any?)? = null
+
+        /**
+         * 在方法执行前 Hook（仅当功能启用时）
+         */
+        fun beforeIfEnabled(action: (XC_MethodHook.MethodHookParam) -> Unit) {
+            beforeAction = action
+        }
+
+        /**
+         * 在方法执行后 Hook（仅当功能启用时）
+         */
+        fun afterIfEnabled(action: (XC_MethodHook.MethodHookParam) -> Unit) {
+            afterAction = action
+        }
+
+        /**
+         * 替换方法返回值
+         */
+        fun replace(action: (XC_MethodHook.MethodHookParam) -> Any?) {
+            replaceAction = action
+        }
+    }
+}
+
+/**
+ * 扩展函数：将结果设置为 null
+ */
+fun XC_MethodHook.MethodHookParam.resultNull() {
+    this.result = null
+}
+
+/**
+ * 扩展函数：将结果设置为指定值
+ */
+fun XC_MethodHook.MethodHookParam.resultValue(value: Any?) {
+    this.result = value
+}
