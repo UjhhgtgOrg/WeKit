@@ -65,6 +65,7 @@ class DexFinderDialog(
     // 扫描结果
     private val scanResults = mutableMapOf<String, ScanResult>()
     private var allSuccess = false
+    private var taskCounter = 0 // 任务计数器
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -236,16 +237,16 @@ class DexFinderDialog(
     private fun updateProgress(progress: ScanProgress) {
         when (progress) {
             is ScanProgress.Start -> {
-                val completed = scanResults.size
+                taskCounter++
                 val total = outdatedItems.size
-                tvCurrentTask.text = "正在适配: ${progress.path} ($completed/$total)..."
-                progressMain.progress = completed
-                tvProgressMain.text = "总进度: $completed/$total"
+                tvCurrentTask.text = "正在适配: ${progress.path} ($taskCounter/$total)..."
+                tvProgressMain.text = "总进度: ${scanResults.size}/$total"
             }
             is ScanProgress.Complete -> {
                 scanResults[progress.path] = ScanResult.Success(progress.path)
                 val completed = scanResults.size
                 val total = outdatedItems.size
+                tvCurrentTask.text = "已完成: ${progress.path}"
                 progressMain.progress = completed
                 tvProgressMain.text = "总进度: $completed/$total"
             }
@@ -253,6 +254,7 @@ class DexFinderDialog(
                 scanResults[progress.path] = ScanResult.Failed(progress.path, progress.error)
                 val completed = scanResults.size
                 val total = outdatedItems.size
+                tvCurrentTask.text = "失败: ${progress.path}"
                 progressMain.progress = completed
                 tvProgressMain.text = "总进度: $completed/$total"
             }
