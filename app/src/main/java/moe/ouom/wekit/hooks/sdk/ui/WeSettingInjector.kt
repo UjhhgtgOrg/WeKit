@@ -1,4 +1,4 @@
-package moe.ouom.wekit.hooks.sdk
+package moe.ouom.wekit.hooks.sdk.ui
 
 import android.R
 import android.annotation.SuppressLint
@@ -13,6 +13,7 @@ import moe.ouom.wekit.config.RuntimeConfig
 import moe.ouom.wekit.constants.Constants
 import moe.ouom.wekit.core.dsl.dexMethod
 import moe.ouom.wekit.core.model.ApiHookItem
+import moe.ouom.wekit.dexkit.DexMethodDescriptor
 import moe.ouom.wekit.dexkit.intf.IDexFind
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.ui.CommonContextWrapper
@@ -36,6 +37,7 @@ class WeSettingInjector : ApiHookItem(), IDexFind {
         private const val CLS_PREFERENCE = "com.tencent.mm.ui.base.preference.Preference"
     }
 
+    @SuppressLint("NonUniqueDexKitData")
     override fun dexFind(dexKit: DexKitBridge): Map<String, String> {
         val descriptors = mutableMapOf<String, String>()
 
@@ -48,17 +50,13 @@ class WeSettingInjector : ApiHookItem(), IDexFind {
         }
 
         // 查找 setKey 方法
-        if (dexMethodSetKey.find(dexKit, allowMultiple = true) {
-                searchPackages("com.tencent.mm.ui.base.preference")
-                matcher {
-                    declaredClass = CLS_PREFERENCE
-                    returnType = "void"
-                    paramTypes("java.lang.String")
-                    usingStrings("Preference")
-                }
-            }) {
-            dexMethodSetKey.getDescriptorString()?.let {
-                descriptors[dexMethodSetKey.key] = it
+        dexMethodSetKey.find(dexKit, allowMultiple = true, descriptors = descriptors) {
+            searchPackages("com.tencent.mm.ui.base.preference")
+            matcher {
+                declaredClass = CLS_PREFERENCE
+                returnType = "void"
+                paramTypes("java.lang.String")
+                usingStrings("Preference")
             }
         }
 
@@ -72,7 +70,7 @@ class WeSettingInjector : ApiHookItem(), IDexFind {
         if (setTitleCandidates.isNotEmpty()) {
             val target = setTitleCandidates.last()
             dexMethodSetTitle.setDescriptor(
-                moe.ouom.wekit.dexkit.DexMethodDescriptor(
+                DexMethodDescriptor(
                     target.className,
                     target.methodName,
                     target.methodSign
@@ -84,16 +82,21 @@ class WeSettingInjector : ApiHookItem(), IDexFind {
         }
 
         // 查找 getKey 方法
+        WeLogger.d("WeSettingInjector", "Searching for getKey method in ${prefClass.name}")
         val getKeyCandidates = prefClass.findMethod {
             matcher {
                 paramCount = 0
                 returnType = "java.lang.String"
             }
         }
-        val targetGetKey = getKeyCandidates.singleOrNull { it.name != "toString" }
+        WeLogger.d("WeSettingInjector", "Found ${getKeyCandidates.size} String methods with 0 params: ${getKeyCandidates.map { it.name }}")
+
+        val targetGetKey = getKeyCandidates.firstOrNull { it.name != "toString" }
+        WeLogger.d("WeSettingInjector", "Selected getKey method: ${targetGetKey?.name}")
+
         if (targetGetKey != null) {
             dexMethodGetKey.setDescriptor(
-                moe.ouom.wekit.dexkit.DexMethodDescriptor(
+                DexMethodDescriptor(
                     targetGetKey.className,
                     targetGetKey.methodName,
                     targetGetKey.methodSign
@@ -101,7 +104,10 @@ class WeSettingInjector : ApiHookItem(), IDexFind {
             )
             dexMethodGetKey.getDescriptorString()?.let {
                 descriptors[dexMethodGetKey.key] = it
+                WeLogger.d("WeSettingInjector", "Successfully saved getKey descriptor: $it")
             }
+        } else {
+            WeLogger.e("WeSettingInjector", "Failed to find getKey method!")
         }
 
         // 查找 Adapter 类和 addPreference 方法
@@ -124,16 +130,12 @@ class WeSettingInjector : ApiHookItem(), IDexFind {
         }.singleOrNull()
 
         if (adapterClass != null) {
-            if (dexMethodAddPref.find(dexKit, allowMultiple = true) {
-                    searchPackages("com.tencent.mm.ui.base.preference")
-                    matcher {
-                        declaredClass = adapterClass.name
-                        paramTypes(CLS_PREFERENCE, "int")
-                        returnType = "void"
-                    }
-                }) {
-                dexMethodAddPref.getDescriptorString()?.let {
-                    descriptors[dexMethodAddPref.key] = it
+            dexMethodAddPref.find(dexKit, allowMultiple = true, descriptors = descriptors) {
+                searchPackages("com.tencent.mm.ui.base.preference")
+                matcher {
+                    declaredClass = adapterClass.name
+                    paramTypes(CLS_PREFERENCE, "int")
+                    returnType = "void"
                 }
             }
         }

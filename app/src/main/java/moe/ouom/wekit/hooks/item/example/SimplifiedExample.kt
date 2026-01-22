@@ -2,9 +2,9 @@ package moe.ouom.wekit.hooks.item.example
 
 import android.util.Log
 import de.robv.android.xposed.XposedHelpers
-import moe.ouom.wekit.core.dsl.lazyDexMethod
+import moe.ouom.wekit.core.dsl.dexMethod
+import moe.ouom.wekit.core.dsl.dexClass
 import moe.ouom.wekit.core.dsl.resultNull
-import moe.ouom.wekit.core.dsl.toDexMethod
 import moe.ouom.wekit.core.model.BaseSwitchFunctionHookItem
 import moe.ouom.wekit.dexkit.intf.IDexFind
 import moe.ouom.wekit.util.log.WeLogger
@@ -19,8 +19,11 @@ import org.luckypray.dexkit.DexKitBridge
 //@HookItem(path = "example/示例写法", desc = "展示新架构的简化写法")
 class SimplifiedExample : BaseSwitchFunctionHookItem() /* 这里也可以继承 BaseClickableFunctionHookItem */, IDexFind {
 
-    // DSL: 懒加载 Dex 方法（不需要 path、searchVersion、priorityKey）
-    private val MethodTarget by lazyDexMethod("MethodTarget")
+    // DSL: Dex 方法委托（自动生成 key）
+    private val MethodTarget by dexMethod()
+
+    // DSL: Dex 类委托（自动生成 key）
+    private val ExampleClass by dexClass()
 
     // ========== Dex 查找与缓存 ==========
 
@@ -30,43 +33,34 @@ class SimplifiedExample : BaseSwitchFunctionHookItem() /* 这里也可以继承 
      * 重要说明：
      * 1. 必须返回 Map<属性名, descriptor字符串>
      * 2. 系统会自动检测方法逻辑变化，当查找逻辑改变时会自动要求重新扫描
-     * 3. 所有使用 lazyDexMethod 声明的属性都应该在这里搜索并返回
-     * 4. 使用 findDexClassMethod 会在找不到或找到多个时抛出异常
-     * 5. 使用 findDexClassMethodOptional 可以允许多个结果或空结果
+     * 3. 所有使用 dexMethod/dexClass 声明的属性都应该在这里搜索并返回
+     * 4. 使用 find() 方法查找，allowMultiple=false 时找不到或找到多个会抛出异常
+     * 5. 使用 allowMultiple=true 可以允许多个结果
+     * 6. 使用 delegate.key 作为 Map 的键（自动生成）
      */
     override fun dexFind(dexKit: DexKitBridge): Map<String, String> {
         val descriptors = mutableMapOf<String, String>()
 
         // 查找目标方法
-        MethodTarget.findDexClassMethod(dexKit) {
+        MethodTarget.find(dexKit, descriptors = descriptors) {
             matcher {
                 name = "targetMethod"
                 paramCount = 2
                 usingStrings("some_string_constant")
             }
         }
-        // 将找到的 descriptor 添加到返回的 Map 中
-        MethodTarget.getDescriptorString()?.let { descriptors["MethodTarget"] = it }
+
+        // 查找目标类
+        ExampleClass.find(dexKit, descriptors = descriptors) {
+            matcher {
+                usingStrings("ExampleClassName")
+            }
+        }
 
         // 如果有多个方法需要查找，继续添加：
-        // AnotherMethod.findDexClassMethod(dexKit) { ... }
-        // AnotherMethod.getDescriptorString()?.let { descriptors["AnotherMethod"] = it }
+        // AnotherMethod.find(dexKit, descriptors = descriptors) { ... }
 
         return descriptors
-    }
-
-    /**
-     * 从缓存加载 descriptors
-     *
-     * 重要说明：
-     * 1. 这个方法会在缓存有效时被调用，避免重复扫描
-     * 2. 必须恢复所有在 dexFind() 中搜索的方法
-     * 3. 属性名必须与 dexFind() 中使用的 key 一致
-     */
-    override fun loadFromCache(cache: Map<String, Any>) {
-        (cache["MethodTarget"] as? String)?.let { MethodTarget.setDescriptorFromCache(it) }
-        // 如果有多个方法，继续恢复：
-        // (cache["AnotherMethod"] as? String)?.let { AnotherMethod.setDescriptorFromCache(it) }
     }
 
     // Hook 入口
@@ -86,21 +80,31 @@ class SimplifiedExample : BaseSwitchFunctionHookItem() /* 这里也可以继承 
 
         // 方式 1: 使用全局优先级（推荐）
         MethodTarget.toDexMethod {
-            beforeIfEnabled { param ->
-                // ....
-                param.resultNull()
+            hook {
+                beforeIfEnabled { param ->
+                    // ...
+                    param.resultNull()
+                }
             }
         }
 
         // 方式 2: 使用自定义优先级
         MethodTarget.toDexMethod(priority = 100) {
-             afterIfEnabled { param ->
-                 // ...
-             }
+            hook {
+                afterIfEnabled { param ->
+                    // ...
+                }
+            }
         }
 
+        // 方式 3: 使用 dexClass 委托直接访问 Class（推荐）
+        // 直接使用 .clazz 访问器，自动反射获取 Class
+        val instance = XposedHelpers.newInstance(
+            ExampleClass.clazz,
+            "param1", "param2"
+        )
 
-        // 方式 3: 这里拿 Hook A 作为例子 （使用全局 HOOK 优先级）
+        // 方式 4: 这里拿 Hook A 作为例子 （使用全局 HOOK 优先级）
         val clsReceiveLuckyMoney: Class<*> = XposedHelpers.findClass("com.example.LuckyMoneyReceive", classLoader)
         val mOnGYNetEnd = XposedHelpers.findMethodExact(
             clsReceiveLuckyMoney,
@@ -110,15 +114,15 @@ class SimplifiedExample : BaseSwitchFunctionHookItem() /* 这里也可以继承 
             JSONObject::class.java
         )
 
-        val h1 =hookAfter(mOnGYNetEnd) { param ->
-            // ....
+        val h1 = hookAfter(mOnGYNetEnd) { param ->
+            // ...
         }
 
-        // 可选：如需取消Hook，调用 h2.unhook()
+        // 可选：如需取消Hook，调用 h1.unhook()
         h1.unhook()
 
 
-        // 方式 4: 这里拿 Hook B 作为例子 （使用自定义 HOOK 优先级）
+        // 方式 5: 这里拿 Hook B 作为例子 （使用自定义 HOOK 优先级）
         val clsReceiveLuckyMoney2: Class<*> = XposedHelpers.findClass("com.example.LuckyMoneyReceive", classLoader)
         val mOnGYNetEnd2 = XposedHelpers.findMethodExact(
             clsReceiveLuckyMoney2,
@@ -129,10 +133,10 @@ class SimplifiedExample : BaseSwitchFunctionHookItem() /* 这里也可以继承 
         )
 
         hookAfter(mOnGYNetEnd2, priority = 50) { param ->
-            // ....
+            // ...
         }
 
-        // 方式 5: 带执行优先级的 hook 构造方法执行后
+        // 方式 6: 带执行优先级的 hook 构造方法执行后
         val targetClass = XposedHelpers.findClass("com.example.TestClass", classLoader)
         val h2 = hookAfter(
             clazz = targetClass,

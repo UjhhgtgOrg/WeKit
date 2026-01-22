@@ -38,7 +38,7 @@ public class SyncUtils {
     }
 
     /**
-     * 获取当前进程类型（适配微信）
+     * 获取当前进程类型
      */
     public static int getProcessType() {
         if (mProcType != 0) {

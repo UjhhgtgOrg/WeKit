@@ -66,7 +66,7 @@ public class DexMethodDescriptor implements Serializable {
         if (clz == null || n == null || s == null) {
             throw new NullPointerException();
         }
-        // 如果是点分格式，转换为JVM格式
+        // 如果是点分格式，转换为 JVM 格式
         if (!clz.startsWith("L") && !clz.startsWith("[")) {
             declaringClass = "L" + clz.replace('.', '/') + ";";
         } else {
@@ -150,6 +150,7 @@ public class DexMethodDescriptor implements Serializable {
         return declaringClass.substring(1, declaringClass.length() - 1).replace('/', '.');
     }
 
+    @NonNull
     @Override
     public String toString() {
         return declaringClass + "->" + name + signature;

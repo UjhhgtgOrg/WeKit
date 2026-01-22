@@ -23,7 +23,7 @@ class DexClassDelegate internal constructor(
     private var cachedClass: Class<*>? = null
 
     /**
-     * 获取 Class 实例（自动反射）
+     * 获取 Class 实例
      */
     val clazz: Class<*>
         get() {
@@ -37,7 +37,7 @@ class DexClassDelegate internal constructor(
         }
 
     /**
-     * 设置描述符（从缓存或查找结果）
+     * 设置描述符
      */
     fun setDescriptor(className: String) {
         this.descriptorString = className
@@ -52,7 +52,12 @@ class DexClassDelegate internal constructor(
     /**
      * 查找 Dex 类
      */
-    fun find(dexKit: DexKitBridge, allowMultiple: Boolean = false, block: FindClass.() -> Unit): Boolean {
+    fun find(
+        dexKit: DexKitBridge,
+        allowMultiple: Boolean = false,
+        descriptors: MutableMap<String, String>? = null,
+        block: FindClass.() -> Unit
+    ): Boolean {
         val results = dexKit.findClass(block).toList()
 
         if (results.isEmpty()) {
@@ -64,6 +69,7 @@ class DexClassDelegate internal constructor(
         }
 
         setDescriptor(results[0].name)
+        descriptors?.let { it[key] = results[0].name }
         return true
     }
 
@@ -93,7 +99,7 @@ class DexMethodDelegate internal constructor(
         }
 
     /**
-     * 设置描述符（从缓存或查找结果）
+     * 设置描述符
      */
     fun setDescriptor(desc: DexMethodDescriptor) {
         this.descriptor = desc
@@ -111,12 +117,17 @@ class DexMethodDelegate internal constructor(
     /**
      * 获取描述符字符串
      */
-    fun getDescriptorString(): String? = descriptor?.getDescriptor()
+    fun getDescriptorString(): String? = descriptor?.descriptor
 
     /**
      * 查找 Dex 方法
      */
-    fun find(dexKit: DexKitBridge, allowMultiple: Boolean = false, block: FindMethod.() -> Unit): Boolean {
+    fun find(
+        dexKit: DexKitBridge,
+        allowMultiple: Boolean = false,
+        descriptors: MutableMap<String, String>? = null,
+        block: FindMethod.() -> Unit
+    ): Boolean {
         val results = dexKit.findMethod(block).toList()
 
         if (results.isEmpty()) {
@@ -134,6 +145,7 @@ class DexMethodDelegate internal constructor(
             methodData.methodSign
         )
         setDescriptor(desc)
+        descriptors?.let { it[key] = desc.descriptor }
         return true
     }
 

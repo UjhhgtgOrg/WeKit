@@ -17,13 +17,16 @@ interface IDexFind {
     fun dexFind(dexKit: DexKitBridge): Map<String, String>
 
     /**
-     * 从缓存加载 descriptors（框架自动调用）
+     * 从缓存加载 descriptors
      * @param cache 缓存的 Map<Key, descriptor字符串>
+     * @throws IllegalStateException 如果缓存不完整（缺少必需的委托）
      */
     fun loadFromCache(cache: Map<String, Any>) {
         // 自动收集所有 dex 开头的委托属性
         val delegates = collectDexDelegates()
 
+        // 检查缓存完整性：所有委托都应该在缓存中
+        val missingKeys = mutableListOf<String>()
         delegates.forEach { (key, delegate) ->
             val value = cache[key] as? String
             if (value != null) {
@@ -31,7 +34,17 @@ interface IDexFind {
                     is DexClassDelegate -> delegate.setDescriptor(value)
                     is DexMethodDelegate -> delegate.setDescriptorFromString(value)
                 }
+            } else {
+                missingKeys.add(key)
             }
+        }
+
+        // 如果有缺失的键，抛出异常触发重新查找
+        if (missingKeys.isNotEmpty()) {
+            throw IllegalStateException(
+                "Cache incomplete for ${this::class.java.simpleName}: missing keys $missingKeys. " +
+                "This will trigger a rescan."
+            )
         }
     }
 

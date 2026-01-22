@@ -136,15 +136,11 @@ class WeNetworkApi : ApiHookItem(), IDexFind {
             throw RuntimeException("NetSceneQueue class not found")
         }
 
-        if (dexMethodGetNetSceneQueue.find(dexKit, allowMultiple = true) {
-                matcher {
-                    modifiers = Modifier.STATIC
-                    paramCount = 0
-                    returnType = netSceneQueueClass.name
-                }
-            }) {
-            dexMethodGetNetSceneQueue.getDescriptorString()?.let {
-                descriptors[dexMethodGetNetSceneQueue.key] = it
+        dexMethodGetNetSceneQueue.find(dexKit, allowMultiple = true, descriptors = descriptors) {
+            matcher {
+                modifiers = Modifier.STATIC
+                paramCount = 0
+                returnType = netSceneQueueClass.name
             }
         }
 

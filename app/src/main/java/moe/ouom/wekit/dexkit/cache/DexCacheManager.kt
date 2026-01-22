@@ -79,15 +79,32 @@ object DexCacheManager {
             }
 
             // 检查缓存数据是否为空
-            val hasData = json.keys().asSequence().any { key ->
-                key !in listOf("methodHash", "hostVersion", "timestamp")
-            }
-            if (!hasData) {
+            val dataKeys = json.keys().asSequence()
+                .filter { key -> key !in listOf("methodHash", "hostVersion", "timestamp") }
+                .toList()
+
+            if (dataKeys.isEmpty()) {
                 WeLogger.d("DexCacheManager", "Cache is empty for: ${item.path}, need rescan")
                 return false
             }
 
-            WeLogger.d("DexCacheManager", "Cache valid for: ${item.path}")
+            // 验证缓存数据的完整性：检查所有值是否有效
+            var hasInvalidData = false
+            for (key in dataKeys) {
+                val value = json.optString(key, "")
+                if (value.isEmpty() || value == "null") {
+                    WeLogger.d("DexCacheManager", "Cache has invalid data for key: $key in ${item.path}")
+                    hasInvalidData = true
+                    break
+                }
+            }
+
+            if (hasInvalidData) {
+                WeLogger.d("DexCacheManager", "Cache data incomplete for: ${item.path}, need rescan")
+                return false
+            }
+
+            WeLogger.d("DexCacheManager", "Cache valid for: ${item.path}, keys: $dataKeys")
             return true
         } catch (e: Exception) {
             WeLogger.e("DexCacheManager: Failed to read cache for: ${item.path}", e)
@@ -98,13 +115,29 @@ object DexCacheManager {
     /**
      * 计算 dexFind 方法的哈希值
      * 用于检测方法逻辑是否发生变化
+     * 通过计算类字节码的哈希值来检测方法体的任何变化
      */
     private fun calculateMethodHash(item: IDexFind): String {
         try {
-            // 获取 dexFind 方法
-            val method = item::class.java.getDeclaredMethod("dexFind", org.luckypray.dexkit.DexKitBridge::class.java)
+            val clazz = item::class.java
 
-            // 构建方法特征字符串
+            // 尝试获取类的字节码并计算哈希
+            val classLoader = clazz.classLoader
+            val className = clazz.name.replace('.', '/') + ".class"
+
+            val inputStream = classLoader?.getResourceAsStream(className)
+            inputStream?.use { stream ->
+                val md = MessageDigest.getInstance("MD5")
+                val buffer = ByteArray(8192)
+                var bytesRead: Int
+                while (stream.read(buffer).also { bytesRead = it } != -1) {
+                    md.update(buffer, 0, bytesRead)
+                }
+                return md.digest().joinToString("") { "%02x".format(it) }
+            }
+
+            // 降级方案：使用方法签名
+            val method = clazz.getDeclaredMethod("dexFind", org.luckypray.dexkit.DexKitBridge::class.java)
             val signature = buildString {
                 append(method.declaringClass.name)
                 append("::")
@@ -114,7 +147,6 @@ object DexCacheManager {
                 append(")")
             }
 
-            // 计算 MD5 哈希
             val md = MessageDigest.getInstance("MD5")
             val digest = md.digest(signature.toByteArray())
             return digest.joinToString("") { "%02x".format(it) }

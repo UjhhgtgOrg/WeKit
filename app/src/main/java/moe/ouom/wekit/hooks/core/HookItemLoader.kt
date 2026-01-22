@@ -76,7 +76,28 @@ class HookItemLoader {
         } else {
             // 所有项的缓存均有效
             WeLogger.i("HookItemLoader", "All Dex cache is valid, loading descriptors into memory")
-            loadDescriptorsFromCache(allDexFindItems)
+            val failedItems = loadDescriptorsFromCache(allDexFindItems)
+
+            // 如果有加载失败的项，触发重新查找
+            if (failedItems.isNotEmpty()) {
+                WeLogger.w("HookItemLoader", "Found ${failedItems.size} items with incomplete cache, triggering rescan")
+                WeLogger.i("HookItemLoader", "Launching DexFinderDialog for cache repair")
+                Thread {
+                    while (true) {
+                        Thread.sleep(10)
+                        val activity = RuntimeConfig.getLauncherUIActivity()
+                        if (activity != null) {
+                            SyncUtils.post {
+                                val dialog = DexFinderDialog(activity, classLoader, appInfo, failedItems)
+                                dialog.show()
+                                return@post
+                            }
+                            return@Thread
+                        }
+                    }
+                }.start()
+                return
+            }
         }
 
         // 根据配置和进程过滤需要执行的项
@@ -114,7 +135,9 @@ class HookItemLoader {
     /**
      * 从缓存加载 descriptor
      */
-    private fun loadDescriptorsFromCache(items: List<IDexFind>) {
+    private fun loadDescriptorsFromCache(items: List<IDexFind>): List<IDexFind> {
+        val failedItems = mutableListOf<IDexFind>()
+
         items.forEach { item ->
             try {
                 val cache = DexCacheManager.loadCache(item)
@@ -123,11 +146,21 @@ class HookItemLoader {
                     item.loadFromCache(cache)
                 } else {
                     WeLogger.w("HookItemLoader", "Cache is null for ${(item as? BaseHookItem)?.path}")
+                    failedItems.add(item)
                 }
+            } catch (e: IllegalStateException) {
+                // 缓存不完整，删除并标记为需要重新查找
+                val path = (item as? BaseHookItem)?.path ?: "unknown"
+                WeLogger.w("HookItemLoader", "Cache incomplete for $path: ${e.message}")
+                DexCacheManager.deleteCache(path)
+                failedItems.add(item)
             } catch (e: Exception) {
                 WeLogger.e("HookItemLoader: Failed to load descriptors from cache", e)
+                failedItems.add(item)
             }
         }
+
+        return failedItems
     }
 
     /**
