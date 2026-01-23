@@ -4,7 +4,7 @@ import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XposedBridge
 import moe.ouom.wekit.config.ConfigManager
 import moe.ouom.wekit.constants.Constants
-import moe.ouom.wekit.hooks.core.factory.ExceptionFactory
+import moe.ouom.wekit.hooks.core.factory._ExceptionFactory
 import moe.ouom.wekit.util.log.WeLogger
 import java.lang.reflect.Method
 
@@ -53,7 +53,7 @@ class DexMethodHookBuilder(
                     beforeAction?.invoke(param)
                 } catch (e: Throwable) {
                     WeLogger.e(e)
-                    ExceptionFactory.add(null, e)
+                    _ExceptionFactory.add(null, e)
                 }
             }
 
@@ -62,7 +62,7 @@ class DexMethodHookBuilder(
                     afterAction?.invoke(param)
                 } catch (e: Throwable) {
                     WeLogger.e(e)
-                    ExceptionFactory.add(null, e)
+                    _ExceptionFactory.add(null, e)
                 }
             }
         })

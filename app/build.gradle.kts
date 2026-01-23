@@ -586,7 +586,9 @@ tasks.register("protectSensitiveCode") {
                         val isHookPackage = normalizedPath.contains("moe/ouom/wekit/hooks")
                         val isPublicPackage = normalizedPath.contains("/_")
 
-                        if (isHookPackage && !isPublicPackage) {
+                        val inWhiteList = file.name.startsWith("_")
+
+                        if (isHookPackage && !isPublicPackage && !inWhiteList) {
                             classFiles.add(file)
                         }
 

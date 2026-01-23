@@ -6,7 +6,7 @@ import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers
 import moe.ouom.wekit.config.ConfigManager
 import moe.ouom.wekit.constants.Constants
-import moe.ouom.wekit.hooks.core.factory.ExceptionFactory
+import moe.ouom.wekit.hooks.core.factory._ExceptionFactory
 import moe.ouom.wekit.loader.startup.HybridClassLoader
 import moe.ouom.wekit.util.log.WeLogger
 import java.lang.reflect.Member
@@ -80,7 +80,7 @@ abstract class BaseHookItem {
             }
         } catch (e: Throwable) {
             WeLogger.e("BaseHookItem Load Failed", e)
-            ExceptionFactory.add(this, e)
+            _ExceptionFactory.add(this, e)
         }
     }
 
@@ -344,7 +344,7 @@ abstract class BaseHookItem {
             try {
                 hookAction.call(param)
             } catch (throwable: Throwable) {
-                ExceptionFactory.add(this, throwable)
+                _ExceptionFactory.add(this, throwable)
             }
         }
     }

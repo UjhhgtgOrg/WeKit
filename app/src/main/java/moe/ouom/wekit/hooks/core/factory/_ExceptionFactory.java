@@ -15,8 +15,9 @@ import moe.ouom.wekit.util.log.LogUtils;
 
 /**
  * 异常处理工厂
+ * NOTE: 不要移除这个类名前面的 "_"，他能保护此方法不进入 Hidden DEX
  */
-public class ExceptionFactory {
+public class _ExceptionFactory {
     private final static Map<BaseHookItem, List<Throwable>> exceptionMap = new HashMap<>();
 
     /**
