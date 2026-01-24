@@ -105,27 +105,35 @@ class WeRedPacketAuto : BaseClickableFunctionHookItem(), WeDatabaseApi.DatabaseI
             val isRandomDelay = config.getBoolPrek("red_packet_delay_random")
             val customDelay = config.getStringPrek("red_packet_delay_custom", "0")?.toLongOrNull() ?: 0L
 
+            WeLogger.i("WeRedPacketAuto: 配置读取 - isRandomDelay=$isRandomDelay, customDelay=$customDelay")
+
             // 如果开启随机延迟，在自定义延迟基础上增加随机偏移
             val delayTime = if (isRandomDelay) {
                 val baseDelay = if (customDelay > 0) customDelay else 1000L
                 val randomOffset = Random.nextLong(-500, 500)
-                (baseDelay + randomOffset).coerceAtLeast(0)
+                val finalDelay = (baseDelay + randomOffset).coerceAtLeast(0)
+                WeLogger.i("WeRedPacketAuto: 随机延迟模式 - baseDelay=$baseDelay, randomOffset=$randomOffset, finalDelay=$finalDelay")
+                finalDelay
             } else {
+                WeLogger.i("WeRedPacketAuto: 固定延迟模式 - delayTime=$customDelay")
                 customDelay
             }
 
             Thread {
                 try {
+                    WeLogger.i("WeRedPacketAuto: 开始延迟 ${delayTime}ms (sendId=$sendId)")
                     if (delayTime > 0) Thread.sleep(delayTime)
 
+                    WeLogger.i("WeRedPacketAuto: 延迟结束，准备发送拆包请求 (sendId=$sendId)")
                     val req = XposedHelpers.newInstance(
                         dexClsReceiveLuckyMoney.clazz,
                         msgType, channelId, sendId, nativeUrl, 1, "v1.0", talker
                     )
 
                     WeNetworkApi.sendRequest(req)
+                    WeLogger.i("WeRedPacketAuto: 拆包请求已发送 (sendId=$sendId)")
                 } catch (e: Throwable) {
-                    WeLogger.e("WeRedPacketAuto: 发送拆包请求失败", e)
+                    WeLogger.e("WeRedPacketAuto: 发送拆包请求失败 (sendId=$sendId)", e)
                 }
             }.start()
 
