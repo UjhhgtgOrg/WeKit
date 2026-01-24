@@ -7,6 +7,7 @@ import androidx.core.net.toUri
 import com.afollestad.materialdialogs.MaterialDialog
 import de.robv.android.xposed.XposedHelpers
 import moe.ouom.wekit.config.ConfigManager
+import moe.ouom.wekit.constants.Constants
 import moe.ouom.wekit.constants.Constants.Companion.TYPE_LUCKY_MONEY
 import moe.ouom.wekit.constants.Constants.Companion.TYPE_LUCKY_MONEY_EXCLUSIVE
 import moe.ouom.wekit.core.dsl.dexClass
@@ -44,21 +45,32 @@ class WeRedPacketAuto : BaseClickableFunctionHookItem(), WeDatabaseApi.DatabaseI
     )
 
     override fun entry(classLoader: ClassLoader) {
+        WeLogger.i("WeRedPacketAuto: entry() 被调用，开始注册数据库监听")
         // 注册数据库监听
         WeDatabaseApi.addListener(this)
+        WeLogger.i("WeRedPacketAuto: 数据库监听器已注册")
 
         // Hook 具体的网络回调
         hookReceiveCallback()
+        WeLogger.i("WeRedPacketAuto: 网络回调 Hook 完成")
     }
 
     /**
      * 接口实现：处理数据库插入事件
      */
     override fun onInsert(table: String, values: ContentValues) {
+        val config = ConfigManager.getDefaultConfig()
+        val verboseLog = config.getBooleanOrFalse(Constants.PrekVerboseLog)
+
+        if (verboseLog) {
+            WeLogger.d("WeRedPacketAuto: onInsert 被调用 - table=$table")
+        }
+
         if (table != "message") return
 
         val type = values.getAsInteger("type") ?: 0
         if (type == TYPE_LUCKY_MONEY || type == TYPE_LUCKY_MONEY_EXCLUSIVE) {
+            WeLogger.i("WeRedPacketAuto: 检测到红包消息 type=$type")
             handleRedPacket(values)
         }
     }
@@ -190,8 +202,11 @@ class WeRedPacketAuto : BaseClickableFunctionHookItem(), WeDatabaseApi.DatabaseI
     }
 
     override fun unload(classLoader: ClassLoader) {
+        WeLogger.i("WeRedPacketAuto: unload() 被调用，移除数据库监听")
         WeDatabaseApi.removeListener(this)
         currentRedPacketMap.clear()
+        WeLogger.i("WeRedPacketAuto: 数据库监听器已移除，红包缓存已清空")
+        super.unload(classLoader)  // 必须调用父类方法来重置 isLoad 标志
     }
 
     override fun onClick(context: Context?) {

@@ -26,5 +26,7 @@ class Constants private constructor() {
         const val PrekCfgXXX: String = "setting_cfg_value_"
         const val PrekClickableXXX: String = "clickable_setting_switch_value_"
         const val PrekEnableLog: String = "setting_switch_value_prek_enable_log"
+        const val PrekVerboseLog: String = "setting_switch_value_prek_verbose_log"
+        const val PrekDatabaseVerboseLog: String = "setting_switch_value_prek_database_verbose_log"
     }
 }

@@ -3,6 +3,7 @@ package moe.ouom.wekit.hooks.sdk.api
 import android.annotation.SuppressLint
 import android.content.ContentValues
 import de.robv.android.xposed.XposedHelpers
+import moe.ouom.wekit.config.ConfigManager
 import moe.ouom.wekit.constants.Constants
 import moe.ouom.wekit.core.model.ApiHookItem
 import moe.ouom.wekit.hooks.core.annotation.HookItem
@@ -25,11 +26,15 @@ class WeDatabaseApi : ApiHookItem() {
         fun addListener(listener: DatabaseInsertListener) {
             if (!listeners.contains(listener)) {
                 listeners.add(listener)
+                WeLogger.i("WeDatabaseApi: 监听器已添加，当前监听器数量: ${listeners.size}")
+            } else {
+                WeLogger.w("WeDatabaseApi: 监听器已存在，跳过添加")
             }
         }
 
         fun removeListener(listener: DatabaseInsertListener) {
-            listeners.remove(listener)
+            val removed = listeners.remove(listener)
+            WeLogger.i("WeDatabaseApi: 监听器移除${if (removed) "成功" else "失败"}，当前监听器数量: ${listeners.size}")
         }
     }
 
@@ -55,8 +60,22 @@ class WeDatabaseApi : ApiHookItem() {
                     val table = param.args[0] as String
                     val values = param.args[2] as ContentValues
 
+                    val config = ConfigManager.getDefaultConfig()
+                    val verboseLog = config.getBooleanOrFalse(Constants.PrekVerboseLog)
+                    val dbVerboseLog = config.getBooleanOrFalse(Constants.PrekDatabaseVerboseLog)
+
                     // 分发事件给所有监听者
-                    listeners.forEach { it.onInsert(table, values) }
+                    if (listeners.isNotEmpty()) {
+                        if (verboseLog) {
+                            if (dbVerboseLog) {
+                                // 输出完整的 ContentValues
+                                WeLogger.d("WeDatabaseApi: 分发数据库插入事件 table=$table 给 ${listeners.size} 个监听器, values=$values")
+                            } else {
+                                WeLogger.d("WeDatabaseApi: 分发数据库插入事件 table=$table 给 ${listeners.size} 个监听器")
+                            }
+                        }
+                        listeners.forEach { it.onInsert(table, values) }
+                    }
                 } catch (e: Throwable) {
                     WeLogger.e("WeDatabaseApi: Dispatch failed", e)
                 }

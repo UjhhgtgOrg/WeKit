@@ -69,14 +69,34 @@ abstract class BaseHookItem {
      * 开始加载 Hook
      */
     fun startLoad() {
+        val config = ConfigManager.getDefaultConfig()
+        val verboseLog = config.getBooleanOrFalse(Constants.PrekVerboseLog)
+
+        if (verboseLog) {
+            WeLogger.d("BaseHookItem.startLoad() called for ${this::class.java.simpleName}, isLoad=$isLoad")
+        }
+
         if (isLoad) {
+            if (verboseLog) {
+                WeLogger.w("BaseHookItem.startLoad() skipped - already loaded for ${this::class.java.simpleName}")
+            }
             return
         }
         try {
             isLoad = true
+            if (verboseLog) {
+                WeLogger.d("BaseHookItem.startLoad() calling initOnce() for ${this::class.java.simpleName}")
+            }
             initOnce()
             if (initOnce()) {
+                if (verboseLog) {
+                    WeLogger.d("BaseHookItem.startLoad() calling entry() for ${this::class.java.simpleName}")
+                }
                 entry(HybridClassLoader.getHostClassLoader())
+            } else {
+                if (verboseLog) {
+                    WeLogger.w("BaseHookItem.startLoad() initOnce() returned false for ${this::class.java.simpleName}")
+                }
             }
         } catch (e: Throwable) {
             WeLogger.e("BaseHookItem Load Failed", e)
@@ -100,7 +120,16 @@ abstract class BaseHookItem {
      * 卸载 Hook
      */
     open fun unload(classLoader: ClassLoader) {
+        val config = ConfigManager.getDefaultConfig()
+        val verboseLog = config.getBooleanOrFalse(Constants.PrekVerboseLog)
+
+        if (verboseLog) {
+            WeLogger.d("BaseHookItem.unload() called for ${this::class.java.simpleName}, isLoad=$isLoad")
+        }
         isLoad = false
+        if (verboseLog) {
+            WeLogger.d("BaseHookItem.unload() completed for ${this::class.java.simpleName}, isLoad=$isLoad")
+        }
     }
 
     /**

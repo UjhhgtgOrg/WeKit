@@ -44,6 +44,30 @@ class MainSettingsDialog(context: Context) : BaseRikkaDialog(context, "WeKit") {
             useFullKey = true
         )
 
+        addSwitchPreference(
+            key = Constants.PrekVerboseLog,
+            title = "详细日志",
+            summary = "输出高频日志",
+            iconName = "ic_debug",
+            useFullKey = true
+        )
+
+        val dbVerboseLogView = addSwitchPreference(
+            key = Constants.PrekDatabaseVerboseLog,
+            title = "数据库详细日志",
+            summary = "输出完整的数据库插入事件详情（ContentValues）",
+            iconName = "ic_database",
+            useFullKey = true
+        )
+
+        // 数据库详细日志依赖于详细日志
+        setDependency(
+            dependentView = dbVerboseLogView,
+            dependencyKey = Constants.PrekVerboseLog,
+            enableWhen = true,
+            useFullKey = true
+        )
+
         // ==========================================
         // 兼容 (Compatibility)
         // ==========================================
