@@ -163,10 +163,10 @@ class WeSettingInjector : ApiHookItem(), IDexFind {
                 return // 类不存在，跳过
             }
 
-            // 检查微信版本
-            if (requireMinWeChatVersion(MMVersion.MM_8_0_67)) {
-                return // 是新版，跳过
-            }
+            // 灰度测试，不再检查微信版本
+//            if (requireMinWeChatVersion(MMVersion.MM_8_0_67)) {
+//                return // 是新版，跳过
+//            }
 
             val setKeyMethod = dexMethodSetKey.method
             val setTitleMethod = dexMethodSetTitle.method
