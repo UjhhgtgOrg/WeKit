@@ -85,10 +85,10 @@ object DexCacheManager {
             val cachedMethodHash = json.optString("methodHash", "")
             val currentMethodHash = calculateMethodHash(item)
 
-            WeLogger.d(
-                "DexCacheManager",
-                "Hash comparison for: ${item.path}, cached: $cachedMethodHash, current: $currentMethodHash"
-            )
+//            WeLogger.d(
+//                "DexCacheManager",
+//                "Hash comparison for: ${item.path}, cached: $cachedMethodHash, current: $currentMethodHash"
+//            )
 
             if (cachedMethodHash != currentMethodHash) {
                 WeLogger.d(
@@ -124,7 +124,7 @@ object DexCacheManager {
                 return false
             }
 
-            WeLogger.d("DexCacheManager", "Cache valid for: ${item.path}, keys: $dataKeys")
+//            WeLogger.d("DexCacheManager", "Cache valid for: ${item.path}, keys: $dataKeys")
             return true
         } catch (e: Exception) {
             WeLogger.e("DexCacheManager: Failed to read cache for: ${item.path}", e)

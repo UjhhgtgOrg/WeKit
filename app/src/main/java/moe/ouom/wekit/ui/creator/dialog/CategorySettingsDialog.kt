@@ -55,14 +55,46 @@ class CategorySettingsDialog(
 
         switchWidget.isChecked = isChecked
 
-        val listener = CompoundButton.OnCheckedChangeListener { _, checked ->
+        // 使用可变引用来避免在 lambda 内部引用自身导致的初始化问题
+        var listenerRef: CompoundButton.OnCheckedChangeListener? = null
+        val listener = CompoundButton.OnCheckedChangeListener { buttonView, checked ->
+            // 在状态改变前调用 onBeforeToggle 确认是否允许切换
+            val allowToggle = item.onBeforeToggle(checked, context)
+
+            if (!allowToggle) {
+                // 不允许切换,撤回开关状态
+                // 使用 post 避免在 listener 中直接修改状态导致的递归调用
+                buttonView.post {
+                    buttonView.setOnCheckedChangeListener(null)
+                    buttonView.isChecked = !checked
+                    buttonView.setOnCheckedChangeListener(listenerRef)
+                }
+                return@OnCheckedChangeListener
+            }
+
+            // 允许切换,保存配置并更新状态
             ConfigManager.getDefaultConfig().edit().putBoolean(configKey, checked).apply()
             item.isEnabled = checked
             if (checked) item.startLoad()
         }
+        listenerRef = listener
+
+        // 设置切换完成回调,用于异步确认后更新UI
+        item.setToggleCompletionCallback {
+            // 更新UI开关状态,不触发listener
+            switchWidget.post {
+                switchWidget.setOnCheckedChangeListener(null)
+                switchWidget.isChecked = item.isEnabled
+                switchWidget.setOnCheckedChangeListener(listener)
+            }
+        }
 
         switchWidget.setOnCheckedChangeListener(listener)
-        root.setOnClickListener { switchWidget.toggle() }
+
+        // 设置点击监听器: 点击整个条目时切换开关
+        root.setOnClickListener {
+            switchWidget.toggle()
+        }
 
         contentContainer.addView(view)
     }
@@ -83,7 +115,24 @@ class CategorySettingsDialog(
 
         switchWidget.isChecked = isChecked
 
-        switchWidget.setOnCheckedChangeListener { _, checked ->
+        // 使用可变引用来避免在 lambda 内部引用自身导致的初始化问题
+        var listenerRef: CompoundButton.OnCheckedChangeListener? = null
+        val listener = CompoundButton.OnCheckedChangeListener { buttonView, checked ->
+            // 在状态改变前调用 onBeforeToggle 确认是否允许切换
+            val allowToggle = item.onBeforeToggle(checked, context)
+
+            if (!allowToggle) {
+                // 不允许切换,撤回开关状态
+                // 使用 post 避免在 listener 中直接修改状态导致的递归调用
+                buttonView.post {
+                    buttonView.setOnCheckedChangeListener(null)
+                    buttonView.isChecked = !checked
+                    buttonView.setOnCheckedChangeListener(listenerRef)
+                }
+                return@OnCheckedChangeListener
+            }
+
+            // 允许切换,保存配置并更新状态
             ConfigManager.getDefaultConfig().edit().putBoolean(configKey, checked).apply()
             item.isEnabled = checked
             if (checked) {
@@ -98,6 +147,19 @@ class CategorySettingsDialog(
                 }
             }
         }
+        listenerRef = listener
+
+        // 设置切换完成回调,用于异步确认后更新UI
+        item.setToggleCompletionCallback {
+            // 更新UI开关状态,不触发listener
+            switchWidget.post {
+                switchWidget.setOnCheckedChangeListener(null)
+                switchWidget.isChecked = item.isEnabled
+                switchWidget.setOnCheckedChangeListener(listener)
+            }
+        }
+
+        switchWidget.setOnCheckedChangeListener(listener)
 
         if (item.noSwitchWidget()) {
             switchWidget.visibility = View.GONE

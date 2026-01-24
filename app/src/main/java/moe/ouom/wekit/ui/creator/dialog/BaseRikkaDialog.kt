@@ -16,10 +16,9 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatDialog
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.isEmpty
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.afollestad.materialdialogs.MaterialDialog
+import com.afollestad.materialdialogs.input.input
 import com.google.android.material.materialswitch.MaterialSwitch
-import com.google.android.material.textfield.TextInputEditText
-import com.google.android.material.textfield.TextInputLayout
 import moe.ouom.wekit.config.ConfigManager
 import moe.ouom.wekit.constants.Constants
 import moe.ouom.wekit.ui.CommonContextWrapper
@@ -433,39 +432,19 @@ abstract class BaseRikkaDialog(
         // 修复 NPE：必须使用 Activity Context 作为 Wrapper 的基础，不能使用 Module Context
         val wrappedContext = CommonContextWrapper.createAppCompatContext(context)
 
-        val density = wrappedContext.resources.displayMetrics.density
-        val padding = (20 * density).toInt()
-
-        // 使用 wrappedContext 创建 Layout，确保内部控件使用模块 ClassLoader
-        val textInputLayout = TextInputLayout(wrappedContext).apply {
-            layoutParams = LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-            )
-            setPadding(padding, padding / 2, padding, 0)
-            if (hint != null) {
-                this.hint = hint
-            }
-        }
-
-        // EditText 使用 TextInputLayout 的 context
-        val editText = TextInputEditText(textInputLayout.context).apply {
-            setText(currentValue)
-            this.inputType = inputType
-            this.isSingleLine = singleLine
-            if (maxLength > 0) {
-                filters = arrayOf(android.text.InputFilter.LengthFilter(maxLength))
-            }
-        }
-
-        textInputLayout.addView(editText)
-
-        // Dialog Builder 必须使用 wrappedContext
-        val dialog = MaterialAlertDialogBuilder(wrappedContext)
-            .setTitle(title)
-            .setView(textInputLayout)
-            .setPositiveButton("确定") { _, _ ->
-                val newValue = editText.text.toString()
+        // 使用 MaterialDialog 的 input 扩展函数
+        MaterialDialog(wrappedContext)
+            .title(text = title)
+            .input(
+                hint = hint,
+                prefill = currentValue,
+                inputType = inputType,
+                maxLength = if (maxLength > 0) maxLength else null,
+                allowEmpty = true,
+                waitForPositiveButton = true
+            ) { dialog, text ->
+                // 用户点击确定后的回调
+                val newValue = text.toString()
                 ConfigManager.getDefaultConfig().edit().putString(key, newValue).apply()
 
                 val displayText = if (summaryFormatter != null) {
@@ -477,14 +456,10 @@ abstract class BaseRikkaDialog(
 
                 WeLogger.d("BaseRikkaDialog: Config changed [$key] -> $newValue")
             }
-            .setNegativeButton("取消", null)
-            .show() // 创建并显示对话框
-
-        // 获取模块定义的 accentColor，如果获取失败则使用默认蓝色
-        val accentColor = ModuleRes.getColor("colorAccent")
-
-        dialog.getButton(BUTTON_POSITIVE)?.setTextColor(accentColor)
-        dialog.getButton(BUTTON_NEGATIVE)?.setTextColor(accentColor)
+            .negativeButton(text = "取消") { dialog ->
+                dialog.dismiss()
+            }
+            .show()
     }
 
     /**

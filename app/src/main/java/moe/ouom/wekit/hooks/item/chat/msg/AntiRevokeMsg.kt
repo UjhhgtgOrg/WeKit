@@ -1,5 +1,7 @@
 package moe.ouom.wekit.hooks.item.chat.msg
 
+import android.content.Context
+import com.afollestad.materialdialogs.MaterialDialog
 import moe.ouom.wekit.core.dsl.dexMethod
 import moe.ouom.wekit.core.dsl.resultNull
 import moe.ouom.wekit.core.model.BaseSwitchFunctionHookItem
@@ -20,7 +22,6 @@ class AntiRevokeMsg : BaseSwitchFunctionHookItem(), IDexFind {
         }
         return descriptors
     }
-
     override fun entry(classLoader: ClassLoader) {
         methodRevokeMsg.toDexMethod {
             hook {
