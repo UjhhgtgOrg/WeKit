@@ -24,7 +24,7 @@ val INTEGRITY_MAGIC_TAG = 0xFEEDDEAD.toInt()
 // 定义用于混淆的异或 Key
 val INTEGRITY_XOR_KEY = 0x5A5A5A5A
 
-class Elf64Parser(val file: File) {
+class Elf64Parser(file: File) {
     private val buffer = file.readBytes()
     private val byteBuffer = ByteBuffer.wrap(buffer).order(ByteOrder.LITTLE_ENDIAN)
 
@@ -147,108 +147,48 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
-// 生成方法hash的任务
-tasks.register("generateMethodHashes") {
+// 生成方法 hash 的任务
+val generateMethodHashes = tasks.register("generateMethodHashes") {
     group = "wekit"
-    description = "Generate hash values for the content of dexFind method in IDexFind implementations"
-
     val sourceDir = file("src/main/java")
-    val outputDir = file("build/generated/source/methodhashes")
-    val outputFile = file("$outputDir/moe/ouom/wekit/dexkit/cache/GeneratedMethodHashes.kt")
+    val outputDir = layout.buildDirectory.dir("generated/source/methodhashes")
+    val outputFile = outputDir.get().file("moe/ouom/wekit/dexkit/cache/GeneratedMethodHashes.kt").asFile
 
     inputs.dir(sourceDir)
-    outputs.file(outputFile)
+    outputs.dir(outputDir)
 
     doLast {
-        println("🔍 [MethodHash] Scanning dexFind implementations in $sensitivePackagePath...")
-
         val hashMap = mutableMapOf<String, String>()
-
-        sourceDir.walk()
-            .filter { it.isFile && it.extension == "kt" }
-            .forEach { file ->
-                val content = file.readText()
-
-                // 1. 检查是否实现了 IDexFind
-                if (content.contains("IDexFind")) {
-                    // 2. 提取包名和类名
-                    val packageRegex = Regex("""package\s+([\w.]+)""")
-                    val classNameRegex = Regex("""(?:class|object)\s+(\w+)""")
-
-                    val packageName = packageRegex.find(content)?.groupValues?.get(1)
-                    val className = classNameRegex.find(content)?.groupValues?.get(1) ?: return@forEach
-                    val fullClassName = if (packageName != null) "$packageName.$className" else className
-
-                    // 3. 提取 dexFind 方法体
-                    // 定位 "override fun dexFind"
-                    val dexFindMatch = Regex("""override\s+fun\s+dexFind\s*\(""").find(content)
-
-                    if (dexFindMatch != null) {
-                        val startSearchIndex = dexFindMatch.range.last
-                        val firstBraceIndex = content.indexOf('{', startSearchIndex)
-
-                        if (firstBraceIndex != -1) {
-                            // 使用花括号计数法提取完整的方法体
-                            var braceCount = 0
-                            var lastBraceIndex = -1
-
-                            for (i in firstBraceIndex until content.length) {
-                                if (content[i] == '{') braceCount++
-                                else if (content[i] == '}') braceCount--
-
-                                if (braceCount == 0) {
-                                    lastBraceIndex = i
-                                    break
-                                }
-                            }
-
-                            if (lastBraceIndex != -1) {
-                                // 提取出来的就是 { ... } 之间的内容
-                                val methodBody = content.substring(firstBraceIndex, lastBraceIndex + 1)
-
-                                // 4. 计算方法体的 MD5 Hash
-                                val md = MessageDigest.getInstance("MD5")
-                                val digest = md.digest(methodBody.toByteArray())
-                                val hash = digest.joinToString("") { byte -> "%02x".format(byte) }
-
-                                hashMap[fullClassName] = hash
-                                println("   ✅ $fullClassName (dexFind body) -> $hash")
-                            }
+        sourceDir.walk().filter { it.isFile && it.extension == "kt" && it.readText().contains("IDexFind") }.forEach { file ->
+            val content = file.readText()
+            val packageName = Regex("""package\s+([\w.]+)""").find(content)?.groupValues?.get(1)
+            val className = Regex("""(?:class|object)\s+(\w+)""").find(content)?.groupValues?.get(1) ?: return@forEach
+            val fullClassName = if (packageName != null) "$packageName.$className" else className
+            val dexFindMatch = Regex("""override\s+fun\s+dexFind\s*\(""").find(content)
+            if (dexFindMatch != null) {
+                val start = content.indexOf('{', dexFindMatch.range.last)
+                if (start != -1) {
+                    var count = 0
+                    for (i in start until content.length) {
+                        if (content[i] == '{') count++ else if (content[i] == '}') count--
+                        if (count == 0) {
+                            val body = content.substring(start, i + 1)
+                            val hash = MessageDigest.getInstance("MD5").digest(body.toByteArray()).joinToString("") { "%02x".format(it) }
+                            hashMap[fullClassName] = hash
+                            break
                         }
                     }
                 }
             }
-
-        if (hashMap.isEmpty()) {
-            println("   ⚠️ No dexFind methods found to hash")
-        } else {
-            println("   📊 Total: ${hashMap.size} methods hashed")
         }
-
-        // 5. 生成 Kotlin 文件
         outputFile.parentFile.mkdirs()
-        val mapEntries = hashMap.entries.sortedBy { it.key }.joinToString(",\n        ") { (className, hash) ->
-            "\"$className\" to \"$hash\""
-        }
-
         outputFile.writeText("""
-            // AUTOMATICALLY GENERATED BY GRADLE TASK: generateMethodHashes
-            // Generated at: ${System.currentTimeMillis()}
-            // DO NOT EDIT THIS FILE MANUALLY
             package moe.ouom.wekit.dexkit.cache
-
             object GeneratedMethodHashes {
-                private val hashes: Map<String, String> = mapOf(
-                    $mapEntries
-                )
-
-                fun getHash(className: String): String {
-                    return hashes[className] ?: ""
-                }
+                private val hashes = mapOf(${hashMap.entries.sortedBy { it.key }.joinToString(",") { "\"${it.key}\" to \"${it.value}\"" }})
+                fun getHash(className: String) = hashes[className] ?: ""
             }
         """.trimIndent())
-
-        println("✅ [MethodHash] Generated: ${outputFile.absolutePath}")
     }
 }
 
@@ -295,12 +235,23 @@ android {
         buildConfigField("long", "BUILD_TIMESTAMP", "${System.currentTimeMillis()}L")
         ndk { abiFilters += "arm64-v8a" }
 
+        @Suppress("UnstableApiUsage")
         externalNativeBuild {
             cmake {
                 cppFlags += "-std=c++17"
                 cppFlags("-I${project.file("src/main/cpp/include")}")
-                arguments += listOf("-DANDROID_STL=c++_shared")
+
+                arguments += listOf(
+                    "-DANDROID_STL=c++_shared",
+                    "-DCMAKE_SHARED_LINKER_FLAGS=-Wl,-z,max-page-size=16384"
+                )
             }
+        }
+    }
+
+    sourceSets {
+        getByName("main") {
+            kotlin.srcDir(generateMethodHashes)
         }
     }
 
@@ -871,7 +822,7 @@ fun Project.configureNativePatching(
 }
 
 // 配置 generateMethodHashes 任务在 Kotlin 编译之前执行
-tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+tasks.withType<KotlinCompile>().configureEach {
     dependsOn("generateMethodHashes")
 }
 
