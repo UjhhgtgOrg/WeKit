@@ -935,6 +935,7 @@ dependencies {
 
     implementation(libs.glide)
     implementation(libs.byte.buddy)
+    implementation(libs.byte.buddy.android)
     implementation(libs.dalvik.dx)
     implementation(libs.okhttp3.okhttp)
     implementation(libs.markdown.core)

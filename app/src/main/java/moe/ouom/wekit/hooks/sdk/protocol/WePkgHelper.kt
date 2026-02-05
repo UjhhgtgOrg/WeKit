@@ -1,378 +1,401 @@
 package moe.ouom.wekit.hooks.sdk.protocol
 
+import android.annotation.SuppressLint
 import android.os.Handler
 import android.os.Looper
 import de.robv.android.xposed.XposedHelpers
+import moe.ouom.wekit.core.dsl.dexClass
+import moe.ouom.wekit.core.dsl.dexMethod
 import moe.ouom.wekit.core.model.ApiHookItem
+import moe.ouom.wekit.dexkit.intf.IDexFind
 import moe.ouom.wekit.hooks.core.annotation.HookItem
+import moe.ouom.wekit.hooks.sdk.protocol.intf.WeReqCallback
 import moe.ouom.wekit.util.FunProtoData
+import moe.ouom.wekit.util.Initiator.loadClass
 import moe.ouom.wekit.util.ProtoJsonBuilder
 import moe.ouom.wekit.util.log.WeLogger
 import org.json.JSONObject
+import org.luckypray.dexkit.DexKitBridge
+import org.luckypray.dexkit.query.enums.OpCodeMatchType
+import org.luckypray.dexkit.query.matchers.base.IntRange
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Method
+import java.lang.reflect.Modifier
 import java.lang.reflect.Proxy
-import java.security.MessageDigest
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
-
-interface WeReqCallback {
-    fun onSuccess(json: String, bytes: ByteArray?)
-    fun onFail(errType: Int, errCode: Int, errMsg: String)
-}
-
-class WeReqDsl : WeReqCallback {
-    private var successHandler: ((String, ByteArray?) -> Unit)? = null
-    private var failHandler: ((Int, Int, String) -> Unit)? = null
-
-    fun onSuccess(handler: (json: String, bytes: ByteArray?) -> Unit) { this.successHandler = handler }
-    fun onFail(handler: (errType: Int, errCode: Int, errMsg: String) -> Unit) { this.failHandler = handler }
-
-    override fun onSuccess(json: String, bytes: ByteArray?) { successHandler?.invoke(json, bytes) }
-    override fun onFail(errType: Int, errCode: Int, errMsg: String) { failHandler?.invoke(errType, errCode, errMsg) }
-}
-
-object WeMessageApi {
-    private var classLoader: ClassLoader? = null
-
-    fun init(loader: ClassLoader) { this.classLoader = loader }
-
-    /**
-     * 预览下一个可用的 LocalMsgId
-     */
-    fun previewNextId(): Long {
-        val loader = classLoader ?: return System.currentTimeMillis() / 1000
-        val clsKernelService = XposedHelpers.findClass("ga3.x3", loader)
-        val clsMMKernel = XposedHelpers.findClass("hi0.j1", loader)
-        val kernelService = XposedHelpers.callStaticMethod(clsMMKernel, "s", clsKernelService)
-        val storage = XposedHelpers.callMethod(kernelService, "gh")
-
-        val c0Class = XposedHelpers.findClass("ha3.c0", loader)
-        val c0Field = storage.javaClass.declaredFields.firstOrNull { it.type == c0Class }
-        if (c0Field != null) {
-            c0Field.isAccessible = true
-            val c0Obj = c0Field.get(storage)
-            val currentId = XposedHelpers.getLongField(c0Obj, "a")
-            return currentId + 1
-        } else {
-            throw IllegalStateException("获取MsgInfoStorage的 c0 字段失败：未找到匹配类型的字段")
-        }
-    }
-}
-
-// =================================================================================================
-// Signer
-// =================================================================================================
-
-data class SignResult(
-    val json: JSONObject,
-    val nativeNetScene: Any? = null,
-    val onSendSuccess: (() -> Unit)? = null
-)
-
-interface ISigner {
-    fun match(cgiId: Int): Boolean
-    fun sign(loader: ClassLoader, json: JSONObject): SignResult
-}
-
-/**
- * 消息发送签名器 (CGI 522)
- */
-class NewSendMsgSigner : ISigner {
-    override fun match(cgiId: Int) = (cgiId == 522)
-    override fun sign(loader: ClassLoader, json: JSONObject): SignResult {
-        val clsConfig = XposedHelpers.findClass("xv0.z1", loader)
-        val selfWxid = XposedHelpers.callStaticMethod(clsConfig, "r") as? String ?: ""
-
-        fun applySign(item: JSONObject) {
-            val ts = System.currentTimeMillis()
-            item.put("4", (ts / 1000).toInt())
-            val seed = SimpleDateFormat("ssHHmmMMddyy", Locale.US).format(Date(ts))
-            val md5 = MessageDigest.getInstance("MD5").digest(selfWxid.toByteArray())
-            val hexSelf = md5.joinToString("") { "%02x".format(it) }.take(7)
-            val finalSeed = "$seed$hexSelf${String.format("%04x", ts % 65535)}${((ts % 7) + 100)}"
-            item.put("5", finalSeed.hashCode())
-        }
-
-        val list = json.optJSONArray("2")
-        if (list != null) {
-            for (i in 0 until list.length()) list.optJSONObject(i)?.let { applySign(it) }
-        } else json.optJSONObject("2")?.let { applySign(it) }
-
-        return SignResult(json)
-    }
-}
-
-/**
- * AppMsg 签名注入 (CGI 222)
- */
-class AppMsgSigner : ISigner {
-    override fun match(cgiId: Int) = (cgiId == 222)
-    override fun sign(loader: ClassLoader, json: JSONObject): SignResult {
-        val innerMsg = json.optJSONObject("2") ?: return SignResult(json)
-        val toUser = innerMsg.optString("4")
-
-        val nextId = WeMessageApi.previewNextId()
-        val nowMs = System.currentTimeMillis()
-
-        val signature = "$toUser${nextId}T$nowMs"
-
-        innerMsg.put("8", signature)       // u8.ClientMsgId
-        innerMsg.put("7", (nowMs / 1000).toInt()) // u8.CreateTime
-        json.put("7", signature)           // lr5.Signature
-        json.put("4", (nowMs / 1000).toInt()) // lr5.ReqTime
-
-        WeLogger.i("AppMsgSigner", "成功: ID=$nextId, Sign=$signature")
-        return SignResult(json)
-    }
-}
-
-/**
- * 表情签名器 (CGI 175)
- */
-class EmojiSigner : ISigner {
-    override fun match(cgiId: Int) = (cgiId == 175)
-    override fun sign(loader: ClassLoader, json: JSONObject): SignResult {
-        val tag3Obj = json.optJSONObject("3")
-        if (tag3Obj != null) {
-            val ts = System.currentTimeMillis().toString()
-            tag3Obj.put("9", ts)
-        }
-        return SignResult(json)
-    }
-}
-
-// =================================================================================================
-// WePkgHelper
-// =================================================================================================
 
 @HookItem(path = "protocol/通用发包服务")
-class WePkgHelper : ApiHookItem() {
+class WePkgHelper : ApiHookItem(), IDexFind {
+
+    // 核心 Protobuf 类 //
+    private val dexClsProtoBase by dexClass()
+    private val dexClsRawReq by dexClass()
+    private val dexClsGenericResp by dexClass()
+    private val dexClsConfigBuilder by dexClass()
+
+    // 业务特定请求类 //
+    private val dexClsNewSendMsgReq by dexClass()
+    val dexClsOplogReq by dexClass()
+    private val dexClsNetScenePat by dexClass()
+
+    // 网络 //
+    private val dexClsNetSceneBase by dexClass()
+    private val dexClsNetQueue by dexClass()
+    private val dexClsKernel by dexClass()
+    private val dexClsNetDispatcher by dexClass()
+    private val dexClsIOnSceneEnd by dexClass()
+    private val dexClsCallbackIface by dexClass()
+    private val dexClsReqResp by dexClass()
+
+    // 关键方法 //
+    private val dexMethodGetNetQueue by dexMethod()
+    private val dexMethodNetDispatch by dexMethod()
 
     private var classLoader: ClassLoader? = null
-    private val signers = listOf(NewSendMsgSigner(), EmojiSigner(), AppMsgSigner())
+    private val cgiReqClassMap = mutableMapOf<Int, Class<*>>()
+
+    private val signers = listOf(
+        NewSendMsgSigner(),
+        EmojiSigner(),
+        AppMsgSigner(),
+        SendPatSigner { dexClsNetScenePat.clazz }
+    )
 
     companion object {
         const val TAG = "PkgHelper"
-        @Volatile var INSTANCE: WePkgHelper? = null
-
-        private const val CLS_CALLBACK_IFACE = "com.tencent.mm.modelbase.c3"
-        private const val CLS_GENERIC_RESP = "mx4.yd"
-
-        val NATIVE_CONFIG = mutableMapOf<Int, Triple<String, Int, Int>>(
-            522 to Triple("mx4.as5", 237, 1000000237),   // /cgi-bin/micromsg-bin/newsendmsg
-            137 to Triple("mx4.uq6", 44, 1000000044),    // /cgi-bin/micromsg-bin/verifyuser
-            120 to Triple("mx4.y3", 36, 1000000036),     // /cgi-bin/micromsg-bin/addchatroommember
-            625 to Triple("mx4.lr", 9, 1000000009),      // /cgi-bin/micromsg-bin/uploadmsgimg
-            222 to Triple("mx4.lr5", 107, 1000000107),   // /cgi-bin/micromsg-bin/sendappmsg
-            159 to Triple("mx4.se3", 51, 1000000051),    // /cgi-bin/micromsg-bin/getpackagelist
-            168 to Triple("mx4.dg3", 67, 1000000067),    // /cgi-bin/micromsg-bin/getqrcode
-            175 to Triple("mx4.lm6", 68, 1000000068),    // /cgi-bin/micromsg-bin/sendemoji
-            106 to Triple("mx4.dp5", 34, 1000000034),    // /cgi-bin/micromsg-bin/searchcontact
-            211 to Triple("mx4.m36", 98, 1000000098),    // /cgi-bin/micromsg-bin/mmsnstimeline
-            212 to Triple("mx4.w36", 99, 1000000099),    // /cgi-bin/micromsg-bin/mmsnsuserpage
-            209 to Triple("mx4.t26", 97, 1000000097),    // /cgi-bin/micromsg-bin/mmsnspost
-            207 to Triple("mx4.s36", 95, 1000000095),    // /cgi-bin/micromsg-bin/mmsnsupload
-            214 to Triple("mx4.d36", 102, 1000000102),   // /cgi-bin/micromsg-bin/mmsnssync
-            213 to Triple("mx4.z06", 100, 1000000100),   // /cgi-bin/micromsg-bin/mmsnscomment
-            218 to Triple("mx4.m26", 104, 1000000104),   // /cgi-bin/micromsg-bin/mmsnsobjectop
-            210 to Triple("mx4.g26", 101, 1000000101),   // /cgi-bin/micromsg-bin/mmsnsobjectdetail
-            1992 to Triple("mx4.ud6", 185, 1000000185),  // /cgi-bin/mmpay-bin/gettransferwording
-            1679 to Triple("mx4.ud6", 185, 1000000185),  // /cgi-bin/mmpay-bin/tenpay/getbannerinfo
-            1544 to Triple("mx4.ud6", 185, 1000000185),  // /cgi-bin/mmpay-bin/transferplaceorder
-            1501 to Triple("mx4.ud6", 185, 1000000185),  // /cgi-bin/mmpay-bin/tenpay/bindquerynew
-            27 to Triple("mx4.on6", 19, 1000000019),     // /cgi-bin/micromsg-bin/uploadvoice
-
-            1779 to Triple("mx4.kw", 0, 0),              // /cgi-bin/mmpay-bin/transferoldpaycheck
-            28828 to Triple("mx4.qg4", 0, 0),            // /cgi-bin/mmpay-bin/sec/report_mmpaysecreport
-            1554 to Triple("mx4.gr3", 0, 0),             // /cgi-bin/mmpay-bin/operationwxhb
-            1575 to Triple("mx4.gr3", 0, 0),             // /cgi-bin/mmpay-bin/requestwxhb
-            1581 to Triple("mx4.gr3", 0, 0),             // /cgi-bin/mmpay-bin/receivewxhb
-            1585 to Triple("mx4.gr3", 0, 0),             // /cgi-bin/mmpay-bin/qrydetailwxhb
-            2929 to Triple("mx4.to3", 0, 0),             // /cgi-bin/mmpay-bin/ftfhb/businesscallbackwxhb
-            2715 to Triple("mx4.ti5", 0, 0),             // /cgi-bin/mmpay-bin/ftfhb/wxhbreport
-            2783 to Triple("mx4.iw", 0, 0),              // /cgi-bin/mmpay-bin/beforetransfer
-            17038 to Triple("mx4.a83", 0, 0),            // /cgi-bin/micromsg-bin/getcoversetreddotinfo
-            21017 to Triple("com.tencent.mm.plugin.luckymoney.model.j0", 0, 0), // /cgi-bin/micromsg-bin/getdefaultredpacket
-
-            3565 to Triple("mx4.ft2", 0, 0),             // /cgi-bin/micromsg-bin/findersync
-            3930 to Triple("mx4.e81", 0, 0),             // /cgi-bin/micromsg-bin/finderinit
-            3736 to Triple("mx4.fw2", 0, 0),             // /cgi-bin/micromsg-bin/finderuserpage
-            9037 to Triple("mx4.xv2", 0, 0),             // /cgi-bin/micromsg-bin/finderuserpageheader
-            11847 to Triple("mx4.u71", 0, 0),            // /cgi-bin/micromsg-bin/finderhomepage
-            6449 to Triple("mx4.ts0", 0, 0),             // /cgi-bin/micromsg-bin/finderbatchgetobjectasyncloadinfo
-            3867 to Triple("mx4.e01", 0, 0),             // /cgi-bin/micromsg-bin/finderfollow
-            10072 to Triple("mx4.oj5", 0, 0),            // /cgi-bin/micromsg-bin/findersdkreport
-            3828 to Triple("mx4.a51", 0, 0),             // /cgi-bin/micromsg-bin/findergetmsgsessionid
-            3901 to Triple("x52.a3", 0, 0),              // /cgi-bin/micromsg-bin/finderstream
-            7312 to Triple("mx4.ve2", 0, 0),             // /cgi-bin/micromsg-bin/findernavlivestream
-            6611 to Triple("mx4.bw2", 0, 0),             // /cgi-bin/micromsg-bin/finderuserpagepreview
-            9570 to Triple("mx4.oj5", 0, 0),             // /cgi-bin/micromsg-bin/finderlivetipssdkreport
-            10526 to Triple("mx4.ep0", 0, 0),            // /cgi-bin/micromsg-bin/fetchfindermembershiphomeinfo
-            14246 to Triple("pm5.ce", 0, 0),             // /cgi-bin/micromsg-bin/findergetoftenreadauthor
-            8560 to Triple("mx4.k11", 0, 0),             // /cgi-bin/micromsg-bin/findergetbulletcomment
-            3906 to Triple("mx4.jv0", 0, 0),             // /cgi-bin/micromsg-bin/findercomment
-            3710 to Triple("mx4.z91", 0, 0),             // /cgi-bin/micromsg-bin/finderlike
-            3515 to Triple("mx4.iz0", 0, 0),             // /cgi-bin/micromsg-bin/finderfav
-            4004 to Triple("mx4.ny0", 0, 0),             // /cgi-bin/micromsg-bin/finderenhance
-            11842 to Triple("mx4.u11", 0, 0),            // /cgi-bin/micromsg-bin/findergetcommentlist
-            7454 to Triple("mx4.nr0", 0, 0),             // /cgi-bin/micromsg-bin/finderasyncgetcommentinfo
-            19525 to Triple("mx4.tr2", 0, 0),            // /cgi-bin/micromsg-bin/finderstreamrerank
-            3839 to Triple("mx4.rv0", 0, 0),             // /cgi-bin/micromsg-bin/finderconsumeprefetchreport
-            6658 to Triple("mx4.wt0", 0, 0),             // /cgi-bin/micromsg-bin/findercheckprefetch
-            6681 to Triple("mx4.az0", 0, 0),             // /cgi-bin/micromsg-bin/finderextstatsreport
-            3539 to Triple("mx4.o81", 0, 0),             // /cgi-bin/micromsg-bin/finderjoinlive
-            6479 to Triple("mx4.i41", 0, 0),             // /cgi-bin/micromsg-bin/findergetliverelatedlist
-            3520 to Triple("mx4.qa2", 0, 0),             // /cgi-bin/micromsg-bin/findermarkread
-            5971 to Triple("mx4.y62", 0, 0),             // /cgi-bin/micromsg-bin/finderlivesyncextrainfo
-            4053 to Triple("mx4.m41", 0, 0),             // /cgi-bin/micromsg-bin/findergetliverewardgiftlist
-            11231 to Triple("mx4.on1", 0, 0),            // /cgi-bin/micromsg-bin/finderlivegetfloatmsgconfig
-            3976 to Triple("mx4.a41", 0, 0),             // /cgi-bin/micromsg-bin/findergetlivemsg
-            6271 to Triple("mx4.sp1", 0, 0),             // /cgi-bin/micromsg-bin/finderlivegetredpacketinfo
-            3861 to Triple("mx4.u31", 0, 0),             // /cgi-bin/micromsg-bin/findergetliveinfo
-            3776 to Triple("mx4.br2", 0, 0),             // /cgi-bin/micromsg-bin/finderstatsreport
-            11815 to Triple("mx4.fx1", 0, 0),            // /cgi-bin/micromsg-bin/finderlivenavstreamstatus
-            9665 to Triple("mx4.f22", 0, 0),             // /cgi-bin/micromsg-bin/finderliverelatedliststatus
-            4210 to Triple("mx4.q41", 0, 0),             // /cgi-bin/micromsg-bin/findergetlivetabs
-            7289 to Triple("mx4.mw2", 0, 0),             // /cgi-bin/micromsg-bin/findernewuserprepare
-            5864 to Triple("mx4.p61", 0, 0),             // /cgi-bin/micromsg-bin/findergetsvrexptconfig
-            6401 to Triple("mx4.fm3", 0, 0),             // /cgi-bin/micromsg-bin/getwecoinbalance
-            22006 to Triple("mx4.oj5", 0, 0),            // /cgi-bin/micromsg-bin/finderreddotsdkreport
-            3763 to Triple("mx4.s11", 0, 0),             // /cgi-bin/micromsg-bin/findergetcommentdetail
-            389 to Triple("mx4.pn2", 0, 0),              // /cgi-bin/micromsg-bin/finderrefreshpreloadinfo
-            14285 to Triple("mx4.i92", 0, 0),            // /cgi-bin/micromsg-bin/finderlivevoipstreamstatus
-            3980 to Triple("mx4.nu0", 0, 0),             // /cgi-bin/micromsg-bin/findercollectunread
-
-            379 to Triple("mx4.y53", 0, 0),              // /cgi-bin/micromsg-bin/getcdndns
-            721 to Triple("mx4.s00", 0, 0),              // /cgi-bin/micromsg-bin/checkresupdate
-            251 to Triple("mx4.r66", 0, 0),              // /cgi-bin/micromsg-bin/statusnotify
-            8674 to Triple("mx4.gh5", 0, 0),             // /cgi-bin/micromsg-bin/contactsync
-            6238 to Triple("mx4.md3", 0, 0),             // /cgi-bin/micromsg-bin/getnetworkinfo
-            15031 to Triple("mx4.gh5", 0, 0),            // /cgi-bin/micromsg-bin/openimcontactsync
-            22246 to Triple("mx4.gh5", 0, 0),            // /cgi-bin/micromsg-bin/chatroomheadimgsync
-            526 to Triple("mx4.sd3", 0, 0),              // /cgi-bin/micromsg-bin/getonlineinfo
-            11705 to Triple("g31.b1", 0, 0),             // /cgi-bin/micromsg-bin/roambackuppackagesget
-            1047 to Triple("mx4.mt", 0, 0),              // /cgi-bin/micromsg-bin/cardsync
-            849 to Triple("mx4.gs5", 0, 0),              // /cgi-bin/micromsg-bin/sendpat
-            988 to Triple("mx4.j73", 0, 0),              // /cgi-bin/micromsg-bin/getkvidkeystrategy
-            110 to Triple("mx4.xm6", 0, 0),              // /cgi-bin/micromsg-bin/uploadmsgimg (注意：与625区别)
-            5865 to Triple("fc3.p", 0, 0),               // /cgi-bin/micromsg-bin/mulmediareportcgi
-            17911 to Triple("mx4.ef3", 0, 0),            // /cgi-bin/micromsg-bin/getpintopfavinchat
-            17849 to Triple("mx4.bq", 0, 0),             // /cgi-bin/micromsg-bin/bypinfosynctypingcontactticket
-            3673 to Triple("mx4.sq", 0, 0),              // /cgi-bin/micromsg-bin/bypsync
-            8116 to Triple("mx4.g07", 0, 0),             // /cgi-bin/micromsg-bin/wevisiongeteffectconfig
-            10056 to Triple("mx4.i07", 0, 0),            // /cgi-bin/micromsg-bin/wevisiongetmodel
-            697 to Triple("mx4.ne", 0, 0),               // /cgi-bin/micromsg-bin/mmbatchemojidownload
-            771 to Triple("mx4.ki5", 0, 0),              // /cgi-bin/micromsg-bin/reportclientcheck
-            996 to Triple("mx4.i20", 0, 0),              // /cgi-bin/micromsg-bin/newreportkvcomm
-            986 to Triple("mx4.i20", 0, 0),              // /cgi-bin/micromsg-bin/newreportidkey
-            4005 to Triple("mx4.k23", 0, 0),             // /cgi-bin/micromsg-bin/geocoderlocation
-            810 to Triple("mx4.ku4", 0, 0),              // /cgi-bin/micromsg-bin/openimsync
-            5171 to Triple("mx4.bf5", 0, 0),             // /cgi-bin/micromsg-bin/reddot_report
-            1200 to Triple("mx4.ni6", 0, 0),             // /cgi-bin/mmbiz-bin/translatelink
-            655 to Triple("mx4.l33", 0, 0),              // /cgi-bin/micromsg-bin/getaddress
-            457 to Triple("mx4.oe3", 0, 0),              // /cgi-bin/micromsg-bin/getpoilist
-            11363 to Triple("mx4.kf3", 0, 0),            // /cgi-bin/micromsg-bin/getpoidetail
-            716 to Triple("mx4.tc5", 0, 0),              // /cgi-bin/micromsg-bin/rtkvreport
-            6691 to Triple("mx4.ur5", 0, 0),             // /cgi-bin/micromsg-bin/sendfileuploadmsg
-            914 to Triple("mx4.d33", 0, 0),              // /cgi-bin/micromsg-bin/getapmstrategy
-            411 to Triple("mx4.a93", 0, 0),              // /cgi-bin/micromsg-bin/getemotionlist
-            1295 to Triple("mx4.y2", 0, 0),              // /cgi-bin/mmoc-bin/ad/addatareport
-            148 to Triple("mx4.yz3", 0, 0),              // /cgi-bin/micromsg-bin/lbsfind
-            850 to Triple("mx4.oh3", 0, 0),              // /cgi-bin/micromsg-bin/getsafetyinfo
-            179 to Triple("mx4.u90", 0, 0),              // /cgi-bin/micromsg-bin/delchatroommember
-            551 to Triple("mx4.h73", 0, 0),              // /cgi-bin/micromsg-bin/getchatroommemberdetail
-            182 to Triple("mx4.s73", 0, 0),              // /cgi-bin/micromsg-bin/getcontact
-            6684 to Triple("mx4.pc3", 0, 0),             // /cgi-bin/micromsg-bin/getmidassdkinfo
-            6619 to Triple("ox4.o", 0, 0),               // /cgi-bin/micromsg-bin/getfriendringback
-            9120 to Triple("mx4.ht6", 0, 0),             // /cgi-bin/micromsg-bin/voipilinkgetsdkmode
-            6472 to Triple("o11.v9", 0, 0),              // /cgi-bin/micromsg-bin/musiclivesearchsmartbox
-            4114 to Triple("o11.v9", 0, 0),              // /cgi-bin/micromsg-bin/musiclivesearch
-            427 to Triple("of0.c", 0, 0),                // /cgi-bin/micromsg-bin/gamereportkv
-            1311 to Triple("hz2.u1", 0, 0),              // /cgi-bin/mmgame-bin/getgamecenterglobalsetting
-            1313 to Triple("mx4.q10", 0, 0),             // /cgi-bin/mmgame-bin/checkwepkgversion
-            9175 to Triple("hz2.o4", 0, 0),              // /cgi-bin/mmgame-bin/gamemsgpushappsvr/pullusermessage
-            19762 to Triple("mx4.mn4", 0, 0),            // /cgi-bin/mmemotionlogicsvr/newgetdesigneracctinfo
-            12586 to Triple("mx4.oj5", 0, 0),            // /cgi-bin/micromsg-bin/emotionsdkreport
-            1812 to Triple("mx4.o84", 0, 0),             // /cgi-bin/mmbiz-bin/usrmsg/mmbizscan_confsync
-            4362 to Triple("mx4.q33", 0, 0),             // /cgi-bin/micromsg-bin/getallfunction
-            425 to Triple("mx4.ob5", 209, 1000000209),   // /cgi-bin/micromsg-bin/mmradarsearch
-
-            1948 to Triple("mx4.a37", 0, 0),             // /cgi-bin/mmsearch-bin/websearchconfig
-            2975 to Triple("mx4.oq5", 0, 0),             // /cgi-bin/mmsearch-bin/searchwebquery
-            1048 to Triple("mx4.lb4", 0, 0),             // /cgi-bin/mmsearch-bin/searchguide
-            4534 to Triple("mx4.k64", 0, 0),             // /cgi-bin/mmsearch-bin/localsearchdict
-            1417 to Triple("mx4.fy4", 0, 0),             // /cgi-bin/mmsearch-bin/parduspresearch
-            1076 to Triple("mx4.ky4", 0, 0),             // /cgi-bin/mmsearch-bin/pardussearch
-            1134 to Triple("mx4.jj5", 0, 0),             // /cgi-bin/mmsearch-bin/searchreport
-            4773 to Triple("g31.b1", 0, 0),              // /cgi-bin/mmsearch-bin/searchsync
-            5805 to Triple("mx4.lo3", 0, 0),             // /cgi-bin/micromsg-bin/h5auth
-            25050 to Triple("mx4.nt5", 0, 0),            // /cgi-bin/mmbiz-bin/timeline/servicetimelineconfirm
-            26449 to Triple("pm5.w6", 0, 0),             // /cgi-bin/mmbiz-bin/mmecbase/init
-            29962 to Triple("pm5.r6", 0, 0),             // /cgi-bin/mmbiz-bin/mmec_getusershoplabel
-            28920 to Triple("g31.b1", 0, 0),             // /cgi-bin/mmbiz-bin/mmec_ecsshopdata
-            25694 to Triple("g31.b1", 0, 0),             // /cgi-bin/mmbiz-bin/mmec/timeline/ecsgetrecommendfeeds
-            27078 to Triple("g31.b1", 0, 0),             // /cgi-bin/mmbiz-bin/mp/metabstrategy
-            2723 to Triple("mx4.wj", 0, 0),              // /cgi-bin/mmbiz-bin/bizattr/bizstrategy
-            4687 to Triple("g31.b1", 0, 0),              // /cgi-bin/mmbiz-bin/timeline/bizmsgresortv2
-            4326 to Triple("g31.b1", 0, 0),              // /cgi-bin/mmbiz-bin/timeline/getrecommendfeedsv2
-            29710 to Triple("mx4.oj5", 0, 0),            // /cgi-bin/mmbiz-bin/mmec/timeline-dc/amoebasdkreport
-            8815 to Triple("g31.b1", 0, 0),              // /cgi-bin/micromsg-bin/newlifesync
-            23111 to Triple("g31.p0", 0, 0),             // /cgi-bin/mmlistenappsvr/listennewsync
-            14186 to Triple("g31.b1", 0, 0),             // /cgi-bin/micromsg-bin/mmecreddotsync
-            18646 to Triple("mx4.oo3", 18646, 0),        // /cgi-bin/micromsg-bin/transfer/searchh5exttransfer
-            18852 to Triple("mx4.oo3", 18852, 0),        // /cgi-bin/micromsg-bin/transfer/bizmaexttransfer
-            2538 to Triple("mx4.o2", 0, 0),              // /cgi-bin/mmoc-bin/ad/adchannelmsg
-            1286 to Triple("mx4.h33", 0, 0),             // /cgi-bin/mmoc-bin/adplayinfo/get_adcanvasinfo
-            683 to Triple("mx4.a06", 0, 0),              // /cgi-bin/micromsg-bin/mmsnsadobjectdetail
-            1122 to Triple("mx4.pz3", 0, 0),             // /cgi-bin/mmbiz-bin/wxaattr/launchwxaapp
-            1151 to Triple("mx4.b67", 0, 0),             // /cgi-bin/mmbiz-bin/wxaattr/wxaattrsync
-            2946 to Triple("mx4.um5", 0, 0),             // /cgi-bin/mmbiz-bin/wxartrappsvr/route
-            7107 to Triple("mx4.g6", 0, 0),              // /cgi-bin/mmbiz-bin/wxabusiness/afterlaunchwxaapp
-            4602 to Triple("mx4.jw3", 0, 0),             // /cgi-bin/mmbiz-bin/js-operatewxdata-keepalive
-            1029 to Triple("mx4.hw3", 0, 0),             // /cgi-bin/mmbiz-bin/js-login
-            1479 to Triple("mx4.h45", 0, 0),             // /cgi-bin/mmbiz-bin/wxasync/wxaapp_predownloadcode
-            2921 to Triple("mx4.sf3", 0, 0),             // /cgi-bin/mmbiz-bin/wxabusiness/getprofileinfo
-            1149 to Triple("mx4.ul6", 0, 0),             // /cgi-bin/mmbiz-bin/wxaapp/updatewxausagerecord
-            1713 to Triple("mx4.ze", 0, 0),              // /cgi-bin/mmbiz-bin/wxaapp/batchgetwxadownloadurl
-            1714 to Triple("mx4.cq6", 0, 0),             // /cgi-bin/mmbiz-bin/wxaapp/verifyplugin
-            1733 to Triple("mx4.g67", 0, 0),             // /cgi-bin/mmbiz-bin/wxabusiness/fetchdata
-            4024 to Triple("mx4.r30", 0, 0),             // /cgi-bin/mmbiz-bin/wxabusiness/coldstartfetchdata
-            3827 to Triple("mx4.d77", 0, 0),             // /cgi-bin/mmbiz-bin/wxaattr/wxajsapiinfo
-            1192 to Triple("mx4.vg", 0, 0),              // /cgi-bin/mmbiz-bin/wxaattr/batchwxaattrsync
-            1009 to Triple("mx4.r57", 0, 0),             // /cgi-bin/mmbiz-bin/wxausrevent/wxaappidkeybatchreport
-
-            4245 to Triple("oc4.f1", 0, 0),              // /cgi-bin/micromsg-bin/textstatusgetselfhistories
-            4099 to Triple("oc4.z1", 0, 0),              // /cgi-bin/micromsg-bin/textstatuslike
-            4255 to Triple("oc4.d1", 0, 0),              // /cgi-bin/micromsg-bin/textstatusgeticonconfig
-            6868 to Triple("oc4.l1", 0, 0),              // /cgi-bin/micromsg-bin/textstatusgetuserpermission
-            5293 to Triple("oc4.o", 0, 0),               // /cgi-bin/micromsg-bin/modtextstatus
-            5215 to Triple("oc4.h1", 0, 0),              // /cgi-bin/micromsg-bin/textstatusgetselfinfo
-            5967 to Triple("oc4.z0", 0, 0),              // /cgi-bin/micromsg-bin/textstatusdeleteselfhistory
-            9262 to Triple("g31.b1", 0, 0),              // /cgi-bin/micromsg-bin/voipilinklivesync
-            10342 to Triple("g31.b1", 0, 0),             // /cgi-bin/micromsg-bin/voipilinkinvite
-            9332 to Triple("g31.b1", 0, 0),              // /cgi-bin/micromsg-bin/voipilinkcancel
-            11421 to Triple("mx4.es3", 0, 0),            // /cgi-bin/micromsg-bin/mmilinktransfer/...
-            3847 to Triple("mx4.xb3", 0, 0),             // /cgi-bin/micromsg-bin/getemotiondetail
-            720 to Triple("g31.p0", 0, 0),               // /cgi-bin/micromsg-bin/mmgetpersonaldesigner
-            821 to Triple("g31.p0", 0, 0),                // /cgi-bin/micromsg-bin/mmgetdesigneremojilist
-            594 to Triple("mx4.sl5", 0, 0),              // /cgi-bin/micromsg-bin/revokemsg
-            681 to Triple("mx4.jv4", 0, 0),               // /cgi-bin/micromsg-bin/oplog
-        )
+        @Volatile
+        var INSTANCE: WePkgHelper? = null
     }
 
     override fun entry(classLoader: ClassLoader) {
         this.classLoader = classLoader
         INSTANCE = this
+
+        // 映射业务请求类
+        cgiReqClassMap[522] = dexClsNewSendMsgReq.clazz
+        cgiReqClassMap[681] = dexClsOplogReq.clazz
+
+
+        WeLogger.i(TAG, "WePkgHelper 核心组件已加载")
     }
 
-    fun sendCgi(uri: String, cgiId: Int, jsonPayload: String, dslBlock: WeReqDsl.() -> Unit) {
+    @SuppressLint("NonUniqueDexKitData")
+    override fun dexFind(dexKit: DexKitBridge): Map<String, String> {
+        val descriptors = mutableMapOf<String, String>()
+
+        // 查找 Protobuf 基类
+        dexClsProtoBase.find(dexKit, descriptors) {
+            matcher {
+                usingStrings("computeSize error")
+                methods {
+                    add {
+                        name = "op"
+                        paramTypes("int", "java.lang.Object[]")
+                    }
+                }
+            }
+        }
+
+        // 查找 RawReq
+        dexClsRawReq.find(dexKit, descriptors) {
+            matcher {
+                fields {
+                    count(1)
+                    add { type = "byte[]" }
+                }
+
+                methods {
+                    add {
+                        name = "<init>"
+                        paramTypes("byte[]")
+                    }
+
+                    add {
+                        name = "op"
+                        paramTypes("int", "java.lang.Object[]")
+                        returnType = "int"
+                        opNames(
+                            opNames = emptyList(),
+                            matchType = OpCodeMatchType.Contains,
+                            opCodeSize = IntRange(0, 10)
+                        )
+                    }
+
+                    add {
+                        name = "toByteArray"
+                        returnType = "byte[]"
+                        invokeMethods {
+                            add {
+                                declaredClass = "java.lang.System"
+                                name = "arraycopy"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+
+        val wrapperName = dexClsRawReq.clazz.superclass
+        if (wrapperName != null) {
+            val candidates = dexKit.findClass {
+                matcher {
+                    superClass = wrapperName.name
+                    fields {
+                        count(2)
+                        add { type = "int" }
+                        add { type = "java.util.LinkedList" }
+                    }
+                }
+            }
+
+            for (candidate in candidates) {
+                val isMsgReq = dexKit.findMethod {
+                    searchInClass(listOf(candidate))
+                    matcher {
+                        name = "op"
+                        addUsingField { name = "BaseRequest" }
+                    }
+                }.isEmpty()
+
+                if (isMsgReq) {
+                    dexClsNewSendMsgReq.setDescriptor(candidate.name)
+                    descriptors[dexClsNewSendMsgReq.key] = candidate.name
+                    break
+                }
+            }
+        }
+
+        val protoBaseName = dexClsProtoBase.getDescriptorString() ?: ""
+        dexClsConfigBuilder.find(dexKit, descriptors) {
+            matcher {
+                fields {
+                    countMin(10)
+                    add { type = protoBaseName }
+                    add { type = protoBaseName }
+                    add { type = "java.lang.String" }
+                }
+            }
+        }
+
+        // 查找响应 GenericResp
+        dexClsGenericResp.find(dexKit, descriptors) {
+            matcher {
+                fields {
+                    countMax(1)
+                }
+
+                methods {
+                    add {
+                        name = "<init>"
+                        opNames(listOf("new-instance"), OpCodeMatchType.Contains)
+                    }
+                    add {
+                        name = "op"
+                        paramTypes("int", "java.lang.Object[]")
+                        returnType = "int"
+                        opNames(
+                            opNames = emptyList(),
+                            matchType = OpCodeMatchType.Contains,
+                            opCodeSize = IntRange(0, 10)
+                        )
+                    }
+                }
+            }
+        }
+
+        // 查找 NetSceneBase
+        dexClsNetSceneBase.find(dexKit, descriptors) {
+            matcher {
+                usingStrings("MicroMsg.NetSceneBase")
+                modifiers = Modifier.ABSTRACT
+                methods {
+                    add { usingNumbers(600000L) }
+                }
+            }
+        }
+
+        // 查找队列与核心单例
+        dexClsNetQueue.find(dexKit, descriptors) {
+            matcher {
+                usingStrings("MicroMsg.NetSceneQueue", "waiting2running waitingQueue_size =")
+            }
+        }
+
+        dexClsKernel.find(dexKit, descriptors) {
+            matcher {
+                usingStrings(":appbrand0", ":appbrand1", ":appbrand2")
+                methods {
+                    add {
+                        modifiers = Modifier.STATIC or Modifier.PUBLIC
+                        dexClsNetQueue.clazz.let { returnType = it.name }
+                    }
+                }
+            }
+        }
+
+        val kernelName = dexClsKernel.getDescriptorString() ?: ""
+        val queueName = dexClsNetQueue.getDescriptorString() ?: ""
+        dexMethodGetNetQueue.find(dexKit, descriptors) {
+            matcher {
+                declaredClass = kernelName
+                modifiers = Modifier.STATIC or Modifier.PUBLIC
+                returnType = queueName
+            }
+        }
+
+        // 查找分发器与回调
+        val netSceneBaseName = dexClsNetSceneBase.getDescriptorString() ?: ""
+        dexClsCallbackIface.find(dexKit, descriptors) {
+            matcher {
+                modifiers = Modifier.INTERFACE or Modifier.ABSTRACT
+                methods {
+                    add {
+                        returnType = "int"
+                        paramCount = 5
+                        paramTypes("int", "int", "java.lang.String", null, netSceneBaseName)
+                    }
+                }
+            }
+        }
+
+        val cbIfaceName = dexClsCallbackIface.getDescriptorString() ?: ""
+        if (cbIfaceName.isNotEmpty()) {
+            val callbackMethod = dexKit.findMethod {
+                searchInClass(listOf(dexClsCallbackIface.getClassData(dexKit)))
+                matcher {
+                    paramCount = 5
+                }
+            }.firstOrNull()
+
+            if (callbackMethod != null) {
+                val reqRespName = callbackMethod.paramTypes[3].name
+                dexClsReqResp.setDescriptor(reqRespName)
+                descriptors[dexClsReqResp.key] = reqRespName
+
+                WeLogger.i(TAG, "动态识别 ReqResp 基类: $reqRespName")
+
+                val dispatchMethod = dexKit.findMethod {
+                    matcher {
+                        modifiers = Modifier.STATIC or Modifier.PUBLIC
+                        paramCount = 3
+                        paramTypes(reqRespName, cbIfaceName, "boolean")
+                    }
+                }.firstOrNull()
+
+                if (dispatchMethod != null) {
+                    dexClsNetDispatcher.setDescriptor(dispatchMethod.className)
+                    dexMethodNetDispatch.setDescriptor(
+                        dispatchMethod.className,
+                        dispatchMethod.methodName,
+                        dispatchMethod.methodSign
+                    )
+                    descriptors[dexClsNetDispatcher.key] = dispatchMethod.className
+                    descriptors[dexMethodNetDispatch.key] = dexMethodNetDispatch.getDescriptorString() ?: ""
+                }
+            }
+        }
+
+        try {
+            dexClsOplogReq.find(dexKit, descriptors) {
+                matcher {
+                    dexClsProtoBase.clazz.let { superClass = it.name }
+                    usingStrings("/cgi-bin/micromsg-bin/oplog")
+                    fields { count(1) }
+                    methods {
+                        add {
+                            name = "op"
+                            paramTypes("int", "java.lang.Object[]")
+                        }
+                    }
+                }
+            }
+        } catch (_: RuntimeException) {
+            val wrapperClassData = dexKit.findClass {
+                matcher {
+                    methods {
+                        add {
+                            name = "getFuncId"
+                            returnType = "int"
+                            usingNumbers(681)
+                        }
+                        add {
+                            name = "toProtoBuf"
+                            returnType = "byte[]"
+                        }
+                    }
+                }
+            }.firstOrNull() ?: throw NoSuchElementException("无法通过 FuncId 681 定位 Wrapper 类")
+
+            val wrapperClassName = wrapperClassData.name
+
+            val wrapperClass = loadClass(wrapperClassName)
+            val realProtoClass = wrapperClass.declaredFields.firstOrNull { field ->
+                val type = field.type
+                !type.isPrimitive &&
+                        !type.name.startsWith("java.") &&
+                        isExtendsBaseProtoBuf(type)
+            }?.type ?: throw NoSuchElementException("在 Wrapper 类中未找到实体字段")
+
+            WeLogger.i("oplog 定位成功 ${realProtoClass.name}")
+            descriptors[dexClsOplogReq.key] = realProtoClass.name
+        }
+
+        dexClsIOnSceneEnd.find(dexKit, descriptors) {
+            matcher {
+                modifiers = Modifier.INTERFACE
+                interfaceCount(0)
+
+                methods {
+                    count = 1
+                    add {
+                        name = "onSceneEnd"
+                        paramCount = 4
+                        paramTypes("int", "int", "java.lang.String", netSceneBaseName)
+                        returnType = "void"
+                    }
+                }
+            }
+        }
+
+        dexClsNetScenePat.find(dexKit, descriptors) {
+            matcher {
+                dexClsNetSceneBase.clazz.let { superClass = it.name }
+
+                methods {
+                    add {
+                        name = "getType"
+                        returnType = "int"
+                        usingNumbers(849)
+                    }
+                }
+                usingStrings("/cgi-bin/micromsg-bin/sendpat")
+            }
+        }
+
+        return descriptors
+    }
+
+
+    /**
+     * 验证一个类是否继承自微信的 ProtoBuf 基类
+     */
+    private fun isExtendsBaseProtoBuf(cls: Class<*>?): Boolean {
+        var current = cls
+        while (current != null && current != Any::class.java) {
+            if (current.getName().contains("protobuf")
+            ) {
+                return true
+            }
+            current = current.getSuperclass()
+        }
+        return false
+    }
+    fun sendCgi(uri: String, cgiId: Int, funcId: Int, routeId: Int, jsonPayload: String, dslBlock: WeReqDsl.() -> Unit) {
         val dsl = WeReqDsl().apply(dslBlock)
-        sendCgi(uri, cgiId, jsonPayload, dsl as WeReqCallback)
+        sendCgi(uri, cgiId, funcId, routeId, jsonPayload, dsl as WeReqCallback)
     }
 
-    fun sendCgi(uri: String, cgiId: Int, jsonPayload: String, callback: WeReqCallback? = null) {
+    fun sendCgi(uri: String, cgiId: Int, funcId: Int, routeId: Int, jsonPayload: String, callback: WeReqCallback? = null) {
         val loader = classLoader ?: return
         Thread {
             try {
@@ -391,48 +414,89 @@ class WePkgHelper : ApiHookItem() {
 
                 // 发送逻辑
                 if (nativeNetScene != null) {
-                    // 原生模式
+                    val netQueue = XposedHelpers.callStaticMethod(dexClsKernel.clazz, dexMethodGetNetQueue.method.name)
+                    val cgiType = XposedHelpers.callMethod(nativeNetScene, "getType") as Int
+
                     val callbackProxy = Proxy.newProxyInstance(
                         loader,
-                        arrayOf(XposedHelpers.findClass("com.tencent.mm.modelbase.u0", loader)),
-                        NativeResponseHandler(cgiId, callback, successAction)
-                    )
+                        arrayOf(dexClsIOnSceneEnd.clazz)
+                    ) { proxy, method, args ->
+                        when (method.name) {
+                            "hashCode" -> return@newProxyInstance System.identityHashCode(proxy)
+                            "equals" -> return@newProxyInstance proxy === args?.get(0)
+                            "toString" -> return@newProxyInstance "WeKitNativeCallback@${Integer.toHexString(System.identityHashCode(proxy))}"
+                        }
 
-                    // hi0.j1.d().g(netScene, 0)
-                    val netQueue = XposedHelpers.callStaticMethod(XposedHelpers.findClass("hi0.j1", loader), "d")
-                    XposedHelpers.callMethod(netQueue, "g", nativeNetScene, 0)
-                    XposedHelpers.callMethod(nativeNetScene, "doScene", XposedHelpers.callMethod(netQueue, "f"), callbackProxy)
+                        if (method.name == "onSceneEnd" && args != null) {
+                            try {
+                                XposedHelpers.callMethod(netQueue, "q", cgiType, proxy)
+                            } catch (e: Throwable) {
+                                WeLogger.w(TAG, "注销原生回调失败: ${e.message}")
+                            }
 
+                            NativeResponseHandler(cgiId, callback, successAction).invoke(
+                                proxy,
+                                method,
+                                args
+                            )
+                        }
+
+                        return@newProxyInstance null
+                    }
+
+                    // 注册并入队
+                    XposedHelpers.callMethod(netQueue, "a", cgiType, callbackProxy)
+                    XposedHelpers.callMethod(netQueue, "g", nativeNetScene)
+
+                    WeLogger.i(TAG, "[$cgiId] 原生模式：已注册监听并入队发送")
                 } else {
                     // 通用发包模式
                     val bytes = ProtoJsonBuilder.makeBytes(jsonObj)
-                    val config = NATIVE_CONFIG[cgiId]
-                    val reqObject: Any
-                    var funcId = 0; var routeId = 0
 
-                    if (config != null) {
-                        reqObject = XposedHelpers.newInstance(XposedHelpers.findClass(config.first, loader))
-                        XposedHelpers.callMethod(reqObject, "parseFrom", bytes)
-                        funcId = config.second
-                        routeId = if (config.third != 0) config.third else (if (funcId > 0) 1000000000 + funcId else 0)
+                    val finalReqObject: Any
+
+                    val specificReqCls = cgiReqClassMap[cgiId]
+
+                    if (specificReqCls != null) {
+                        finalReqObject = XposedHelpers.newInstance(specificReqCls)
+                        XposedHelpers.callMethod(finalReqObject, "parseFrom", bytes)
+                        WeLogger.i(TAG, "[$cgiId] 使用业务特定类: ${specificReqCls.name}")
                     } else {
-                        reqObject = XposedHelpers.newInstance(XposedHelpers.findClass("mx4.xd", loader), bytes)
+                        val rawCls = dexClsRawReq.clazz
+                        finalReqObject = XposedHelpers.newInstance(rawCls, bytes)
+                        WeLogger.i(TAG, "[$cgiId] 使用通用原始类: ${rawCls.name}")
                     }
 
-                    val builder = XposedHelpers.newInstance(XposedHelpers.findClass("com.tencent.mm.modelbase.l", loader))
-                    XposedHelpers.setObjectField(builder, "a", reqObject)
-                    XposedHelpers.setObjectField(builder, "b", XposedHelpers.newInstance(XposedHelpers.findClass(CLS_GENERIC_RESP, loader)))
-                    XposedHelpers.setObjectField(builder, "c", uri); XposedHelpers.setIntField(builder, "d", cgiId)
-                    XposedHelpers.setIntField(builder, "e", funcId); XposedHelpers.setIntField(builder, "f", routeId)
+                    val builder = dexClsConfigBuilder.clazz.getDeclaredConstructor().newInstance()
+                        ?: throw IllegalStateException("ConfigBuilder 实例化失败")
+
+                    XposedHelpers.setObjectField(builder, "a", finalReqObject)
+                    XposedHelpers.setObjectField(
+                        builder,
+                        "b",
+                        XposedHelpers.newInstance(dexClsGenericResp.clazz)
+                    )
+                    XposedHelpers.setObjectField(builder, "c", uri)
+                    XposedHelpers.setIntField(builder, "d", cgiId)
+                    XposedHelpers.setIntField(builder, "e", funcId)
+                    XposedHelpers.setIntField(builder, "f", routeId)
+                    XposedHelpers.setIntField(builder, "l", 1)
+                    XposedHelpers.setObjectField(builder, "n", bytes)
 
                     val rr = XposedHelpers.callMethod(builder, "a")
-                    val cbProxy = Proxy.newProxyInstance(loader, arrayOf(XposedHelpers.findClass(CLS_CALLBACK_IFACE, loader)),
-                        ResponseHandler(cgiId, callback, successAction))
+                    val cbProxy = Proxy.newProxyInstance(
+                        loader,
+                        arrayOf(dexClsCallbackIface.clazz),
+                        ResponseHandler(cgiId, callback, successAction)
+                    )
 
-                    val clsNetDispatcher = XposedHelpers.findClass("com.tencent.mm.modelbase.x2", loader)
-                    val methodD = XposedHelpers.findMethodExact(clsNetDispatcher, "d",
-                        XposedHelpers.findClass("com.tencent.mm.modelbase.o", loader),
-                        XposedHelpers.findClass(CLS_CALLBACK_IFACE, loader), Boolean::class.javaPrimitiveType)
+                    val methodD = XposedHelpers.findMethodExact(
+                        dexClsNetDispatcher.clazz,
+                        "d",
+                        dexClsReqResp.clazz,
+                        dexClsCallbackIface.clazz,
+                        Boolean::class.javaPrimitiveType
+                    )
 
                     WeLogger.i(TAG, "[$cgiId] 通用发送中...")
                     methodD.invoke(null, rr, cbProxy, false)
@@ -446,18 +510,57 @@ class WePkgHelper : ApiHookItem() {
     }
 
     // 处理原生 NetScene 的回调
-    private class NativeResponseHandler(val cgiId: Int, val userCallback: WeReqCallback?, val successAction: (() -> Unit)?) : InvocationHandler {
+    private class NativeResponseHandler(
+        val cgiId: Int,
+        val userCallback: WeReqCallback?,
+        val successAction: (() -> Unit)?
+    ) : InvocationHandler {
         override fun invoke(proxy: Any, method: Method, args: Array<out Any>?): Any? {
             if (method.declaringClass == Any::class.java) return null
-            // void onSceneEnd(int i16, int i17, String str, m1 m1Var);
+
+            // void onSceneEnd(int errType, int errCode, String errMsg, m1 netScene);
             if (method.name == "onSceneEnd" && args != null) {
-                val errType = args[0] as Int; val errCode = args[1] as Int
+                val errType = args[0] as Int
+                val errCode = args[1] as Int
+                val errMsg = args[2] as? String ?: "null"
+                val netScene = args[3]
+
                 Handler(Looper.getMainLooper()).post {
                     if (errType == 0 && errCode == 0) {
                         successAction?.invoke()
-                        userCallback?.onSuccess("{\"status\":\"success\"}", null)
+
+                        var bytes: ByteArray? = null
+                        var json = "{}"
+
+                        try {
+                            val loader = netScene.javaClass.classLoader
+                            val v0Class = XposedHelpers.findClass("com.tencent.mm.network.v0", loader)
+                            val rrField = netScene.javaClass.declaredFields.firstOrNull {
+                                v0Class.isAssignableFrom(it.type)
+                            }
+
+                            val rrObj = if (rrField != null) {
+                                rrField.isAccessible = true
+                                rrField.get(netScene)
+                            } else {
+                                XposedHelpers.getObjectField(netScene, "d")
+                            }
+
+                            if (rrObj != null) {
+                                val respWrapper = XposedHelpers.getObjectField(rrObj, "b")
+                                val protoObj = XposedHelpers.getObjectField(respWrapper, "a")
+                                bytes = XposedHelpers.callMethod(protoObj, "toByteArray") as? ByteArray
+                                if (bytes != null) {
+                                    json = FunProtoData().also { it.fromBytes(bytes) }.toJSON().toString()
+                                }
+                            }
+                        } catch (e: Throwable) {
+                            WeLogger.w("NativeResponseHandler", "提取回包 Bytes 失败: ${e.message}")
+                        }
+
+                        userCallback?.onSuccess(json, bytes)
                     } else {
-                        userCallback?.onFail(errType, errCode, args[2] as String)
+                        userCallback?.onFail(errType, errCode, errMsg)
                     }
                 }
             }
@@ -466,23 +569,34 @@ class WePkgHelper : ApiHookItem() {
     }
 
     // 处理通用发包的回调
-    private class ResponseHandler(val cgiId: Int, val userCallback: WeReqCallback?, val successAction: (() -> Unit)?) : InvocationHandler {
+    private class ResponseHandler(
+        val cgiId: Int,
+        val userCallback: WeReqCallback?,
+        val successAction: (() -> Unit)?
+    ) : InvocationHandler {
         override fun invoke(proxy: Any, method: Method, args: Array<out Any>?): Any? {
             if (method.declaringClass == Any::class.java) return null
             if (method.name == "callback" && args != null) {
-                val errType = args[0] as Int; val errCode = args[1] as Int
+                val errType = args[0] as Int
+                val errCode = args[1] as Int
                 val reqResp = args[3]
                 Handler(Looper.getMainLooper()).post {
                     if (errType == 0 && errCode == 0) {
                         successAction?.invoke()
                         val respWrapper = XposedHelpers.getObjectField(reqResp, "b")
                         val yd = XposedHelpers.getObjectField(respWrapper, "a")
-                        val bytes = try { XposedHelpers.callMethod(yd, "initialProtobufBytes") as? ByteArray } catch(e:Throwable){null}
+                        val bytes = try {
+                            XposedHelpers.callMethod(yd, "initialProtobufBytes") as? ByteArray
+                        } catch (_: Throwable) {
+                            null
+                        }
                             ?: XposedHelpers.callMethod(yd, "toByteArray") as? ByteArray
-                        val json = if (bytes != null) FunProtoData().also { it.fromBytes(bytes) }.toJSON().toString() else "{}"
+                        val json =
+                            if (bytes != null) FunProtoData().also { it.fromBytes(bytes) }.toJSON()
+                                .toString() else "{}"
                         userCallback?.onSuccess(json, bytes)
                     } else {
-                        userCallback?.onFail(errType, errCode, args[2] as String)
+                        userCallback?.onFail(errType, errCode, args[2] as? String ?: "null (No Error Message)")
                     }
                 }
                 return 0

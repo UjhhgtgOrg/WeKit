@@ -192,9 +192,9 @@ public class FunProtoData {
                     }
                     else if (o instanceof FunProtoData data){
                         byte[] subBytes = data.toBytes();
-                        out.writeTag(k_index, 2); // 显式写入 Tag + WireType 2
-                        out.writeUInt32NoTag(subBytes.length); // 写入内容长度
-                        out.writeRawBytes(subBytes); // 写入原始数据
+                        out.writeTag(k_index, 2);
+                        out.writeUInt32NoTag(subBytes.length);
+                        out.writeRawBytes(subBytes);
                     }
                     else {
                         WeLogger.w("FunProtoData.toBytes Unknown type: " + o.getClass().getName());

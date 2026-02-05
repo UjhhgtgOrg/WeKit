@@ -6,6 +6,7 @@ import moe.ouom.wekit.util.Initiator.loadClass
 import org.luckypray.dexkit.DexKitBridge
 import org.luckypray.dexkit.query.FindClass
 import org.luckypray.dexkit.query.FindMethod
+import org.luckypray.dexkit.result.ClassData
 import java.lang.reflect.Method
 import kotlin.properties.PropertyDelegateProvider
 import kotlin.properties.ReadOnlyProperty
@@ -80,6 +81,15 @@ class DexClassDelegate internal constructor(
         return true
     }
 
+    fun getClassData(dexKit: DexKitBridge): ClassData {
+        val name = getDescriptorString()
+        return dexKit.findClassData(name!!)!!
+    }
+
+    fun getSuperClass(dexKit: DexKitBridge): ClassData? {
+        return getClassData(dexKit)?.superClass
+    }
+
     override fun getValue(thisRef: Any?, property: KProperty<*>): DexClassDelegate = this
 }
 
@@ -112,6 +122,10 @@ class DexMethodDelegate internal constructor(
     fun setDescriptor(desc: DexMethodDescriptor) {
         this.descriptor = desc
         this.cachedMethod = null
+    }
+
+    fun setDescriptor(className: String, methodName: String, methodSign: String) {
+        this.setDescriptor(DexMethodDescriptor(className, methodName, methodSign))
     }
 
     /**
@@ -206,4 +220,12 @@ fun dexMethod(): PropertyDelegateProvider<Any?, ReadOnlyProperty<Any?, DexMethod
         val key = "$className:${property.name}"
         DexMethodDelegate(key, thisRef)  // 传递 thisRef 作为 hookItem
     }
+}
+
+fun DexKitBridge.findClassData(clazz: String): ClassData? {
+    return findClass {
+        matcher {
+            className = clazz
+        }
+    }.singleOrNull()
 }

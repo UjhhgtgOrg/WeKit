@@ -330,11 +330,25 @@ public class WeLogger {
         }
 
         StringBuilder stackTraceMsg = new StringBuilder(prefix).append("\n");
+        boolean startRecording = false;
+
         for (StackTraceElement element : stackTrace) {
             String className = element.getClassName();
-            if (className.equals(BuildConfig.APPLICATION_ID) || className.equals(Thread.class.getName())) {
+            if (className.contains("LSPHooker")) {
+                startRecording = true;
                 continue;
             }
+
+            // 如果还没遇到目标类，直接跳过
+            if (!startRecording) {
+                continue;
+            }
+
+            // 过滤掉无关紧要的系统类或当前类（可选）
+            if (className.equals(Thread.class.getName())) {
+                continue;
+            }
+
             stackTraceMsg.append(String.format(
                     "  at %s.%s(%s:%d)\n",
                     element.getClassName(),

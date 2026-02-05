@@ -12,7 +12,7 @@ import java.lang.reflect.Modifier
 class WePkgListener : ApiHookItem() {
 
     companion object {
-        private var DEBUG = true
+        private var DEBUG = false
 
     }
     override fun entry(classLoader: ClassLoader) {
@@ -46,6 +46,8 @@ class WePkgListener : ApiHookItem() {
 
                     val configLog = "$cgiId to Triple(\"$reqClassName\", $funcId, $routeId), // $uri"
                     WeLogger.e("WePkgListener-gen", configLog)
+
+//                    WeLogger.printStackTrace()
                 }
             })
         } catch (e: Throwable) {
@@ -85,7 +87,7 @@ class WePkgListener : ApiHookItem() {
                                     if (DEBUG) WeLogger.d("WePkgListener", "JSON: ${data.toJSON()}")
                                 }
                             } catch (_: Exception) { }
-                            WeLogger.printStackTrace()
+                            if (DEBUG) WeLogger.printStackTrace()
                         }
                     } catch (t: Throwable) {
                         if (DEBUG) WeLogger.e("WePkgListener", "Dispatch 扫描异常: ${t.message}")

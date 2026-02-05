@@ -110,6 +110,9 @@ public class UnifiedEntryPoint {
                         @Override
                         protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                             Application application = (Application) param.args[0];
+                            Application hostApp = (Application) param.args[0];
+                            StartupInfo.setHostApp(hostApp);
+
                             WeLogger.i("UnifiedEntryPoint", "Instrumentation.callApplicationOnCreate captured!");
                             WeLogger.i("UnifiedEntryPoint", "Application: " + application.getClass().getName());
 
@@ -126,9 +129,6 @@ public class UnifiedEntryPoint {
                             } catch (Throwable e) {
                                 Log.e(BuildConfig.TAG, "StartupAgent.startup failed", e);
                             }
-
-                            Application hostApp = (Application) param.args[0];
-                            StartupInfo.setHostApp(hostApp);
                         }
                     }
             );
