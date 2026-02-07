@@ -12,6 +12,8 @@ object WePkgManager {
 
     fun addInterceptor(interceptor: IWePkgInterceptor) = listeners.addIfAbsent(interceptor)
 
+    fun removeInterceptor(interceptor: IWePkgInterceptor) = listeners.remove(interceptor)
+
     internal fun handleRequestTamper(uri: String, cgiId: Int, reqBytes: ByteArray): ByteArray? {
         if (WeConfig.dGetBoolean(Constants.PrekVerboseLog)) {
             val data = WeProtoData()

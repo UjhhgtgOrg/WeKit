@@ -145,6 +145,10 @@ class HookQueryCashierPkg : BaseClickableFunctionHookItem(), IWePkgInterceptor {
         }
     }
 
+    override fun unload(classLoader: ClassLoader) {
+        WePkgManager.removeInterceptor(this)
+    }
+
     override fun onClick(context: Context?) {
         context?.let {
             ConfigDialog(it).show()
