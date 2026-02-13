@@ -11,7 +11,6 @@ import moe.ouom.wekit.util.log.WeLogger
 
 @HookItem(path = "娱乐功能/设置微信昵称", desc = "通过发包来更灵活的设置微信昵称")
 class WeProfileNameSetter : BaseClickableFunctionHookItem() {
-    override fun entry(classLoader: ClassLoader) {}
 
     override fun onClick(context: Context?) {
         context?.let {
@@ -65,7 +64,5 @@ class WeProfileNameSetter : BaseClickableFunctionHookItem() {
         return input.replace("\"", "\\\"")
     }
 
-    override fun noSwitchWidget(): Boolean {
-        return true
-    }
+    override fun noSwitchWidget(): Boolean = true
 }

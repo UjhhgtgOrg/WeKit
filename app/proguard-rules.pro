@@ -128,6 +128,16 @@
 }
 
 # ==========================================================
+# Mozila Rhino
+# ==========================================================
+-keep class javax.script.** { *; }
+-keep class com.sun.script.javascript.** { *; }
+-keep class org.mozilla.javascript.** { *; }
+-dontwarn org.mozilla.javascript.**
+-dontwarn sun.reflect.CallerSensitive
+
+
+# ==========================================================
 # 忽略警告
 # ==========================================================
 # 忽略 ByteBuddy 和 Mocking 相关的类

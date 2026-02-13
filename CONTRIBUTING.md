@@ -1182,9 +1182,12 @@ import moe.ouom.wekit.hooks.core.annotation.HookItem
 )
 class DexCacheCleaner : BaseClickableFunctionHookItem() {
 
+    // 如果重写noSwitchWidget为true时将永远不会调用entry 此时可不重写entry方法来触发功能 通过onClick触发
+    /*
     override fun entry(classLoader: ClassLoader) {
         // 可点击功能不需要 Hook，只需实现 onClick
     }
+    */
 
     override fun onClick() {
         // 清理缓存
@@ -1195,6 +1198,8 @@ class DexCacheCleaner : BaseClickableFunctionHookItem() {
 
         WeLogger.i("DexCacheCleaner", "DEX 缓存已清理")
     }
+
+    override fun noSwitchWidget(): Boolean = true
 }
 ```
 
@@ -1652,6 +1657,8 @@ class AutoGrabRedPacketConfigDialog(context: Context) : BaseRikkaDialog(context,
 | **切换前确认** | ✅ `onBeforeToggle(newState, context)` | ✅ `onBeforeToggle(newState, context)` |
 | **点击处理** | 点击切换开关 | **`onClick(Context)` 必须重写** |
 | **主要用途** | 主要用于 Hook 功能 | 主要用于需要点击交互的功能 |
+
+**如果重写noSwitchWidget为true将不会调用entry 请手动在onClick实现**
 
 ### 功能放置位置
 
@@ -2210,6 +2217,7 @@ class MyPacketInterceptor : IWePkgInterceptor {
 
 **步骤 2: 注册拦截器**
 
+请确保该项目未重写noSwitchWidget为true 否则不会触发 `entry()` 方法
 在 Hook 入口点（通常是 `entry()` 方法）中注册拦截器：
 
 ```kotlin

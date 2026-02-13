@@ -10,7 +10,6 @@ import moe.ouom.wekit.util.log.WeLogger
 
 @HookItem(path = "娱乐功能/清空资料信息", desc = "点击清空你之前所选择的微信地区和性别等资料信息")
 class WeProfileCleaner : BaseClickableFunctionHookItem() {
-    override fun entry(classLoader: ClassLoader) {}
 
     override fun onClick(context: Context?) {
         context?.let {
@@ -54,7 +53,5 @@ class WeProfileCleaner : BaseClickableFunctionHookItem() {
         }
     }
 
-    override fun noSwitchWidget(): Boolean {
-        return true
-    }
+    override fun noSwitchWidget(): Boolean = true
 }

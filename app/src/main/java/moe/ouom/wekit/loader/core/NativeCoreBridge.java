@@ -8,6 +8,7 @@ import java.io.File;
 
 import moe.ouom.wekit.host.HostInfo;
 import moe.ouom.wekit.util.log.WeLogger;
+import moe.ouom.wekit.util.script.JsExecutor;
 
 
 public class NativeCoreBridge {
@@ -28,6 +29,8 @@ public class NativeCoreBridge {
         Context context = HostInfo.getApplication();
         // init mmkv
         initializeMmkvForPrimaryNativeLibrary(context);
+        // init JsExecutor
+        JsExecutor.getInstance().initialize(context);
     }
 
     /**

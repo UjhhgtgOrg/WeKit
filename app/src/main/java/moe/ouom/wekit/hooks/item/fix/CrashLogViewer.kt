@@ -9,7 +9,6 @@ import com.afollestad.materialdialogs.list.listItems
 import moe.ouom.wekit.core.model.BaseClickableFunctionHookItem
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.ui.CommonContextWrapper
-import moe.ouom.wekit.util.Initiator.loadClass
 import moe.ouom.wekit.util.common.Toasts.showToast
 import moe.ouom.wekit.util.common.Utils.formatFileSize
 import moe.ouom.wekit.util.crash.CrashLogManager
@@ -34,32 +33,9 @@ import java.util.Locale
 class CrashLogViewer : BaseClickableFunctionHookItem() {
 
     private var crashLogManager: CrashLogManager? = null
-    private var appContext: Context? = null
-
-    override fun entry(classLoader: ClassLoader) {
-        try {
-            // 获取 Application Context
-            val activityThreadClass = loadClass("android.app.ActivityThread")
-            val currentApplicationMethod = activityThreadClass.getMethod("currentApplication")
-            appContext = currentApplicationMethod.invoke(null) as? Context
-
-            if (appContext == null) {
-                WeLogger.e("CrashLogViewer", "Failed to get application context")
-                return
-            }
-
-            // 初始化崩溃日志管理器
-            crashLogManager = CrashLogManager(appContext!!)
-
-            WeLogger.i("CrashLogViewer", "Crash log viewer initialized")
-        } catch (e: Throwable) {
-            WeLogger.e("[CrashLogViewer] Failed to initialize crash log viewer", e)
-        }
-    }
 
     override fun onClick(context: Context?) {
-        val ctx = context ?: appContext
-        if (ctx == null) {
+        if (context == null) {
             WeLogger.e("CrashLogViewer", "Context is null")
             return
         }
@@ -68,15 +44,15 @@ class CrashLogViewer : BaseClickableFunctionHookItem() {
         if (crashLogManager == null) {
             WeLogger.i("CrashLogViewer", "Lazy initializing CrashLogManager")
             try {
-                crashLogManager = CrashLogManager(ctx)
+                crashLogManager = CrashLogManager(context)
             } catch (e: Throwable) {
                 WeLogger.e("[CrashLogViewer] Failed to initialize CrashLogManager", e)
-                showToast(ctx, "初始化失败: ${e.message}")
+                showToast(context, "初始化失败: ${e.message}")
                 return
             }
         }
 
-        showCrashLogList(ctx)
+        showCrashLogList(context)
     }
 
     /**

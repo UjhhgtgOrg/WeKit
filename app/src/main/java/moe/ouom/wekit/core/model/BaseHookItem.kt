@@ -107,14 +107,13 @@ abstract class BaseHookItem {
     /**
      * 在 loadHook 前执行一次
      * 返回 true 表示继续执行 loadHook
-     * 返回 false 表示由 initOnce 自行处理 loadHook 事件
+     * 返回 false 表示不执行 entry 的事件 不可重写
      */
-    open fun initOnce(): Boolean = true
-
+    fun initOnce(): Boolean = true
     /**
      * Hook 入口方法
      */
-    abstract fun entry(classLoader: ClassLoader)
+    open fun entry(classLoader: ClassLoader) {}
 
     /**
      * 卸载 Hook
