@@ -2969,6 +2969,7 @@ close #1
 - [ ] **我确认此更改不会破坏任何原有功能** / I confirm this change does not break any existing features
 - [ ] **我已进行多版本适配（如适用）** / I have used MMVersion for version compatibility (if applicable)
 - [ ] **我已在多个微信版本上测试此更改（如适用）** / I have tested this change on multiple WeChat versions (if applicable)  
+- [ ] **已在 Release 构建中完成测试**（含签名校验与 DEX 加密保护，未经测试请勿勾选；详见 `CONTRIBUTING.md` → 构建和发布 → 构建配置 → Release 构建） / Verified in Release build (with signature verification & DEX encryption protection; check only after testing per `CONTRIBUTING.md` → Build & Release → Build Configuration → Release Build)
 
 ##### 其他信息 / Additional Information
 
@@ -3025,6 +3026,28 @@ close #1
 ```
 
 输出位置：`app/build/outputs/apk/debug/app-debug.apk`
+
+#### Release 构建
+当构建 **Release 变体 APK** 时，软件启动阶段将执行双重签名校验。为进行本地测试，需**临时**修改以下两处配置：
+<64位SHA256签名> 通过 SignatureVerifier.getSignatureHash() 生成
+
+**Native 层（`secrets.h`）**:
+
+```bash
+python generate_secrets_h.py <64位SHA256签名>
+# 将输出内容临时覆盖 app/src/main/cpp/include/secrets.h
+```
+
+**Java 层（`SignatureVerifier.java`）**:
+
+```java
+private static final String[] VALID_SIGNATURE_HASHES = {
+    "<64位SHA256签名>"  // 仅限本地测试
+};
+```
+
+> ⚠️ **关键要求**：  
+> 以上修改**仅用于本地 Release 构建测试**，测试完成后 **`secrets.h` 和 `SignatureVerifier.java` 必须立即还原**至仓库原始版本，**严禁提交至仓库**，包含测试签名的 PR 将被拒绝合并
 
 ### 自定义构建任务
 

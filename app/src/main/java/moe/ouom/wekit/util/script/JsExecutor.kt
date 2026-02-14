@@ -4,13 +4,13 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
+import moe.ouom.wekit.constants.MMVersion
+import moe.ouom.wekit.host.HostInfo
 import moe.ouom.wekit.util.log.WeLogger
 import org.mozilla.javascript.ScriptRuntime
 import org.mozilla.javascript.Scriptable
 import java.text.MessageFormat
-import java.util.Locale
-import java.util.ResourceBundle
-import java.util.MissingResourceException
+import java.util.*
 import javax.script.ScriptEngine
 import javax.script.ScriptEngineManager
 
@@ -123,8 +123,6 @@ class JsExecutor private constructor() {
             val rhinoEngine = engineManager.getEngineByName("rhino")
 
             mScriptEngine = rhinoEngine
-            // 注入日志接口
-            injectLoggingInterface()
             mInitialized = true
             WeLogger.i("JsExecutor initialized with Rhino")
 
@@ -165,17 +163,40 @@ class JsExecutor private constructor() {
     }
 
     /**
-     * 注入日志接口
+     * 注入脚本接口
+     * @param sendCgi CGI发送函数
+     * @param protoUtils 协议工具对象
+     * @param dataBaseUtils 数据库工具对象
+     * @param messageUtils 消息工具对象
      */
     @Suppress("unused")
-    private fun injectLoggingInterface() {
+    fun injectScriptInterfaces(
+        sendCgi: Any,
+        protoUtils: Any,
+        dataBaseUtils: Any,
+        messageUtils: Any
+    ) {
         try {
-            // 为 ScriptEngine 添加日志接口
             mScriptEngine?.put("wekit", object {
                 fun log(vararg args: Any?) {
                     val message = args.joinToString(" ") { it?.toString() ?: "null" }
                     ScriptLogger.getInstance().info(message)
                 }
+
+                fun isMMAtLeast(field: String) = runCatching {
+                    HostInfo.getVersionCode() >= MMVersion::class.java.getField(field).getInt(null)
+                }.getOrDefault(false)
+
+                fun sendCgi(uri: String, cgiId: Int, funcId: Int, routeId: Int, jsonPayload: String) {
+                    sendCgi(uri, cgiId, funcId, routeId, jsonPayload)
+                }
+
+                @JvmField
+                val proto: Any = protoUtils
+                @JvmField
+                val database: Any = dataBaseUtils
+                @JvmField
+                val message: Any = messageUtils
             })
 
             WeLogger.i("JsExecutor: Injected Rhino logging interface")

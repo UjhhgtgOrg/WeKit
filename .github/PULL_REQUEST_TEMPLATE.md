@@ -18,6 +18,7 @@
 - [ ] **我确认此更改不会破坏任何原有功能** / I confirm this change does not break any existing features
 - [ ] **我已进行多版本适配（如适用）** / I have used MMVersion for version compatibility (if applicable)
 - [ ] **我已在多个微信版本上测试此更改（如适用）** / I have tested this change on multiple WeChat versions (if applicable)  
+- [ ] **已在 Release 构建中完成测试**（含签名校验与 DEX 加密保护，未经测试请勿勾选；详见 `CONTRIBUTING.md` → 构建和发布 → 构建配置 → Release 构建） / Verified in Release build (with signature verification & DEX encryption protection; check only after testing per `CONTRIBUTING.md` → Build & Release → Build Configuration → Release Build)
 
 ## 其他信息 / Additional Information
 
