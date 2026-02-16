@@ -43,7 +43,11 @@ class WeChatFooterApi : ApiHookItem() {
                 hookAfter(chatFooterClass, "setUserName") { param ->
                     val toUser = param.args[0] as? String
                     if (!toUser.isNullOrEmpty()) {
-                        XposedHelpers.setAdditionalInstanceField(param.thisObject, FIELD_TO_USER, toUser)
+                        XposedHelpers.setAdditionalInstanceField(
+                            param.thisObject,
+                            FIELD_TO_USER,
+                            toUser
+                        )
                         WeLogger.d(TAG, "捕获并缓存 toUser: $toUser")
                     }
                 }
@@ -87,7 +91,6 @@ class WeChatFooterApi : ApiHookItem() {
     }
 
     private fun handleLongClickLogic(chatFooter: Any, buttonView: View) {
-        var targetEditText: android.widget.EditText? = null
         val content = try {
             XposedHelpers.callMethod(chatFooter, "getLastText") as? String
         } catch (_: Throwable) {

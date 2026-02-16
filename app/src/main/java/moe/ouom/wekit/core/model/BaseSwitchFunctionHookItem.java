@@ -35,7 +35,7 @@ public abstract class BaseSwitchFunctionHookItem extends BaseHookItem {
      */
     public void applyToggle(boolean newState) {
         // 保存配置
-        String configKey = Constants.PrekXXX + this.getPath();
+        var configKey = Constants.PrekXXX + this.getPath();
         WeConfig.getDefaultConfig().edit().putBoolean(configKey, newState).apply();
 
         // 更新状态
@@ -51,9 +51,9 @@ public abstract class BaseSwitchFunctionHookItem extends BaseHookItem {
      * 在开关状态切换前调用,用于确认是否允许切换
      *
      * @param newState 即将切换到的新状态 (true: 启用, false: 禁用)
-     * @param context 上下文对象,可用于显示对话框等UI操作
+     * @param context  上下文对象,可用于显示对话框等UI操作
      * @return true: 允许切换, false: 取消切换
-     *
+     * <p>
      * 默认返回 true
      */
     public boolean onBeforeToggle(boolean newState, Context context) {
@@ -105,7 +105,7 @@ public abstract class BaseSwitchFunctionHookItem extends BaseHookItem {
     }
 
     public boolean configIsEnable() {
-        return WeConfig.getDefaultConfig().getBooleanOrFalse(Constants.PrekXXX+this.getPath());
+        return WeConfig.getDefaultConfig().getBooleanOrFalse(Constants.PrekXXX + this.getPath());
     }
 
 }

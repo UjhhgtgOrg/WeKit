@@ -11,7 +11,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
-import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -72,26 +71,26 @@ public class ActivityProxyHooks {
         }
         try {
             // 获取 ActivityThread 实例
-            Class<?> clazz_ActivityThread = Class.forName("android.app.ActivityThread");
-            Method currentActivityThread = clazz_ActivityThread.getDeclaredMethod("currentActivityThread");
+            var clazz_ActivityThread = Class.forName("android.app.ActivityThread");
+            var currentActivityThread = clazz_ActivityThread.getDeclaredMethod("currentActivityThread");
             currentActivityThread.setAccessible(true);
-            Object sCurrentActivityThread = currentActivityThread.invoke(null);
+            var sCurrentActivityThread = currentActivityThread.invoke(null);
 
             // Hook Instrumentation
-            Field mInstrumentation = clazz_ActivityThread.getDeclaredField("mInstrumentation");
+            var mInstrumentation = clazz_ActivityThread.getDeclaredField("mInstrumentation");
             mInstrumentation.setAccessible(true);
-            Instrumentation instrumentation = (Instrumentation) mInstrumentation.get(sCurrentActivityThread);
+            var instrumentation = (Instrumentation) mInstrumentation.get(sCurrentActivityThread);
             if (!(instrumentation instanceof ProxyInstrumentation)) {
                 mInstrumentation.set(sCurrentActivityThread, new ProxyInstrumentation(instrumentation));
             }
 
             // Hook Handler (mH)
-            Field field_mH = clazz_ActivityThread.getDeclaredField("mH");
+            var field_mH = clazz_ActivityThread.getDeclaredField("mH");
             field_mH.setAccessible(true);
-            Handler oriHandler = (Handler) field_mH.get(sCurrentActivityThread);
-            Field field_mCallback = Handler.class.getDeclaredField("mCallback");
+            var oriHandler = (Handler) field_mH.get(sCurrentActivityThread);
+            var field_mCallback = Handler.class.getDeclaredField("mCallback");
             field_mCallback.setAccessible(true);
-            Handler.Callback current = (Handler.Callback) field_mCallback.get(oriHandler);
+            var current = (Handler.Callback) field_mCallback.get(oriHandler);
             if (current == null || !current.getClass().getName().equals(ProxyHandlerCallback.class.getName())) {
                 field_mCallback.set(oriHandler, new ProxyHandlerCallback(current));
             }
@@ -122,27 +121,28 @@ public class ActivityProxyHooks {
             gDefaultField = activityManagerClass.getDeclaredField("IActivityManagerSingleton");
         }
         gDefaultField.setAccessible(true);
-        Object gDefault = gDefaultField.get(null);
+        var gDefault = gDefaultField.get(null);
 
-        Class<?> singletonClass = Class.forName("android.util.Singleton");
+        var singletonClass = Class.forName("android.util.Singleton");
 
-        Field mInstanceField = singletonClass.getDeclaredField("mInstance");
+        var mInstanceField = singletonClass.getDeclaredField("mInstance");
         mInstanceField.setAccessible(true);
 
         try {
-            Method getMethod = singletonClass.getDeclaredMethod("get");
+            var getMethod = singletonClass.getDeclaredMethod("get");
             getMethod.setAccessible(true);
             getMethod.invoke(gDefault);
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
 
-        Object mInstance = mInstanceField.get(gDefault);
+        var mInstance = mInstanceField.get(gDefault);
         if (mInstance == null) {
             WeLogger.e("ActivityProxyHooks", "IActivityManager instance is null, abort hook.");
             return;
         }
 
         // 创建 IActivityManager 代理
-        Object amProxy = Proxy.newProxyInstance(
+        var amProxy = Proxy.newProxyInstance(
                 ActivityProxyHooks.class.getClassLoader(),
                 new Class[]{Class.forName("android.app.IActivityManager")},
                 new IActivityManagerHandler(mInstance));
@@ -150,17 +150,17 @@ public class ActivityProxyHooks {
 
         // 兼容 Android 10+ (Q) 的 ActivityTaskManager
         try {
-            Class<?> activityTaskManagerClass = Class.forName("android.app.ActivityTaskManager");
-            Field fIActivityTaskManagerSingleton = activityTaskManagerClass.getDeclaredField("IActivityTaskManagerSingleton");
+            var activityTaskManagerClass = Class.forName("android.app.ActivityTaskManager");
+            var fIActivityTaskManagerSingleton = activityTaskManagerClass.getDeclaredField("IActivityTaskManagerSingleton");
             fIActivityTaskManagerSingleton.setAccessible(true);
-            Object singleton = fIActivityTaskManagerSingleton.get(null);
+            var singleton = fIActivityTaskManagerSingleton.get(null);
 
             // 触发 Singleton 加载
             singletonClass.getMethod("get").invoke(singleton);
 
-            Object mDefaultTaskMgr = mInstanceField.get(singleton);
+            var mDefaultTaskMgr = mInstanceField.get(singleton);
             if (mDefaultTaskMgr != null) {
-                Object proxy2 = Proxy.newProxyInstance(
+                var proxy2 = Proxy.newProxyInstance(
                         ActivityProxyHooks.class.getClassLoader(),
                         new Class[]{Class.forName("android.app.IActivityTaskManager")},
                         new IActivityManagerHandler(mDefaultTaskMgr));
@@ -173,18 +173,18 @@ public class ActivityProxyHooks {
 
     private static void hookPackageManager(Context ctx, Object sCurrentActivityThread, Class<?> clazz_ActivityThread) {
         try {
-            Field sPackageManagerField = clazz_ActivityThread.getDeclaredField("sPackageManager");
+            var sPackageManagerField = clazz_ActivityThread.getDeclaredField("sPackageManager");
             sPackageManagerField.setAccessible(true);
-            Object packageManagerImpl = sPackageManagerField.get(sCurrentActivityThread);
+            var packageManagerImpl = sPackageManagerField.get(sCurrentActivityThread);
 
-            Class<?> iPackageManagerInterface = Class.forName("android.content.pm.IPackageManager");
+            var iPackageManagerInterface = Class.forName("android.content.pm.IPackageManager");
 
             // 既替换 ActivityThread 中的缓存，也替换 Application Context 中的缓存
-            PackageManager pm = ctx.getPackageManager();
-            Field mPmField = pm.getClass().getDeclaredField("mPM");
+            var pm = ctx.getPackageManager();
+            var mPmField = pm.getClass().getDeclaredField("mPM");
             mPmField.setAccessible(true);
 
-            Object pmProxy = Proxy.newProxyInstance(
+            var pmProxy = Proxy.newProxyInstance(
                     iPackageManagerInterface.getClassLoader(),
                     new Class[]{iPackageManagerInterface},
                     new PackageManagerInvocationHandler(packageManagerImpl));
@@ -208,18 +208,17 @@ public class ActivityProxyHooks {
 
         @Override
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-            String name = method.getName();
+            var name = method.getName();
 
             // 拦截 startActivity 以及 startActivities (Intent[])
             if (name.startsWith("startActivity") || name.startsWith("startActivities")) {
-                for (int i = 0; i < args.length; i++) {
+                for (var i = 0; i < args.length; i++) {
                     if (args[i] instanceof Intent raw) {
                         if (shouldProxy(raw)) {
                             args[i] = createTokenWrapper(raw);
                         }
-                    }
-                    else if (args[i] instanceof Intent[] rawIntents) {
-                        for (int j = 0; j < rawIntents.length; j++) {
+                    } else if (args[i] instanceof Intent[] rawIntents) {
+                        for (var j = 0; j < rawIntents.length; j++) {
                             if (shouldProxy(rawIntents[j])) {
                                 rawIntents[j] = createTokenWrapper(rawIntents[j]);
                             }
@@ -240,7 +239,7 @@ public class ActivityProxyHooks {
          */
         private boolean shouldProxy(Intent intent) {
             if (intent == null) return false;
-            ComponentName component = intent.getComponent();
+            var component = intent.getComponent();
             // 检查 Component 是否存在且属于模块包名
             return component != null && ActProxyMgr.isModuleProxyActivity(component.getClassName());
         }
@@ -251,9 +250,9 @@ public class ActivityProxyHooks {
          */
         private Intent createTokenWrapper(Intent raw) {
             // 将原始 Intent 存入静态缓存，获取 Token
-            String token = IntentTokenCache.put(new Intent(raw));
+            var token = IntentTokenCache.put(new Intent(raw));
 
-            Intent wrapper = new Intent();
+            var wrapper = new Intent();
             wrapper.setComponent(new ComponentName(PackageConstants.PACKAGE_NAME_WECHAT, ActProxyMgr.STUB_DEFAULT_ACTIVITY));
             wrapper.setFlags(raw.getFlags());
             wrapper.setAction(raw.getAction());
@@ -261,14 +260,14 @@ public class ActivityProxyHooks {
 
             // 复制 Categories
             if (raw.getCategories() != null) {
-                for (String cat : raw.getCategories()) {
+                for (var cat : raw.getCategories()) {
                     wrapper.addCategory(cat);
                 }
             }
             wrapper.putExtra(ActProxyMgr.ACTIVITY_PROXY_INTENT_TOKEN, token);
 
             // 强制设置 HybridClassLoader，避免序列化问题
-            ClassLoader hybridCL = ParcelableFixer.getHybridClassLoader();
+            var hybridCL = ParcelableFixer.getHybridClassLoader();
             if (hybridCL != null) {
                 wrapper.setExtrasClassLoader(hybridCL);
             }
@@ -301,7 +300,7 @@ public class ActivityProxyHooks {
                 handleExecuteTransaction(msg);
             }
 
-            boolean handledByNext = false;
+            var handledByNext = false;
             if (mNextCallbackHook != null) {
                 try {
                     handledByNext = mNextCallbackHook.handleMessage(msg);
@@ -320,21 +319,21 @@ public class ActivityProxyHooks {
             if (wrapper == null) return null;
 
             // 先修复 wrapper 的 ClassLoader，防止读取 token 时报错
-            ClassLoader hybridCL = ParcelableFixer.getHybridClassLoader();
+            var hybridCL = ParcelableFixer.getHybridClassLoader();
             if (hybridCL != null) {
                 wrapper.setExtrasClassLoader(hybridCL);
             }
 
             // 尝试读取 Token
             if (wrapper.hasExtra(ActProxyMgr.ACTIVITY_PROXY_INTENT_TOKEN)) {
-                String token = wrapper.getStringExtra(ActProxyMgr.ACTIVITY_PROXY_INTENT_TOKEN);
-                Intent realIntent = IntentTokenCache.getAndRemove(token); // 取回并移除
+                var token = wrapper.getStringExtra(ActProxyMgr.ACTIVITY_PROXY_INTENT_TOKEN);
+                var realIntent = IntentTokenCache.getAndRemove(token); // 取回并移除
 
                 if (realIntent != null) {
                     // 修复真实 Intent 的 ClassLoader
                     if (hybridCL != null) {
                         realIntent.setExtrasClassLoader(hybridCL);
-                        Bundle extras = realIntent.getExtras();
+                        var extras = realIntent.getExtras();
                         if (extras != null) {
                             extras.setClassLoader(hybridCL);
                         }
@@ -349,12 +348,12 @@ public class ActivityProxyHooks {
 
         private void handleLaunchActivity(Message msg) {
             try {
-                Object record = msg.obj;
-                Field intentField = record.getClass().getDeclaredField("intent");
+                var record = msg.obj;
+                var intentField = record.getClass().getDeclaredField("intent");
                 intentField.setAccessible(true);
-                Intent wrapper = (Intent) intentField.get(record);
+                var wrapper = (Intent) intentField.get(record);
 
-                Intent real = unwrapIntent(wrapper);
+                var real = unwrapIntent(wrapper);
                 if (real != null) {
                     intentField.set(record, real);
                 }
@@ -365,18 +364,18 @@ public class ActivityProxyHooks {
 
         private void handleExecuteTransaction(Message msg) {
             try {
-                Object transaction = msg.obj;
-                Method getCallbacks = transaction.getClass().getDeclaredMethod("getCallbacks");
+                var transaction = msg.obj;
+                var getCallbacks = transaction.getClass().getDeclaredMethod("getCallbacks");
                 getCallbacks.setAccessible(true);
-                List<?> callbacks = (List<?>) getCallbacks.invoke(transaction);
+                var callbacks = (List<?>) getCallbacks.invoke(transaction);
                 if (callbacks != null) {
-                    for (Object item : callbacks) {
+                    for (var item : callbacks) {
                         if (item.getClass().getName().contains("LaunchActivityItem")) {
-                            Field intentField = item.getClass().getDeclaredField("mIntent");
+                            var intentField = item.getClass().getDeclaredField("mIntent");
                             intentField.setAccessible(true);
-                            Intent wrapper = (Intent) intentField.get(item);
+                            var wrapper = (Intent) intentField.get(item);
 
-                            Intent real = unwrapIntent(wrapper);
+                            var real = unwrapIntent(wrapper);
                             if (real != null) {
                                 intentField.set(item, real);
                             }
@@ -405,16 +404,16 @@ public class ActivityProxyHooks {
          */
         private Intent tryRecoverIntent(Intent intent) {
             if (intent != null && intent.hasExtra(ActProxyMgr.ACTIVITY_PROXY_INTENT_TOKEN)) {
-                ClassLoader hybridCL = ParcelableFixer.getHybridClassLoader();
+                var hybridCL = ParcelableFixer.getHybridClassLoader();
                 if (hybridCL != null) intent.setExtrasClassLoader(hybridCL);
 
-                String token = intent.getStringExtra(ActProxyMgr.ACTIVITY_PROXY_INTENT_TOKEN);
-                Intent real = IntentTokenCache.getAndRemove(token);
+                var token = intent.getStringExtra(ActProxyMgr.ACTIVITY_PROXY_INTENT_TOKEN);
+                var real = IntentTokenCache.getAndRemove(token);
 
                 if (real != null) {
                     if (hybridCL != null) {
                         real.setExtrasClassLoader(hybridCL);
-                        Bundle extras = real.getExtras();
+                        var extras = real.getExtras();
                         if (extras != null) extras.setClassLoader(hybridCL);
                     }
                     return real;
@@ -433,7 +432,7 @@ public class ActivityProxyHooks {
                 throws InstantiationException, IllegalAccessException, ClassNotFoundException {
 
             // 兜底：如果 intent 仍然是 stub 的 wrapper，尝试还原
-            Intent recovered = tryRecoverIntent(intent);
+            var recovered = tryRecoverIntent(intent);
             if (recovered != null && recovered.getComponent() != null) {
                 intent = recovered;
                 className = recovered.getComponent().getClassName();
@@ -444,7 +443,7 @@ public class ActivityProxyHooks {
                 return mBase.newActivity(cl, className, intent);
             } catch (ClassNotFoundException e) {
                 if (ActProxyMgr.isModuleProxyActivity(className)) {
-                    ClassLoader moduleCL = Objects.requireNonNull(getClass().getClassLoader());
+                    var moduleCL = Objects.requireNonNull(getClass().getClassLoader());
                     return (Activity) moduleCL.loadClass(className).newInstance();
                 }
                 throw e;
@@ -463,23 +462,24 @@ public class ActivityProxyHooks {
                     "callActivityOnCreate: " + activity.getClass().getName() +
                             " isModule=" + ActProxyMgr.isModuleProxyActivity(activity.getClass().getName()));
 
-            boolean isModuleAct = ActProxyMgr.isModuleProxyActivity(activity.getClass().getName());
+            var isModuleAct = ActProxyMgr.isModuleProxyActivity(activity.getClass().getName());
 
             if (isModuleAct) {
                 checkAndInjectResources(activity);
 
-                ClassLoader hybridCL = ParcelableFixer.getHybridClassLoader();
+                var hybridCL = ParcelableFixer.getHybridClassLoader();
                 if (hybridCL != null) {
                     try {
-                        Field f = Activity.class.getDeclaredField("mClassLoader");
+                        var f = Activity.class.getDeclaredField("mClassLoader");
                         f.setAccessible(true);
                         f.set(activity, hybridCL);
-                    } catch (Throwable ignored) {}
+                    } catch (Throwable ignored) {
+                    }
 
-                    Intent intent = activity.getIntent();
+                    var intent = activity.getIntent();
                     if (intent != null) {
                         intent.setExtrasClassLoader(hybridCL);
-                        Bundle ex = intent.getExtras();
+                        var ex = intent.getExtras();
                         if (ex != null) ex.setClassLoader(hybridCL);
                     }
                 }
@@ -827,10 +827,10 @@ public class ActivityProxyHooks {
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
             if ("getActivityInfo".equals(method.getName())) {
                 ComponentName component = null;
-                int flags = 0;
-                boolean flagsFound = false;
+                var flags = 0;
+                var flagsFound = false;
 
-                for (Object arg : args) {
+                for (var arg : args) {
                     if (arg instanceof ComponentName) {
                         component = (ComponentName) arg;
                     } else if (arg instanceof Long) {
@@ -859,7 +859,7 @@ public class ActivityProxyHooks {
      */
     public static class CounterfeitActivityInfoFactory {
         public static ActivityInfo makeProxyActivityInfo(String className, int flags) {
-            ActivityInfo ai = new ActivityInfo();
+            var ai = new ActivityInfo();
             ai.name = className;
             ai.packageName = PackageConstants.PACKAGE_NAME_WECHAT; // 必须假装是宿主的包名
             ai.enabled = true;
@@ -887,7 +887,11 @@ public class ActivityProxyHooks {
         private static class Entry {
             Intent intent;
             long timestamp;
-            Entry(Intent i) { intent = i; timestamp = System.currentTimeMillis(); }
+
+            Entry(Intent i) {
+                intent = i;
+                timestamp = System.currentTimeMillis();
+            }
         }
 
         private static final Map<String, Entry> sCache = new ConcurrentHashMap<>();
@@ -896,17 +900,17 @@ public class ActivityProxyHooks {
         static String put(Intent intent) {
             cleanup();
 
-            String token = UUID.randomUUID().toString();
+            var token = UUID.randomUUID().toString();
             sCache.put(token, new Entry(intent));
             return token;
         }
 
         static Intent getAndRemove(String token) {
             if (token == null) return null;
-            Entry entry = sCache.remove(token);
+            var entry = sCache.remove(token);
             if (entry == null) return null;
 
-            long now = System.currentTimeMillis();
+            var now = System.currentTimeMillis();
             if (now - entry.timestamp > EXPIRE_MS) {
                 return null;
             }
@@ -915,7 +919,7 @@ public class ActivityProxyHooks {
 
         static Intent peek(String token) {
             if (token == null) return null;
-            Entry entry = sCache.get(token);
+            var entry = sCache.get(token);
             if (entry == null) return null;
 
             if (isExpired(entry)) {
@@ -930,7 +934,7 @@ public class ActivityProxyHooks {
         }
 
         private static void cleanup() {
-            long now = System.currentTimeMillis();
+            var now = System.currentTimeMillis();
             sCache.entrySet().removeIf(stringEntryEntry -> now - stringEntryEntry.getValue().timestamp > EXPIRE_MS);
         }
     }

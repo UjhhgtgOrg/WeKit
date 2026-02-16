@@ -18,8 +18,18 @@ object WeApi {
         val sharedPreferences: SharedPreferences =
             HostInfo.getApplication().getSharedPreferences("com.tencent.mm_preferences", 0)
 
-        RuntimeConfig.setLogin_weixin_username(sharedPreferences.getString("login_weixin_username", ""))
-        RuntimeConfig.setLast_login_nick_name(sharedPreferences.getString("last_login_nick_name", ""))
+        RuntimeConfig.setLogin_weixin_username(
+            sharedPreferences.getString(
+                "login_weixin_username",
+                ""
+            )
+        )
+        RuntimeConfig.setLast_login_nick_name(
+            sharedPreferences.getString(
+                "last_login_nick_name",
+                ""
+            )
+        )
         RuntimeConfig.setLogin_user_name(sharedPreferences.getString("login_user_name", ""))
         RuntimeConfig.setLast_login_uin(sharedPreferences.getString("last_login_uin", "0"))
 
@@ -96,11 +106,20 @@ object MsgIdProvider {
     fun previewNextId(tableName: String): Long {
         return try {
             val mmkvClass = Class.forName("com.tencent.mmkv.MMKV")
-            val mmkvWithIDMethod = mmkvClass.getDeclaredMethod("mmkvWithID", String::class.java, Int::class.javaPrimitiveType)
+            val mmkvWithIDMethod = mmkvClass.getDeclaredMethod(
+                "mmkvWithID",
+                String::class.java,
+                Int::class.javaPrimitiveType
+            )
             val mmkvInstance = mmkvWithIDMethod.invoke(null, MMKV_FILE_ID, 2)
-            val decodeLongMethod = mmkvClass.getDeclaredMethod("decodeLong", String::class.java, Long::class.javaPrimitiveType)
+            val decodeLongMethod = mmkvClass.getDeclaredMethod(
+                "decodeLong",
+                String::class.java,
+                Long::class.javaPrimitiveType
+            )
 
-            val currentId = decodeLongMethod.invoke(mmkvInstance, "$KEY_PREFIX$tableName", 0L) as Long
+            val currentId =
+                decodeLongMethod.invoke(mmkvInstance, "$KEY_PREFIX$tableName", 0L) as Long
 
             if (currentId == 0L) {
                 getInitialId(tableName)
@@ -120,6 +139,7 @@ object MsgIdProvider {
                 90_000_000L -> 500_000_001L
                 else -> current + 1
             }
+
             "qmessage" -> if (current == 1_500_000L) 90_000_001L else current + 1
             "tmessage" -> if (current == 2_000_000L) 93_000_001L else current + 1
             "bottlemessage" -> if (current == 2_500_000L) 96_000_001L else current + 1

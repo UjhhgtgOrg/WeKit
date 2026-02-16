@@ -66,10 +66,10 @@ public class JavaCrashHandler implements Thread.UncaughtExceptionHandler {
             WeLogger.e("JavaCrashHandler", "========================================");
 
             // 收集崩溃信息
-            String crashInfo = CrashInfoCollector.collectCrashInfo(context, throwable, "JAVA");
+            var crashInfo = CrashInfoCollector.collectCrashInfo(context, throwable, "JAVA");
 
             // 保存崩溃日志（标记为Java崩溃）
-            String logPath = crashLogManager.saveCrashLog(crashInfo, true);
+            var logPath = crashLogManager.saveCrashLog(crashInfo, true);
             if (logPath != null) {
                 WeLogger.i("JavaCrashHandler", "Java crash log saved to: " + logPath);
             } else {

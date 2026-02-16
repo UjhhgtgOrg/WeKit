@@ -24,7 +24,9 @@ import moe.ouom.wekit.util.script.ScriptEvalManager
 import moe.ouom.wekit.util.script.ScriptFileManager
 import org.json.JSONObject
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
+import java.util.Locale
+import java.util.UUID
 
 /**
  * 脚本配置管理器Hook项（包含对话框）
@@ -325,7 +327,8 @@ class ScriptConfigHookItem : BaseClickableFunctionHookItem(), IWePkgInterceptor 
          * 复制完整的脚本信息
          */
         private fun copyFullScriptInfo(script: ScriptFileManager.ScriptConfig) {
-            val contentEncoded = Base64.encodeToString(script.content.toByteArray(Charsets.UTF_8), Base64.DEFAULT)
+            val contentEncoded =
+                Base64.encodeToString(script.content.toByteArray(Charsets.UTF_8), Base64.DEFAULT)
             val jsonObject = JSONObject().apply {
                 put("name", script.name)
                 put("id", script.id)
@@ -542,7 +545,8 @@ class ScriptConfigHookItem : BaseClickableFunctionHookItem(), IWePkgInterceptor 
         private fun executeTestScript(script: ScriptFileManager.ScriptConfig, jsCode: String) {
             val wrappedContext = CommonContextWrapper.createAppCompatContext(context)
 
-            val result = scriptEvalManager.testExecuteCode(script.content, jsCode, "${script.name}+测试脚本")
+            val result =
+                scriptEvalManager.testExecuteCode(script.content, jsCode, "${script.name}+测试脚本")
             MaterialDialog(wrappedContext)
                 .title(text = "执行结果")
                 .message(text = result ?: "执行失败或无返回值")
@@ -617,7 +621,8 @@ class ScriptConfigHookItem : BaseClickableFunctionHookItem(), IWePkgInterceptor 
 
         private fun importFromClipboard() {
             try {
-                val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
+                val clipboard =
+                    context.getSystemService(Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
                 val clipData = clipboard?.primaryClip
 
                 if (clipData != null && clipData.itemCount > 0) {
@@ -674,7 +679,10 @@ class ScriptConfigHookItem : BaseClickableFunctionHookItem(), IWePkgInterceptor 
                             renderScriptList()
                             showToast(context, "已从剪贴板导入脚本")
                         } else {
-                            showToast(context, "剪贴板内容格式不正确，缺少必要字段(name, id, description, content)")
+                            showToast(
+                                context,
+                                "剪贴板内容格式不正确，缺少必要字段(name, id, description, content)"
+                            )
                         }
                     } else {
                         showToast(context, "剪贴板内容为空")
@@ -789,7 +797,8 @@ class ScriptConfigHookItem : BaseClickableFunctionHookItem(), IWePkgInterceptor 
 
         private fun copyToClipboard(label: String, text: String) {
             try {
-                val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
+                val clipboard =
+                    context.getSystemService(Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
                 val clip = android.content.ClipData.newPlainText(label, text)
                 clipboard?.setPrimaryClip(clip)
             } catch (e: Exception) {

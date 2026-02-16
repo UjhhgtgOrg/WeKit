@@ -45,7 +45,7 @@ public final class RemotePreferences implements SharedPreferences {
 
     @Nullable
     static RemotePreferences newInstance(XposedService service, String group) throws RemoteException {
-        Bundle output = service.getRaw().requestRemotePreferences(group);
+        var output = service.getRaw().requestRemotePreferences(group);
         if (output == null) return null;
         var prefs = new RemotePreferences(service, group);
         if (output.containsKey("map")) {

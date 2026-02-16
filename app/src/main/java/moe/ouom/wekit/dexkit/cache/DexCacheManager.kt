@@ -47,12 +47,19 @@ object DexCacheManager {
         if (versionFile.exists()) {
             val cachedVersion = versionFile.readText().trim()
             if (cachedVersion != hostVersion) {
-                WeLogger.i("DexCacheManager", "Host version changed: $cachedVersion -> $hostVersion, clearing all cache")
+                WeLogger.i(
+                    "DexCacheManager",
+                    "Host version changed: $cachedVersion -> $hostVersion, clearing all cache"
+                )
                 clearAllCache()
 
                 // 重置"禁用版本适配"配置，确保新版本能够正常适配
-                WeConfig.getDefaultConfig().putBoolean(Constants.PrekDisableVersionAdaptation, false)
-                WeLogger.i("DexCacheManager", "Reset disable_version_adaptation to false due to version change")
+                WeConfig.getDefaultConfig()
+                    .putBoolean(Constants.PrekDisableVersionAdaptation, false)
+                WeLogger.i(
+                    "DexCacheManager",
+                    "Reset disable_version_adaptation to false due to version change"
+                )
             }
         }
 
@@ -119,14 +126,20 @@ object DexCacheManager {
             for (key in dataKeys) {
                 val value = json.optString(key, "")
                 if (value.isEmpty() || value == "null") {
-                    WeLogger.d("DexCacheManager", "Cache has invalid data for key: $key in ${item.path}")
+                    WeLogger.d(
+                        "DexCacheManager",
+                        "Cache has invalid data for key: $key in ${item.path}"
+                    )
                     hasInvalidData = true
                     break
                 }
             }
 
             if (hasInvalidData) {
-                WeLogger.d("DexCacheManager", "Cache data incomplete for: ${item.path}, need rescan")
+                WeLogger.d(
+                    "DexCacheManager",
+                    "Cache data incomplete for: ${item.path}, need rescan"
+                )
                 return false
             }
 
@@ -155,8 +168,12 @@ object DexCacheManager {
             }
 
             // 降级方案：使用方法签名（当编译时hash不可用时）
-            WeLogger.w("DexCacheManager", "No generated hash for $className, using method signature fallback")
-            val method = clazz.getDeclaredMethod("dexFind", org.luckypray.dexkit.DexKitBridge::class.java)
+            WeLogger.w(
+                "DexCacheManager",
+                "No generated hash for $className, using method signature fallback"
+            )
+            val method =
+                clazz.getDeclaredMethod("dexFind", org.luckypray.dexkit.DexKitBridge::class.java)
             val signature = buildString {
                 append(method.declaringClass.name)
                 append("::")

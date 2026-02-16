@@ -10,13 +10,12 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 
-import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
 import moe.ouom.wekit.BuildConfig;
-import moe.ouom.wekit.util.common.CheckUtils;
 import moe.ouom.wekit.loader.hookapi.IClassLoaderHelper;
 import moe.ouom.wekit.loader.hookapi.IHookBridge;
 import moe.ouom.wekit.loader.hookapi.ILoaderService;
+import moe.ouom.wekit.util.common.CheckUtils;
 
 public class Xp51HookImpl implements IHookBridge, ILoaderService {
 
@@ -55,8 +54,8 @@ public class Xp51HookImpl implements IHookBridge, ILoaderService {
         if (!(member instanceof Method) && !(member instanceof Constructor)) {
             throw new IllegalArgumentException("member must be method or constructor");
         }
-        Xp51HookWrapper.Xp51HookCallback cb = new Xp51HookWrapper.Xp51HookCallback(callback, priority);
-        XC_MethodHook.Unhook unhook = XposedBridge.hookMethod(member, cb);
+        var cb = new Xp51HookWrapper.Xp51HookCallback(callback, priority);
+        var unhook = XposedBridge.hookMethod(member, cb);
         if (unhook == null) {
             throw new UnsupportedOperationException("XposedBridge.hookMethod return null for member: " + member);
         }
@@ -83,7 +82,7 @@ public class Xp51HookImpl implements IHookBridge, ILoaderService {
     @NonNull
     @Override
     public <T> T newInstanceOrigin(@NonNull Constructor<T> constructor, @NonNull Object... args)
-            throws InvocationTargetException, IllegalArgumentException, IllegalAccessException, InstantiationException {
+            throws IllegalArgumentException {
         // TODO: 2024-07-22 allocate instance
         throw new UnsupportedOperationException("allocate instance is not supported");
     }

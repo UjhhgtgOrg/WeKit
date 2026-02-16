@@ -39,7 +39,6 @@ import java.util.Objects;
 import java.util.Set;
 
 import moe.ouom.wekit.dexkit.DexMethodDescriptor;
-import moe.ouom.wekit.loader.hookapi.ILoaderService;
 import moe.ouom.wekit.loader.startup.StartupInfo;
 import moe.ouom.wekit.util.io.IoUtils;
 
@@ -53,7 +52,7 @@ public class LibXposedNewApiByteCodeGenerator {
     }
 
     public static void init() {
-        ILoaderService loader = StartupInfo.getLoaderService();
+        var loader = StartupInfo.getLoaderService();
         Method call;
         try {
             call = LibXposedNewApiByteCodeGenerator.class.getMethod("call", int.class, Object[].class);
@@ -102,44 +101,44 @@ public class LibXposedNewApiByteCodeGenerator {
         Objects.requireNonNull(targetClassName, "targetClassName");
         Objects.requireNonNull(tagValue, "tagValue");
         Objects.requireNonNull(classNameXposedInterfaceHooker, "classNameXposedInterfaceHooker");
-        String typeTargetClass = classNameToDescriptor(targetClassName);
-        String typeXposedInterfaceHooker = classNameToDescriptor(classNameXposedInterfaceHooker);
-        String typeBeforeHookCallback = classNameToDescriptor(classBeforeHookCallback);
-        String typeAfterHookCallback = classNameToDescriptor(classAfterHookCallback);
+        var typeTargetClass = classNameToDescriptor(targetClassName);
+        var typeXposedInterfaceHooker = classNameToDescriptor(classNameXposedInterfaceHooker);
+        var typeBeforeHookCallback = classNameToDescriptor(classBeforeHookCallback);
+        var typeAfterHookCallback = classNameToDescriptor(classAfterHookCallback);
         //.field public static final tag:I = 0x32
-        ImmutableField tagField = new ImmutableField(
+        var tagField = new ImmutableField(
                 typeTargetClass, "tag", "I",
                 Modifier.PUBLIC | Modifier.STATIC | Modifier.FINAL,
                 (EncodedValue) new ImmutableIntEncodedValue(tagValue),
                 null, null
         );
 
-        ArrayList<ImmutableMethod> methods = new ArrayList<>();
+        var methods = new ArrayList<ImmutableMethod>();
         {
-            ArrayList<Instruction> insCtor = new ArrayList<>();
+            var insCtor = new ArrayList<Instruction>();
             // invoke-direct {p0}, Ljava/lang/Object;-><init>()V
             insCtor.add(new ImmutableInstruction35c(Opcode.INVOKE_DIRECT, 1, 0, 0, 0, 0, 0,
                     referenceMethod("Ljava/lang/Object;", "<init>", "()V")));
             // return-void
             insCtor.add(new ImmutableInstruction10x(Opcode.RETURN_VOID));
-            ImmutableMethodImplementation ctorMethodImpl = new ImmutableMethodImplementation(1, insCtor, null, null);
-            ImmutableMethod ctorMethod = new ImmutableMethod(typeTargetClass, "<init>", List.of(),
+            var ctorMethodImpl = new ImmutableMethodImplementation(1, insCtor, null, null);
+            var ctorMethod = new ImmutableMethod(typeTargetClass, "<init>", List.of(),
                     "V", Modifier.PUBLIC | ACC_CONSTRUCTOR, null, null, ctorMethodImpl);
             methods.add(ctorMethod);
         }
-        String typeInvocationParamWrapper = "Lmoe/ouom/wekit/loader/modern/Lsp100HookWrapper$InvocationParamWrapper;";
-        String typeLsp100HookAgent = "Lmoe/ouom/wekit/loader/modern/Lsp100HookWrapper$Lsp100HookAgent;";
+        var typeInvocationParamWrapper = "Lmoe/ouom/wekit/loader/modern/Lsp100HookWrapper$InvocationParamWrapper;";
+        var typeLsp100HookAgent = "Lmoe/ouom/wekit/loader/modern/Lsp100HookWrapper$Lsp100HookAgent;";
         {
             Set<ImmutableAnnotation> annotations = null;
             if (classNameBeforeInvocation != null) {
-                ImmutableAnnotation annotation = new ImmutableAnnotation(
+                var annotation = new ImmutableAnnotation(
                         AnnotationVisibility.RUNTIME,
                         classNameToDescriptor(classNameBeforeInvocation),
                         (Collection<? extends AnnotationElement>) null
                 );
                 annotations = Set.of(annotation);
             }
-            ArrayList<Instruction> insBefore = new ArrayList<>();
+            var insBefore = new ArrayList<Instruction>();
             insBefore.add(new ImmutableInstruction31i(Opcode.CONST, 0, tagValue));
             insBefore.add(new ImmutableInstruction35c(Opcode.INVOKE_STATIC, 2, 1, 0, 0, 0, 0,
                     new ImmutableMethodReference(typeLsp100HookAgent, "handleBeforeHookedMethod",
@@ -147,8 +146,8 @@ public class LibXposedNewApiByteCodeGenerator {
 
             insBefore.add(new ImmutableInstruction11x(Opcode.MOVE_RESULT_OBJECT, 0));
             insBefore.add(new ImmutableInstruction11x(Opcode.RETURN_OBJECT, 0));
-            ImmutableMethodImplementation beforeMethodImpl = new ImmutableMethodImplementation(2, insBefore, null, null);
-            ImmutableMethod beforeMethod = new ImmutableMethod(typeTargetClass, "before", List.of(
+            var beforeMethodImpl = new ImmutableMethodImplementation(2, insBefore, null, null);
+            var beforeMethod = new ImmutableMethod(typeTargetClass, "before", List.of(
                     new ImmutableMethodParameter(typeBeforeHookCallback, (Set<? extends Annotation>) null, "c")
             ), typeInvocationParamWrapper, Modifier.PUBLIC | Modifier.STATIC, annotations, null, beforeMethodImpl);
             methods.add(beforeMethod);
@@ -157,22 +156,22 @@ public class LibXposedNewApiByteCodeGenerator {
             // check if we need an annotation
             Set<ImmutableAnnotation> annotations = null;
             if (classNameAfterInvocation != null) {
-                ImmutableAnnotation annotation = new ImmutableAnnotation(
+                var annotation = new ImmutableAnnotation(
                         AnnotationVisibility.RUNTIME,
                         classNameToDescriptor(classNameAfterInvocation),
                         (Collection<? extends AnnotationElement>) null
                 );
                 annotations = Set.of(annotation);
             }
-            ArrayList<Instruction> insAfter = new ArrayList<>();
+            var insAfter = new ArrayList<Instruction>();
             insAfter.add(new ImmutableInstruction31i(Opcode.CONST, 0, tagValue));
             insAfter.add(new ImmutableInstruction35c(Opcode.INVOKE_STATIC, 3, 1, 2, 0, 0, 0,
                     new ImmutableMethodReference(typeLsp100HookAgent, "handleAfterHookedMethod",
                             List.of(typeAfterHookCallback, typeInvocationParamWrapper, "I"), "V")));
             // return-void
             insAfter.add(new ImmutableInstruction10x(Opcode.RETURN_VOID));
-            ImmutableMethodImplementation afterMethodImpl = new ImmutableMethodImplementation(3, insAfter, null, null);
-            ImmutableMethod afterMethod = new ImmutableMethod(typeTargetClass, "after", List.of(
+            var afterMethodImpl = new ImmutableMethodImplementation(3, insAfter, null, null);
+            var afterMethod = new ImmutableMethod(typeTargetClass, "after", List.of(
                     new ImmutableMethodParameter(typeAfterHookCallback, (Set<? extends Annotation>) null, "c"),
                     new ImmutableMethodParameter(typeInvocationParamWrapper, (Set<? extends Annotation>) null, "p")
             ), "V", Modifier.PUBLIC | Modifier.STATIC, annotations, null, afterMethodImpl);
@@ -185,7 +184,7 @@ public class LibXposedNewApiByteCodeGenerator {
             // check if we need an annotation
             Set<ImmutableAnnotation> annotations = null;
             if (classNameXposedHooker != null) {
-                ImmutableAnnotation annotation = new ImmutableAnnotation(
+                var annotation = new ImmutableAnnotation(
                         AnnotationVisibility.RUNTIME,
                         classNameToDescriptor(classNameXposedHooker),
                         (Collection<? extends AnnotationElement>) null
@@ -199,8 +198,8 @@ public class LibXposedNewApiByteCodeGenerator {
             proxyDex = new ImmutableDexFile(Opcodes.forDexVersion(35), Collections.singletonList(classDef));
         }
         // to bytes
-        MemoryDataStore memoryDataStore = new MemoryDataStore();
-        DexPool dexPool = new DexPool(proxyDex.getOpcodes());
+        var memoryDataStore = new MemoryDataStore();
+        var dexPool = new DexPool(proxyDex.getOpcodes());
         for (ClassDef classDef : proxyDex.getClasses()) {
             dexPool.internClass(classDef);
         }
@@ -209,7 +208,7 @@ public class LibXposedNewApiByteCodeGenerator {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        byte[] data = memoryDataStore.getData();
+        var data = memoryDataStore.getData();
         return data;
     }
 

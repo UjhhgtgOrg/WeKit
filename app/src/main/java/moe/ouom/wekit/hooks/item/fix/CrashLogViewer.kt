@@ -113,7 +113,14 @@ class CrashLogViewer : BaseClickableFunctionHookItem() {
      */
     private fun showCrashLogOptions(context: Context, logFile: File) {
         try {
-            val options = listOf("查看详情", "复制简易信息", "复制完整日志", "分享日志", "导出日志", "删除日志")
+            val options = listOf(
+                "查看详情",
+                "复制简易信息",
+                "复制完整日志",
+                "分享日志",
+                "导出日志",
+                "删除日志"
+            )
 
             Handler(Looper.getMainLooper()).post {
                 try {
@@ -132,6 +139,7 @@ class CrashLogViewer : BaseClickableFunctionHookItem() {
                                         copyTextToClipboard(context, summary, "崩溃简易信息")
                                         showToast(context, "简易信息已复制")
                                     }
+
                                     2 -> copyLogToClipboard(context, logFile)
                                     3 -> shareLog(context, logFile)
                                     4 -> exportLog(context, logFile)
@@ -171,7 +179,10 @@ class CrashLogViewer : BaseClickableFunctionHookItem() {
                 return
             }
 
-            WeLogger.i("CrashLogViewer", "Showing crash detail for: ${logFile.name}, size: ${crashInfo.length}")
+            WeLogger.i(
+                "CrashLogViewer",
+                "Showing crash detail for: ${logFile.name}, size: ${crashInfo.length}"
+            )
 
             Handler(Looper.getMainLooper()).post {
                 try {
@@ -216,7 +227,8 @@ class CrashLogViewer : BaseClickableFunctionHookItem() {
                 return
             }
 
-            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
+            val clipboard =
+                context.getSystemService(Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
             val clip = android.content.ClipData.newPlainText("Crash Log", crashInfo)
             clipboard?.setPrimaryClip(clip)
 
@@ -426,10 +438,12 @@ class CrashLogViewer : BaseClickableFunctionHookItem() {
                     line.startsWith("Crash Time:") || line.startsWith("Crash Type:") -> {
                         summary.append(line).append("\n")
                     }
+
                     line.contains("Exception Stack Trace") -> {
                         foundException = true
                         summary.append("\n异常信息:\n")
                     }
+
                     foundException -> {
                         if (line.trim().isNotEmpty() && !line.contains("====")) {
                             summary.append(line).append("\n")
@@ -452,7 +466,8 @@ class CrashLogViewer : BaseClickableFunctionHookItem() {
      */
     private fun copyTextToClipboard(context: Context, text: String, label: String = "Text") {
         try {
-            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
+            val clipboard =
+                context.getSystemService(Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
             val clip = android.content.ClipData.newPlainText(label, text)
             clipboard?.setPrimaryClip(clip)
             WeLogger.i("CrashLogViewer", "Text copied to clipboard: $label")

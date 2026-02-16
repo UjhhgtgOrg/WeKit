@@ -252,7 +252,8 @@ abstract class BaseRikkaDialog(
     ): View {
         val configKey = if (useFullKey) key else "${Constants.PrekXXX}$key"
 
-        val initialValue = WeConfig.getDefaultConfig().getString(configKey, defaultValue) ?: defaultValue
+        val initialValue =
+            WeConfig.getDefaultConfig().getString(configKey, defaultValue) ?: defaultValue
 
         val displaySummary = if (summaryFormatter != null) {
             summaryFormatter(initialValue)
@@ -265,7 +266,8 @@ abstract class BaseRikkaDialog(
             summary = displaySummary,
             iconName = iconName,
             onClick = { anchor, summaryView ->
-                val latestValue = WeConfig.getDefaultConfig().getString(configKey, defaultValue) ?: defaultValue
+                val latestValue =
+                    WeConfig.getDefaultConfig().getString(configKey, defaultValue) ?: defaultValue
 
                 showInputDialog(
                     key = configKey,
@@ -594,7 +596,10 @@ abstract class BaseRikkaDialog(
                 override fun onAnimationRepeat(a: android.view.animation.Animation?) {}
                 override fun onAnimationEnd(a: android.view.animation.Animation?) {
                     rootView.post {
-                        try { super@BaseRikkaDialog.dismiss() } catch (_: Exception) {}
+                        try {
+                            super@BaseRikkaDialog.dismiss()
+                        } catch (_: Exception) {
+                        }
                     }
                 }
             })

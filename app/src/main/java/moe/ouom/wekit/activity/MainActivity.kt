@@ -5,7 +5,17 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -13,8 +23,30 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.surfaceColorAtElevation
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -32,9 +64,9 @@ import moe.ouom.wekit.host.HostInfo
 import moe.ouom.wekit.ui.theme.WekitTheme
 import moe.ouom.wekit.util.common.CheckAbiVariantModel
 import moe.ouom.wekit.util.common.Utils
-import moe.ouom.wekit.util.hookstatus.HookStatus
 import moe.ouom.wekit.util.getEnable
 import moe.ouom.wekit.util.hookstatus.AbiUtils
+import moe.ouom.wekit.util.hookstatus.HookStatus
 import moe.ouom.wekit.util.setEnable
 
 class MainActivity : ComponentActivity() {
@@ -44,7 +76,10 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         // 初始化 HookStatus
-        try { HookStatus.init(this) } catch (_: Exception) {}
+        try {
+            HookStatus.init(this)
+        } catch (_: Exception) {
+        }
 
         setContent {
             WekitTheme {
@@ -61,7 +96,7 @@ class MainActivity : ComponentActivity() {
 
 // SystemUiController 实现
 @Composable
-fun RememberSystemUiController(window: android.view.Window): Unit {
+fun RememberSystemUiController(window: android.view.Window) {
     val isDark = androidx.compose.foundation.isSystemInDarkTheme()
     DisposableEffect(isDark) {
         WindowCompat.setDecorFitsSystemWindows(window, false)
@@ -88,7 +123,12 @@ fun MainScreen(activity: MainActivity, onUrlClick: (String) -> Unit) {
     var showAboutDialog by remember { mutableStateOf(false) }
 
     var isLauncherIconEnabled by remember {
-        mutableStateOf(ComponentName(context, "moe.ouom.wekit.activity.MainActivityAlias").getEnable(context))
+        mutableStateOf(
+            ComponentName(
+                context,
+                "moe.ouom.wekit.activity.MainActivityAlias"
+            ).getEnable(context)
+        )
     }
 
     // 激活状态数据类
@@ -109,7 +149,11 @@ fun MainScreen(activity: MainActivity, onUrlClick: (String) -> Unit) {
         } else false
         val isHookEnabled = isHookEnabledByLegacyApi || isHookEnabledByLibXposedApi
 
-        var isAbiMatch = try { CheckAbiVariantModel.collectAbiInfo(context).isAbiMatch } catch(e: Exception) { true }
+        var isAbiMatch = try {
+            CheckAbiVariantModel.collectAbiInfo(context).isAbiMatch
+        } catch (e: Exception) {
+            true
+        }
 
         if ((isHookEnabled && HostInfo.isInModuleProcess() && !HookStatus.isZygoteHookMode()
                     && HookStatus.isTaiChiInstalled(context)) && HookStatus.getHookType() == HookStatus.HookType.APP_PATCH && "armAll" != AbiUtils.getModuleFlavorName()
@@ -140,7 +184,7 @@ fun MainScreen(activity: MainActivity, onUrlClick: (String) -> Unit) {
 
     // 模拟 onResume 和定时刷新
     LaunchedEffect(Unit) {
-        while(true) {
+        while (true) {
             activationState = getActivationState()
             delay(3000)
         }
@@ -161,9 +205,11 @@ fun MainScreen(activity: MainActivity, onUrlClick: (String) -> Unit) {
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                         )
-                    } },
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(3.dp).copy(alpha = 0.9f)
+                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(3.dp)
+                        .copy(alpha = 0.9f)
                 ),
                 actions = {
                     IconButton(onClick = { showMenu = !showMenu }) {
@@ -177,7 +223,10 @@ fun MainScreen(activity: MainActivity, onUrlClick: (String) -> Unit) {
                             text = { Text(if (isLauncherIconEnabled) "隐藏桌面图标" else "显示桌面图标") },
                             onClick = {
                                 showMenu = false
-                                val componentName = ComponentName(context, "moe.ouom.wekit.activity.MainActivityAlias")
+                                val componentName = ComponentName(
+                                    context,
+                                    "moe.ouom.wekit.activity.MainActivityAlias"
+                                )
                                 val newState = !isLauncherIconEnabled
                                 componentName.setEnable(context, newState)
                                 isLauncherIconEnabled = newState
@@ -245,7 +294,11 @@ fun MainScreen(activity: MainActivity, onUrlClick: (String) -> Unit) {
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.Info, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                            Icon(
+                                Icons.Default.Info,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary
+                            )
                             Spacer(modifier = Modifier.width(16.dp))
                             Text("构建信息", style = MaterialTheme.typography.titleMedium)
                         }
@@ -253,12 +306,17 @@ fun MainScreen(activity: MainActivity, onUrlClick: (String) -> Unit) {
 
                         InfoItem("Build UUID", BuildConfig.BUILD_UUID)
                         Spacer(modifier = Modifier.height(8.dp))
-                        InfoItem("编译日期", Utils.convertTimestampToDate(BuildConfig.BUILD_TIMESTAMP))
+                        InfoItem(
+                            "编译日期",
+                            Utils.convertTimestampToDate(BuildConfig.BUILD_TIMESTAMP)
+                        )
                     }
                 }
 
                 HorizontalDivider(
-                    modifier = Modifier.padding(vertical = 8.dp).alpha(0.1f),
+                    modifier = Modifier
+                        .padding(vertical = 8.dp)
+                        .alpha(0.1f),
                     color = MaterialTheme.colorScheme.onSurface // 分割线颜色适配
                 )
 
@@ -308,8 +366,16 @@ fun MainScreen(activity: MainActivity, onUrlClick: (String) -> Unit) {
 @Composable
 fun InfoItem(label: String, value: String) {
     Column {
-        Text(text = label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
-        Text(text = value, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
 
@@ -331,8 +397,16 @@ fun LinkCard(iconRes: Int, title: String, subtitle: String, onClick: () -> Unit)
             )
             Spacer(modifier = Modifier.width(16.dp))
             Column {
-                Text(text = title, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
-                Text(text = subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
     }

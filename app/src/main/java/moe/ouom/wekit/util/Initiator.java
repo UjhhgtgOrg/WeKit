@@ -61,7 +61,7 @@ public class Initiator {
 
     @Nullable
     public static Class<?> findClassWithSynthetics(@NonNull String className1, @NonNull String className2) {
-        Class<?> clazz = load(className1);
+        var clazz = load(className1);
         if (clazz != null) {
             return clazz;
         }
@@ -71,12 +71,12 @@ public class Initiator {
     @Nullable
     public static Class<?> findClassWithSynthetics(@NonNull String className1, @NonNull String className2,
                                                    @NonNull String className3, int... index) {
-        String cacheKey = className1;
-        Class<?> cache = sClassCache.get(cacheKey);
+        var cacheKey = className1;
+        var cache = sClassCache.get(cacheKey);
         if (cache != null) {
             return cache;
         }
-        Class<?> clazz = findClassWithSyntheticsImpl(className1, index);
+        var clazz = findClassWithSyntheticsImpl(className1, index);
         if (clazz != null) {
             sClassCache.put(cacheKey, clazz);
             return clazz;
@@ -104,7 +104,7 @@ public class Initiator {
      */
     @NonNull
     public static Class<?> loadClass(String className) throws ClassNotFoundException {
-        Class<?> ret = load(className);
+        var ret = load(className);
         if (ret == null) {
             throw new ClassNotFoundException(className);
         }
@@ -113,8 +113,8 @@ public class Initiator {
 
     @NonNull
     public static Class<?> loadClassEither(@NonNull String... classNames) throws ClassNotFoundException {
-        for (String className : classNames) {
-            Class<?> ret = load(className);
+        for (var className : classNames) {
+            var ret = load(className);
             if (ret != null) {
                 return ret;
             }
@@ -124,13 +124,13 @@ public class Initiator {
 
     @Nullable
     private static Class<?> findClassWithSyntheticsImpl(@NonNull String className, int... index) {
-        Class<?> clazz = load(className);
+        var clazz = load(className);
         if (clazz != null) {
             return clazz;
         }
         if (index != null) {
-            for (int i : index) {
-                Class<?> cref = load(className + "$" + i);
+            for (var i : index) {
+                var cref = load(className + "$" + i);
                 if (cref != null) {
                     try {
                         return cref.getDeclaredField("this$0").getType();
@@ -145,11 +145,11 @@ public class Initiator {
 
     @Nullable
     private static Class<?> findClassWithSyntheticsSilently(@NonNull String className, int... index) {
-        Class<?> cache = sClassCache.get(className);
+        var cache = sClassCache.get(className);
         if (cache != null) {
             return cache;
         }
-        Class<?> clazz = load(className);
+        var clazz = load(className);
         if (clazz != null) {
             sClassCache.put(className, clazz);
             return clazz;
@@ -164,12 +164,12 @@ public class Initiator {
 
     @Nullable
     public static Class<?> findClassWithSynthetics0(@NonNull String className1, @NonNull String className2, int... index) {
-        String cacheKey = className1;
-        Class<?> cache = sClassCache.get(cacheKey);
+        var cacheKey = className1;
+        var cache = sClassCache.get(cacheKey);
         if (cache != null) {
             return cache;
         }
-        Class<?> clazz = findClassWithSyntheticsImpl(className1, index);
+        var clazz = findClassWithSyntheticsImpl(className1, index);
         if (clazz != null) {
             sClassCache.put(cacheKey, clazz);
             return clazz;
@@ -184,7 +184,7 @@ public class Initiator {
 
     @Nullable
     public static Class<?> findClassWithSynthetics(@NonNull String className1, @NonNull String className2, int... index) {
-        Class<?> ret = findClassWithSynthetics0(className1, className2, index);
+        var ret = findClassWithSynthetics0(className1, className2, index);
         logErrorIfNotFound(ret, className1);
         return ret;
     }
@@ -192,11 +192,11 @@ public class Initiator {
 
     @Nullable
     public static Class<?> findClassWithSynthetics(@NonNull String className, int... index) {
-        Class<?> cache = sClassCache.get(className);
+        var cache = sClassCache.get(className);
         if (cache != null) {
             return cache;
         }
-        Class<?> clazz = load(className);
+        var clazz = load(className);
         if (clazz != null) {
             sClassCache.put(className, clazz);
             return clazz;

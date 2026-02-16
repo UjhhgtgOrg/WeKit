@@ -14,7 +14,7 @@ public class DexKitExecutor {
     }
 
     public void execute(DexKitTask task) {
-        try (DexKitBridge bridge = DexKitBridge.create(apkPath)) {
+        try (var bridge = DexKitBridge.create(apkPath)) {
             task.execute(bridge, classLoader);
         } catch (Exception e) {
             WeLogger.e("DexKitExecutor", e);

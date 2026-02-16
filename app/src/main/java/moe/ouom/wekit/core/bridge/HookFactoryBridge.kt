@@ -27,6 +27,6 @@ object HookFactoryBridge {
     fun findHookItemByPath(path: String): BaseSwitchFunctionHookItem? {
         return delegate?.findHookItemByPath(path)
     }
-    
+
     fun isReady(): Boolean = delegate != null
 }

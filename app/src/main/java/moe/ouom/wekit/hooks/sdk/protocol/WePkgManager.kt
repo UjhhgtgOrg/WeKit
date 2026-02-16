@@ -18,7 +18,8 @@ object WePkgManager {
         if (WeConfig.dGetBoolean(Constants.PrekVerboseLog)) {
             val data = WeProtoData()
             data.fromBytes(reqBytes)
-            WeLogger.logChunkedI("WePkgInterceptor-Request",
+            WeLogger.logChunkedI(
+                "WePkgInterceptor-Request",
                 "Request: $uri, CGI=$cgiId, LEN=${reqBytes.size}, Data=${data.toJSON()}, Stack=${WeLogger.getStackTraceString()}"
             )
         }
@@ -34,7 +35,8 @@ object WePkgManager {
         if (WeConfig.dGetBoolean(Constants.PrekVerboseLog)) {
             val data = WeProtoData()
             data.fromBytes(respBytes)
-            WeLogger.logChunkedI("WePkgInterceptor-Response",
+            WeLogger.logChunkedI(
+                "WePkgInterceptor-Response",
                 "Received: $uri, CGI=$cgiId, LEN=${respBytes.size}, Data=${data.toJSON()}"
             )
         }

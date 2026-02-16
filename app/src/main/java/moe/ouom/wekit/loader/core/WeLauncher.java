@@ -4,10 +4,7 @@ import static moe.ouom.wekit.constants.Constants.CLAZZ_WECHAT_LAUNCHER_UI;
 
 import android.app.Activity;
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -18,25 +15,25 @@ import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedHelpers;
 import moe.ouom.wekit.config.RuntimeConfig;
 import moe.ouom.wekit.constants.PackageConstants;
+import moe.ouom.wekit.dexkit.cache.DexCacheManager;
 import moe.ouom.wekit.loader.core.hooks.ActivityProxyHooks;
-import moe.ouom.wekit.security.SignatureVerifier;
+import moe.ouom.wekit.loader.core.hooks.ParcelableFixer;
 import moe.ouom.wekit.util.common.ModuleRes;
 import moe.ouom.wekit.util.common.SyncUtils;
 import moe.ouom.wekit.util.log.WeLogger;
 
 public class WeLauncher {
-
     public void init(@NonNull ClassLoader cl, @NonNull ApplicationInfo ai, @NonNull String modulePath, Context context) {
         RuntimeConfig.setHostClassLoader(cl);
         RuntimeConfig.setHostApplicationInfo(ai);
 
-        int currentProcessType = SyncUtils.getProcessType();
-        String currentProcessName = SyncUtils.getProcessName();
+        var currentProcessType = SyncUtils.getProcessType();
+        var currentProcessName = SyncUtils.getProcessName();
         WeLogger.i("WeLauncher", "Init start. Process: " + currentProcessName + " (Type: " + currentProcessType + ")");
 
         try {
-            moe.ouom.wekit.loader.core.hooks.ParcelableFixer.init(
-                    cl, WeLauncher.class.getClassLoader()
+            ParcelableFixer.init(
+                cl, WeLauncher.class.getClassLoader()
             );
             WeLogger.i("WeLauncher", "ParcelableFixer installed.");
         } catch (Throwable e) {
@@ -45,28 +42,22 @@ public class WeLauncher {
 
         // 加载宿主版本信息
         try {
-            PackageManager pm = context.getPackageManager();
-            PackageInfo pInfo = pm.getPackageInfo(context.getPackageName(), 0);
+            var pm = context.getPackageManager();
+            var pInfo = pm.getPackageInfo(context.getPackageName(), 0);
 
             if (pInfo != null) {
                 RuntimeConfig.setWechatVersionName(pInfo.versionName);
                 RuntimeConfig.setWechatVersionCode(pInfo.getLongVersionCode());
-                moe.ouom.wekit.dexkit.cache.DexCacheManager.INSTANCE.init(context, Objects.requireNonNull(pInfo.versionName));
+                DexCacheManager.INSTANCE.init(context, Objects.requireNonNull(pInfo.versionName));
             }
         } catch (Throwable e) {
             WeLogger.e("WeLauncher: Failed to load version info", e);
         }
 
-        // 签名校验
-        if (!SignatureVerifier.isSignatureValid()) {
-            WeLogger.e("WeLauncher", "Signature verification failed. Aborting.");
-            return;
-        }
-
         // 仅在主进程安装 Activity 代理 Hook
         if (currentProcessType == SyncUtils.PROC_MAIN) {
             try {
-                Context appContext = context.getApplicationContext();
+                var appContext = context.getApplicationContext();
                 if (appContext == null) appContext = context;
 
                 ActivityProxyHooks.initForStubActivity(appContext);
@@ -96,12 +87,12 @@ public class WeLauncher {
 
         // Hook LauncherUI.onResume
         try {
-            Class<?> launcherUIClass = XposedHelpers.findClass(CLAZZ_WECHAT_LAUNCHER_UI, cl);
+            var launcherUIClass = XposedHelpers.findClass(CLAZZ_WECHAT_LAUNCHER_UI, cl);
 
             XposedHelpers.findAndHookMethod(launcherUIClass, "onResume", new XC_MethodHook() {
                 @Override
                 protected void afterHookedMethod(MethodHookParam param) {
-                    Activity activity = (Activity) param.thisObject;
+                    var activity = (Activity) param.thisObject;
                     ModuleRes.init(activity, PackageConstants.PACKAGE_NAME_SELF);
                 }
             });
@@ -114,10 +105,10 @@ public class WeLauncher {
         try {
             XposedHelpers.findAndHookMethod(XposedHelpers.findClass(CLAZZ_WECHAT_LAUNCHER_UI, cl), "onCreate", Bundle.class, new XC_MethodHook() {
                 @Override
-                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                    Activity activity = (Activity) param.thisObject;
+                protected void afterHookedMethod(MethodHookParam param) {
+                    var activity = (Activity) param.thisObject;
                     RuntimeConfig.setLauncherUIActivity(activity);
-                    SharedPreferences sharedPreferences = activity.getSharedPreferences("com.tencent.mm_preferences", 0);
+                    var sharedPreferences = activity.getSharedPreferences("com.tencent.mm_preferences", 0);
 
                     RuntimeConfig.setLogin_weixin_username(sharedPreferences.getString("login_weixin_username", ""));
                     RuntimeConfig.setLast_login_nick_name(sharedPreferences.getString("last_login_nick_name", ""));
@@ -125,7 +116,6 @@ public class WeLauncher {
                     RuntimeConfig.setLast_login_uin(sharedPreferences.getString("last_login_uin", "0"));
                 }
             });
-
         } catch (Throwable e) {
             WeLogger.e("WeLauncher: Failed to hook LauncherUI.onCreate", e);
         }

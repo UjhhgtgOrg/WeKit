@@ -9,13 +9,11 @@ import android.view.MenuItem
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XposedHelpers
 import moe.ouom.wekit.constants.Constants
-import moe.ouom.wekit.constants.MMVersion
 import moe.ouom.wekit.core.dsl.dexMethod
 import moe.ouom.wekit.core.model.ApiHookItem
 import moe.ouom.wekit.dexkit.DexMethodDescriptor
 import moe.ouom.wekit.dexkit.intf.IDexFind
 import moe.ouom.wekit.hooks.core.annotation.HookItem
-import moe.ouom.wekit.host.impl.requireMinWeChatVersion
 import moe.ouom.wekit.ui.CommonContextWrapper
 import moe.ouom.wekit.ui.creator.dialog.MainSettingsDialog
 import moe.ouom.wekit.util.log.WeLogger
@@ -89,7 +87,10 @@ class WeSettingInjector : ApiHookItem(), IDexFind {
                 returnType = "java.lang.String"
             }
         }
-        WeLogger.d("WeSettingInjector", "Found ${getKeyCandidates.size} String methods with 0 params: ${getKeyCandidates.map { it.name }}")
+        WeLogger.d(
+            "WeSettingInjector",
+            "Found ${getKeyCandidates.size} String methods with 0 params: ${getKeyCandidates.map { it.name }}"
+        )
 
         val targetGetKey = getKeyCandidates.firstOrNull { it.name != "toString" }
         WeLogger.d("WeSettingInjector", "Selected getKey method: ${targetGetKey?.name}")
@@ -158,7 +159,7 @@ class WeSettingInjector : ApiHookItem(), IDexFind {
         try {
             // 检查类是否存在
             val clsSettingsUI = try {
-                XposedHelpers.findClass(Constants.Companion.CLAZZ_SETTINGS_UI, classLoader)
+                XposedHelpers.findClass(Constants.CLAZZ_SETTINGS_UI, classLoader)
             } catch (_: Throwable) {
                 return // 类不存在，跳过
             }
@@ -184,7 +185,10 @@ class WeSettingInjector : ApiHookItem(), IDexFind {
                 val context = activity as Context
 
                 try {
-                    val clsIconPref = XposedHelpers.findClass(Constants.Companion.CLAZZ_ICON_PREFERENCE, classLoader)
+                    val clsIconPref = XposedHelpers.findClass(
+                        Constants.CLAZZ_ICON_PREFERENCE,
+                        classLoader
+                    )
                     val prefInstance = XposedHelpers.newInstance(clsIconPref, context)
 
                     setKeyMethod.invoke(prefInstance, KEY_WEKIT_ENTRY)
@@ -234,13 +238,14 @@ class WeSettingInjector : ApiHookItem(), IDexFind {
         try {
             // 检查新版 UI 是否存在，不存在则直接退出，不进行 Hook
             try {
-                XposedHelpers.findClass(Constants.Companion.CLAZZ_MAIN_SETTINGS_UI, classLoader)
+                XposedHelpers.findClass(Constants.CLAZZ_MAIN_SETTINGS_UI, classLoader)
             } catch (_: Throwable) {
                 return
             }
 
             // 获取基类 MMActivity
-            val clsMMActivity = XposedHelpers.findClass(Constants.Companion.CLAZZ_MMActivity, classLoader)
+            val clsMMActivity =
+                XposedHelpers.findClass(Constants.CLAZZ_MMActivity, classLoader)
 
             // ---------------------------------------------------------------------
             // Hook 基类 MMActivity 的 onCreateOptionsMenu
@@ -254,7 +259,7 @@ class WeSettingInjector : ApiHookItem(), IDexFind {
             hookAfter(mOnCreateOptionsMenu) { param ->
                 val activity = param.thisObject
                 // 检查当前 Activity 实例的类名是否为 MainSettingsUI
-                if (activity.javaClass.name == Constants.Companion.CLAZZ_MAIN_SETTINGS_UI) {
+                if (activity.javaClass.name == Constants.CLAZZ_MAIN_SETTINGS_UI) {
                     val menu = param.args[0] as? Menu ?: return@hookAfter
                     // 防止重复添加
                     if (menu.findItem(MENU_ID_WEKIT) == null) {
@@ -277,7 +282,7 @@ class WeSettingInjector : ApiHookItem(), IDexFind {
             hookBefore(mOnOptionsItemSelected) { param ->
                 val activity = param.thisObject as Activity
                 // 检查实例类型
-                if (activity.javaClass.name == Constants.Companion.CLAZZ_MAIN_SETTINGS_UI) {
+                if (activity.javaClass.name == Constants.CLAZZ_MAIN_SETTINGS_UI) {
                     val item = param.args[0] as? MenuItem ?: return@hookBefore
                     if (item.itemId == MENU_ID_WEKIT) {
                         openSettingsDialog(activity)

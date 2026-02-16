@@ -44,7 +44,7 @@ class DexMethodDescriptorWrapper(
     /**
      * 获取描述符字符串（用于缓存）
      */
-    fun getDescriptorString(): String? = descriptor?.getDescriptor()
+    fun getDescriptorString(): String? = descriptor?.descriptor
 
     /**
      * 获取 Method 实例
@@ -54,7 +54,10 @@ class DexMethodDescriptorWrapper(
             try {
                 method = descriptor!!.getMethodInstance(classLoader)
             } catch (e: NoSuchMethodException) {
-                throw RuntimeException("Failed to get method instance for $key: ${descriptor!!.getDescriptor()}", e)
+                throw RuntimeException(
+                    "Failed to get method instance for $key: ${descriptor!!.descriptor}",
+                    e
+                )
             }
         }
         return method
@@ -136,7 +139,7 @@ class DexMethodDescriptorWrapper(
         block: DexMethodHookBuilder.() -> Unit
     ) {
         val method = getMethod(classLoader)
-            ?: throw RuntimeException("Method not found for key: $key, descriptor: ${descriptor?.getDescriptor()}")
+            ?: throw RuntimeException("Method not found for key: $key, descriptor: ${descriptor?.descriptor}")
 
         val builder = DexMethodHookBuilder(method, priority, hookItem)
         builder.block()

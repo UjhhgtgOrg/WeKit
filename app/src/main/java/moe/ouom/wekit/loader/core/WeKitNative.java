@@ -1,21 +1,14 @@
 package moe.ouom.wekit.loader.core;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Keep;
+import androidx.annotation.NonNull;
 
-import moe.ouom.wekit.security.SignatureVerifier;
 import moe.ouom.wekit.util.log.WeLogger;
 
 @Keep
 public class WeKitNative {
-
     private static final String TAG = "WeKitNative";
     private static volatile boolean sLibraryLoaded = false;
-
-    public static native byte[] getHiddenDex();
-
-    private static native boolean doInit(String signatureHash);
-
 
     public static void setLibraryLoaded() {
         sLibraryLoaded = true;
@@ -28,22 +21,6 @@ public class WeKitNative {
     public static void init(@NonNull String flag) {
         if (!sLibraryLoaded) {
             WeLogger.e(TAG, "Native library not loaded, verification failed");
-            return;
-        }
-        if (!SignatureVerifier.isSignatureValid()) {
-            WeLogger.e(TAG, "Java layer signature check failed");
-            return;
-        }
-
-        try {
-            boolean success = doInit(flag);
-            if (!success) {
-                WeLogger.e(TAG, "Native init failed (Check Logs for details)");
-            } else {
-                WeLogger.i(TAG, "Native init successful");
-            }
-        } catch (UnsatisfiedLinkError | Exception e) {
-            WeLogger.e("Native init exception", e);
         }
     }
 

@@ -25,7 +25,8 @@ import kotlin.random.Random
 
 @SuppressLint("DiscouragedApi")
 @HookItem(path = "聊天与消息/自动抢红包", desc = "监听消息并自动拆开红包")
-class WeRedPacketAuto : BaseClickableFunctionHookItem(), WeDatabaseListener.DatabaseInsertListener, IDexFind {
+class WeRedPacketAuto : BaseClickableFunctionHookItem(), WeDatabaseListener.DatabaseInsertListener,
+    IDexFind {
 
     private val dexClsReceiveLuckyMoney by dexClass()
     private val dexClsOpenLuckyMoney by dexClass()
@@ -107,7 +108,8 @@ class WeRedPacketAuto : BaseClickableFunctionHookItem(), WeDatabaseListener.Data
 
             // 处理延时
             val isRandomDelay = config.getBoolPrek("red_packet_delay_random")
-            val customDelay = config.getStringPrek("red_packet_delay_custom", "0")?.toLongOrNull() ?: 0L
+            val customDelay =
+                config.getStringPrek("red_packet_delay_custom", "0")?.toLongOrNull() ?: 0L
 
             WeLogger.i("WeRedPacketAuto: 配置读取 - isRandomDelay=$isRandomDelay, customDelay=$customDelay")
 
@@ -239,7 +241,7 @@ class WeRedPacketAuto : BaseClickableFunctionHookItem(), WeDatabaseListener.Data
         // 查找 onGYNetEnd 回调方法
         val receiveLuckyMoneyClassName = dexClsReceiveLuckyMoney.getDescriptorString()
         if (receiveLuckyMoneyClassName != null) {
-            val foundMethod = dexMethodOnGYNetEnd.find(dexKit, descriptors,true) {
+            val foundMethod = dexMethodOnGYNetEnd.find(dexKit, descriptors, true) {
                 matcher {
                     declaredClass = receiveLuckyMoneyClassName
                     name = "onGYNetEnd"

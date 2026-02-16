@@ -3,13 +3,6 @@
 #include <string>
 #include <vector>
 
-/*____________________________________________________________________________________________________________
-   Modified for Android NDK (Clang) compatibility
-   Original Author: skadro
-   Github: https://github.com/skadro-official
-   License: MIT
-____________________________________________________________________________________________________________*/
-
 // 定义 __forceinline 以适配 Android Clang
 #ifndef __forceinline
 #if defined(_MSC_VER)

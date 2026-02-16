@@ -5,10 +5,11 @@ import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
 import android.content.Intent
-import android.net.Uri
 import android.os.Handler
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.net.toUri
+import androidx.core.view.size
 import de.robv.android.xposed.XposedBridge
 import moe.ouom.wekit.util.log.WeLogger
 import org.json.JSONArray
@@ -18,8 +19,6 @@ import java.net.URL
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Objects
-import androidx.core.view.size
-import androidx.core.net.toUri
 import java.util.regex.Pattern
 
 object Utils {
@@ -81,7 +80,7 @@ object Utils {
     }
 
     fun printStackTrace() {
-        val stackTrace = Thread.currentThread().getStackTrace()
+        val stackTrace = Thread.currentThread().stackTrace
         WeLogger.e("---------------------- [Stack Trace] ----------------------")
         for (element in stackTrace) {
             WeLogger.d("    at $element")
@@ -97,7 +96,7 @@ object Utils {
         }
 
         WeLogger.i("*-------------------- $TAG --------------------*")
-        val extras = intent.getExtras()
+        val extras = intent.extras
         if (extras != null) {
             for (key in extras.keySet()) {
                 val value = extras.get(key)
@@ -135,7 +134,7 @@ object Utils {
 
     fun jumpUrl(context: Context, webUrl: String?) {
         val intent = Intent(Intent.ACTION_VIEW)
-        intent.setData(webUrl?.toUri())
+        intent.data = webUrl?.toUri()
         context.startActivity(intent)
     }
 
@@ -146,7 +145,7 @@ object Utils {
     }
 
     fun findMethodByName(clazz: Class<*>, methodName: String?): Method {
-        for (method in clazz.getDeclaredMethods()) {
+        for (method in clazz.declaredMethods) {
             if (method.name == methodName) {
                 return method
             }
@@ -164,8 +163,8 @@ object Utils {
         var type: String? = ""
         try {
             val Url = URL(url)
-            host = Url.getHost()
-            type = Url.toURI().getScheme()
+            host = Url.host
+            type = Url.toURI().scheme
         } catch (e: Exception) {
             XposedBridge.log(e)
         }

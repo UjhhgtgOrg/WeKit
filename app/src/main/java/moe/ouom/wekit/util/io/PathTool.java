@@ -21,8 +21,8 @@ public class PathTool {
     }
 
     public static String getModuleDataPath() {
-        String directory = getStorageDirectory() + "/Android/data/" + HostInfo.getHostInfo().getPackageName() + "/WeKit";
-        File file = new File(directory);
+        var directory = getStorageDirectory() + "/Android/data/" + HostInfo.getHostInfo().getPackageName() + "/WeKit";
+        var file = new File(directory);
         if (!file.exists()) {
             file.mkdirs();
         }
@@ -30,7 +30,7 @@ public class PathTool {
     }
 
     public static String getModuleCachePath(String dirName) {
-        File cache = new File(getModuleDataPath() + "/cache/" + dirName);
+        var cache = new File(getModuleDataPath() + "/cache/" + dirName);
         if (!cache.exists()) {
             cache.mkdirs();
         }

@@ -52,7 +52,7 @@ public final class XposedProvider extends ContentProvider {
     @Override
     public Bundle call(@NonNull String method, @Nullable String arg, @Nullable Bundle extras) {
         if (method.equals(IXposedService.SEND_BINDER) && extras != null) {
-            IBinder binder = extras.getBinder("binder");
+            var binder = extras.getBinder("binder");
             if (binder != null) {
                 Log.d(TAG, "binder received: " + binder);
                 XposedServiceHelper.onBinderReceived(binder);

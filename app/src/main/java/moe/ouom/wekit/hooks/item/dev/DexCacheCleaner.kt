@@ -8,7 +8,7 @@ import moe.ouom.wekit.hooks.core.annotation.HookItem
 
 @HookItem(path = "开发者选项/清除适配信息", desc = "点击清除适配信息")
 class DexCacheCleaner : BaseClickableFunctionHookItem() {
-    
+
     override fun onClick(context: Context?) {
         context?.let {
             MaterialDialog(it)

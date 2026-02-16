@@ -2,8 +2,11 @@ package moe.ouom.wekit.loader.core;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+
 import androidx.annotation.NonNull;
+
 import com.tencent.mmkv.MMKV;
+
 import java.io.File;
 
 import moe.ouom.wekit.host.HostInfo;
@@ -35,6 +38,7 @@ public class NativeCoreBridge {
 
     /**
      * 检查本地核心库是否已初始化
+     *
      * @return true 如果已成功初始化，false 如果未初始化
      */
     public static boolean isNativeCoreInitialized() {
@@ -43,6 +47,7 @@ public class NativeCoreBridge {
 
     /**
      * 设置本地核心库初始化状态
+     *
      * @param initialized true表示已初始化，false表示未初始化
      */
     public static void setNativeCoreInitialized(boolean initialized) {
@@ -66,21 +71,21 @@ public class NativeCoreBridge {
         }
 
         // 获取微信的files目录
-        File appFilesDir = ctx.getFilesDir();
-        String packageName = ctx.getPackageName();
+        var appFilesDir = ctx.getFilesDir();
+        var packageName = ctx.getPackageName();
 
         WeLogger.i("Initializing NativeCoreBridge for package: " + packageName);
 
-        File mmkvDir = new File(appFilesDir, "mmkv");
+        var mmkvDir = new File(appFilesDir, "mmkv");
         // 不存在就创建mmkv目录
         if (!mmkvDir.exists()) {
-            boolean created = mmkvDir.mkdirs();
+            var created = mmkvDir.mkdirs();
             WeLogger.i("Created mmkv directory: " + created);
         }
 
         // 初始化 MMKV
-        String mmkvRootPath = mmkvDir.getAbsolutePath();
-        String initializedPath = MMKV.initialize(ctx, mmkvRootPath);
+        var mmkvRootPath = mmkvDir.getAbsolutePath();
+        var initializedPath = MMKV.initialize(ctx, mmkvRootPath);
 
         WeLogger.i("MMKV initialized at: " + initializedPath);
 

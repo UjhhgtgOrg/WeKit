@@ -38,7 +38,7 @@ public class CrashLogManager {
     private final File crashLogDir;
 
     public CrashLogManager(@NonNull Context context) {
-        Context context1 = context.getApplicationContext();
+        var context1 = context.getApplicationContext();
         this.crashLogDir = new File(context1.getFilesDir(), CRASH_LOG_DIR);
         ensureCrashLogDirExists();
     }
@@ -70,7 +70,7 @@ public class CrashLogManager {
     /**
      * 保存崩溃日志
      *
-     * @param crashInfo 崩溃信息
+     * @param crashInfo   崩溃信息
      * @param isJavaCrash 是否为Java崩溃（true=Java, false=Native）
      * @return 保存的文件路径，失败返回null
      */
@@ -80,12 +80,12 @@ public class CrashLogManager {
             ensureCrashLogDirExists();
 
             // 生成文件名：crash_yyyyMMdd_HHmmss_SSS.log
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd_HHmmss_SSS", Locale.getDefault());
-            String fileName = CRASH_LOG_PREFIX + sdf.format(new Date()) + CRASH_LOG_SUFFIX;
-            File logFile = new File(crashLogDir, fileName);
+            var sdf = new SimpleDateFormat("yyyyMMdd_HHmmss_SSS", Locale.getDefault());
+            var fileName = CRASH_LOG_PREFIX + sdf.format(new Date()) + CRASH_LOG_SUFFIX;
+            var logFile = new File(crashLogDir, fileName);
 
             // 写入崩溃信息
-            FileWriter writer = new FileWriter(logFile);
+            var writer = new FileWriter(logFile);
             writer.write(crashInfo);
             writer.flush();
             writer.close();
@@ -118,7 +118,7 @@ public class CrashLogManager {
     public List<File> getAllCrashLogs() {
         ensureCrashLogDirExists();
 
-        File[] files = crashLogDir.listFiles((dir, name) ->
+        var files = crashLogDir.listFiles((dir, name) ->
                 name.startsWith(CRASH_LOG_PREFIX) && name.endsWith(CRASH_LOG_SUFFIX)
         );
 
@@ -148,18 +148,18 @@ public class CrashLogManager {
                 return null;
             }
 
-            long fileSize = logFile.length();
+            var fileSize = logFile.length();
 
             // 如果文件太大，只读取前面部分并添加提示
             if (fileSize > MAX_LOG_CONTENT_SIZE) {
                 WeLogger.w("CrashLogManager", "Crash log file is too large (" + fileSize + " bytes), reading first " + MAX_LOG_CONTENT_SIZE + " bytes");
 
-                java.io.FileInputStream fis = new java.io.FileInputStream(logFile);
-                byte[] buffer = new byte[MAX_LOG_CONTENT_SIZE];
-                int bytesRead = fis.read(buffer);
+                var fis = new java.io.FileInputStream(logFile);
+                var buffer = new byte[MAX_LOG_CONTENT_SIZE];
+                var bytesRead = fis.read(buffer);
                 fis.close();
 
-                String content = new String(buffer, 0, bytesRead, StandardCharsets.UTF_8);
+                var content = new String(buffer, 0, bytesRead, StandardCharsets.UTF_8);
                 return content + "\n\n========================================\n" +
                         "【提示】日志内容过长，此处仅展示部分内容。\n" +
                         "请点击「导出文件」以保存完整日志。\n" +
@@ -167,8 +167,8 @@ public class CrashLogManager {
             }
 
             // 正常大小的文件，完整读取
-            java.io.FileInputStream fis = new java.io.FileInputStream(logFile);
-            byte[] buffer = new byte[(int) fileSize];
+            var fis = new java.io.FileInputStream(logFile);
+            var buffer = new byte[(int) fileSize];
             fis.read(buffer);
             fis.close();
 
@@ -192,12 +192,12 @@ public class CrashLogManager {
                 return null;
             }
 
-            long fileSize = logFile.length();
+            var fileSize = logFile.length();
             WeLogger.d("CrashLogManager", "Reading full crash log, size: " + fileSize + " bytes");
 
             // 读取完整文件内容，不进行截断
-            java.io.FileInputStream fis = new java.io.FileInputStream(logFile);
-            byte[] buffer = new byte[(int) fileSize];
+            var fis = new java.io.FileInputStream(logFile);
+            var buffer = new byte[(int) fileSize];
             fis.read(buffer);
             fis.close();
 
@@ -228,9 +228,9 @@ public class CrashLogManager {
      * @return 删除的文件数量
      */
     public int deleteAllCrashLogs() {
-        List<File> logFiles = getAllCrashLogs();
-        int count = 0;
-        for (File file : logFiles) {
+        var logFiles = getAllCrashLogs();
+        var count = 0;
+        for (var file : logFiles) {
             if (deleteCrashLog(file)) {
                 count++;
             }
@@ -244,10 +244,10 @@ public class CrashLogManager {
      * 清理旧日志，保留最新的MAX_LOG_FILES个
      */
     private void cleanOldLogs() {
-        List<File> logFiles = getAllCrashLogs();
+        var logFiles = getAllCrashLogs();
         if (logFiles.size() > MAX_LOG_FILES) {
             WeLogger.i("CrashLogManager", "Cleaning old crash logs, current count: " + logFiles.size());
-            for (int i = MAX_LOG_FILES; i < logFiles.size(); i++) {
+            for (var i = MAX_LOG_FILES; i < logFiles.size(); i++) {
                 deleteCrashLog(logFiles.get(i));
             }
         }
@@ -260,8 +260,8 @@ public class CrashLogManager {
      */
     private void setPendingCrashFlag(@NonNull String logFileName) {
         try {
-            File flagFile = new File(crashLogDir, PENDING_CRASH_FLAG);
-            FileWriter writer = new FileWriter(flagFile);
+            var flagFile = new File(crashLogDir, PENDING_CRASH_FLAG);
+            var writer = new FileWriter(flagFile);
             writer.write(logFileName);
             writer.flush();
             writer.close();
@@ -279,17 +279,17 @@ public class CrashLogManager {
     @Nullable
     public String getPendingCrashLogFileName() {
         try {
-            File flagFile = new File(crashLogDir, PENDING_CRASH_FLAG);
+            var flagFile = new File(crashLogDir, PENDING_CRASH_FLAG);
             if (!flagFile.exists()) {
                 return null;
             }
 
-            java.io.FileInputStream fis = new java.io.FileInputStream(flagFile);
-            byte[] buffer = new byte[(int) flagFile.length()];
+            var fis = new java.io.FileInputStream(flagFile);
+            var buffer = new byte[(int) flagFile.length()];
             fis.read(buffer);
             fis.close();
 
-            String fileName = new String(buffer, StandardCharsets.UTF_8).trim();
+            var fileName = new String(buffer, StandardCharsets.UTF_8).trim();
             WeLogger.d("CrashLogManager", "Pending crash log: " + fileName);
             return fileName;
         } catch (IOException e) {
@@ -305,12 +305,12 @@ public class CrashLogManager {
      */
     @Nullable
     public File getPendingCrashLogFile() {
-        String fileName = getPendingCrashLogFileName();
+        var fileName = getPendingCrashLogFileName();
         if (fileName == null) {
             return null;
         }
 
-        File logFile = new File(crashLogDir, fileName);
+        var logFile = new File(crashLogDir, fileName);
         if (logFile.exists() && logFile.isFile()) {
             return logFile;
         }
@@ -324,7 +324,7 @@ public class CrashLogManager {
      * 清除待处理崩溃标记
      */
     public void clearPendingCrashFlag() {
-        File flagFile = new File(crashLogDir, PENDING_CRASH_FLAG);
+        var flagFile = new File(crashLogDir, PENDING_CRASH_FLAG);
         if (flagFile.exists() && flagFile.delete()) {
             WeLogger.d("CrashLogManager", "Pending crash flag cleared");
         }
@@ -367,8 +367,8 @@ public class CrashLogManager {
      */
     public void setPendingJavaCrashFlag(@NonNull String logFileName) {
         try {
-            File flagFile = new File(crashLogDir, PENDING_JAVA_CRASH_FLAG);
-            FileWriter writer = new FileWriter(flagFile);
+            var flagFile = new File(crashLogDir, PENDING_JAVA_CRASH_FLAG);
+            var writer = new FileWriter(flagFile);
             writer.write(logFileName);
             writer.flush();
             writer.close();
@@ -386,17 +386,17 @@ public class CrashLogManager {
     @Nullable
     public String getPendingJavaCrashLogFileName() {
         try {
-            File flagFile = new File(crashLogDir, PENDING_JAVA_CRASH_FLAG);
+            var flagFile = new File(crashLogDir, PENDING_JAVA_CRASH_FLAG);
             if (!flagFile.exists()) {
                 return null;
             }
 
-            java.io.FileInputStream fis = new java.io.FileInputStream(flagFile);
-            byte[] buffer = new byte[(int) flagFile.length()];
+            var fis = new java.io.FileInputStream(flagFile);
+            var buffer = new byte[(int) flagFile.length()];
             fis.read(buffer);
             fis.close();
 
-            String fileName = new String(buffer, StandardCharsets.UTF_8).trim();
+            var fileName = new String(buffer, StandardCharsets.UTF_8).trim();
             WeLogger.d("CrashLogManager", "Pending Java crash log: " + fileName);
             return fileName;
         } catch (IOException e) {
@@ -412,12 +412,12 @@ public class CrashLogManager {
      */
     @Nullable
     public File getPendingJavaCrashLogFile() {
-        String fileName = getPendingJavaCrashLogFileName();
+        var fileName = getPendingJavaCrashLogFileName();
         if (fileName == null) {
             return null;
         }
 
-        File logFile = new File(crashLogDir, fileName);
+        var logFile = new File(crashLogDir, fileName);
         if (logFile.exists() && logFile.isFile()) {
             return logFile;
         }
@@ -431,7 +431,7 @@ public class CrashLogManager {
      * 清除待处理Java崩溃标记
      */
     public void clearPendingJavaCrashFlag() {
-        File flagFile = new File(crashLogDir, PENDING_JAVA_CRASH_FLAG);
+        var flagFile = new File(crashLogDir, PENDING_JAVA_CRASH_FLAG);
         if (flagFile.exists() && flagFile.delete()) {
             WeLogger.d("CrashLogManager", "Pending Java crash flag cleared");
         }

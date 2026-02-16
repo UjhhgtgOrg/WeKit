@@ -44,7 +44,8 @@ class WePkgDispatcher : ApiHookItem(), IDexFind {
                         XposedHelpers.callMethod(reqPbObj, "parseFrom", tampered)
                         WeLogger.i("PkgDispatcher", "Request Tampered: $uri")
                     }
-                } catch (_: Throwable) {  }
+                } catch (_: Throwable) {
+                }
 
                 if (Proxy.isProxyClass(originalCallback.javaClass)) return@hookBefore
 
@@ -63,11 +64,25 @@ class WePkgDispatcher : ApiHookItem(), IDexFind {
 
                                 // 处理 Kinda 框架的 WXPCommReqResp
                                 if (className == "com.tencent.kinda.framework.module.impl.WXPCommReqResp") {
-                                    val originalRespBytes = XposedHelpers.callMethod(respV0, "getWXPRespData") as? ByteArray
+                                    val originalRespBytes = XposedHelpers.callMethod(
+                                        respV0,
+                                        "getWXPRespData"
+                                    ) as? ByteArray
                                     if (originalRespBytes != null) {
-                                        WePkgManager.handleResponseTamper(uri, cgiId, originalRespBytes)?.let { tampered ->
-                                            XposedHelpers.callMethod(respV0, "setWXPRespData", tampered)
-                                            WeLogger.i("PkgDispatcher", "Response Tampered (WXP): $uri")
+                                        WePkgManager.handleResponseTamper(
+                                            uri,
+                                            cgiId,
+                                            originalRespBytes
+                                        )?.let { tampered ->
+                                            XposedHelpers.callMethod(
+                                                respV0,
+                                                "setWXPRespData",
+                                                tampered
+                                            )
+                                            WeLogger.i(
+                                                "PkgDispatcher",
+                                                "Response Tampered (WXP): $uri"
+                                            )
                                         }
                                     }
                                 }
@@ -88,10 +103,24 @@ class WePkgDispatcher : ApiHookItem(), IDexFind {
                                         }
 
                                         if (respPbObj != null) {
-                                            val originalRespBytes = XposedHelpers.callMethod(respPbObj, "toByteArray") as ByteArray
-                                            WePkgManager.handleResponseTamper(uri, cgiId, originalRespBytes)?.let { tampered ->
-                                                XposedHelpers.callMethod(respPbObj, "parseFrom", tampered)
-                                                WeLogger.i("PkgDispatcher", "Response Tampered (PB): $uri")
+                                            val originalRespBytes = XposedHelpers.callMethod(
+                                                respPbObj,
+                                                "toByteArray"
+                                            ) as ByteArray
+                                            WePkgManager.handleResponseTamper(
+                                                uri,
+                                                cgiId,
+                                                originalRespBytes
+                                            )?.let { tampered ->
+                                                XposedHelpers.callMethod(
+                                                    respPbObj,
+                                                    "parseFrom",
+                                                    tampered
+                                                )
+                                                WeLogger.i(
+                                                    "PkgDispatcher",
+                                                    "Response Tampered (PB): $uri"
+                                                )
                                             }
                                         }
                                     }
@@ -148,7 +177,8 @@ class WePkgDispatcher : ApiHookItem(), IDexFind {
                     if (reqObj != null) {
                         reqClassName = reqObj.javaClass.name
                     }
-                } catch (_: Throwable) { }
+                } catch (_: Throwable) {
+                }
 
                 val configLog = "$cgiId to Triple(\"$reqClassName\", $funcId, $routeId), // $uri"
                 WeLogger.w("WePkgListener-gen", configLog)
@@ -161,7 +191,7 @@ class WePkgDispatcher : ApiHookItem(), IDexFind {
     override fun dexFind(dexKit: DexKitBridge): Map<String, String> {
         val descriptors = mutableMapOf<String, String>()
 
-        dexClsOnGYNetEnd.find(dexKit, descriptors,true) {
+        dexClsOnGYNetEnd.find(dexKit, descriptors, true) {
             searchPackages("com.tencent.mm.network")
             matcher {
                 methodCount(1)

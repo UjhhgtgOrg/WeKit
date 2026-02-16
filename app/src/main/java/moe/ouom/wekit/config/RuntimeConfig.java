@@ -1,6 +1,5 @@
 package moe.ouom.wekit.config;
 
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.pm.ApplicationInfo;
 
@@ -57,7 +56,7 @@ public class RuntimeConfig {
         if (launcherUIActivityRef == null) {
             return null;
         }
-        Activity activity = launcherUIActivityRef.get();
+        var activity = launcherUIActivityRef.get();
 
         if (activity != null && (activity.isFinishing() || activity.isDestroyed())) {
             launcherUIActivityRef = null;

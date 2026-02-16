@@ -11,10 +11,10 @@ import java.lang.reflect.Method;
 import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.api.XposedModule;
 import moe.ouom.wekit.BuildConfig;
-import moe.ouom.wekit.util.common.CheckUtils;
 import moe.ouom.wekit.loader.hookapi.IClassLoaderHelper;
 import moe.ouom.wekit.loader.hookapi.IHookBridge;
 import moe.ouom.wekit.loader.hookapi.ILoaderService;
+import moe.ouom.wekit.util.common.CheckUtils;
 
 public class Lsp100HookImpl implements IHookBridge, ILoaderService {
 
@@ -22,7 +22,8 @@ public class Lsp100HookImpl implements IHookBridge, ILoaderService {
     public static XposedModule self = null;
     private IClassLoaderHelper mClassLoaderHelper;
 
-    private Lsp100HookImpl() {}
+    private Lsp100HookImpl() {
+    }
 
     public static void init(@NonNull XposedModule base) {
         self = base;

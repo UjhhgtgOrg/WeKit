@@ -23,7 +23,7 @@ public class ModuleRes {
     /**
      * 初始化加载器，只需在 Hook 入口处调用一次
      *
-     * @param hostContext 宿主的 Context
+     * @param hostContext   宿主的 Context
      * @param modulePkgName 模块的包名
      */
     public static void init(Context hostContext, String modulePkgName) {
@@ -39,7 +39,7 @@ public class ModuleRes {
             sPackageName = modulePkgName;
 
             // 给模块 Context 设置 Material 主题，否则在部分场景下它会崩溃
-            int themeId = sResources.getIdentifier("Theme.WeKit", "style", sPackageName);
+            var themeId = sResources.getIdentifier("Theme.WeKit", "style", sPackageName);
             if (themeId != 0) {
                 sModuleContext.setTheme(themeId);
             } else {
@@ -64,7 +64,7 @@ public class ModuleRes {
      */
     public static int getId(String resName, String resType) {
         if (sResources == null) return 0;
-        int id = sResources.getIdentifier(resName, resType, sPackageName);
+        var id = sResources.getIdentifier(resName, resType, sPackageName);
         if (id == 0) {
             WeLogger.e("ModuleRes: 未找到资源 " + resType + "/" + resName);
         }
@@ -72,24 +72,24 @@ public class ModuleRes {
     }
 
     public static String getString(String resName) {
-        int id = getId(resName, "string");
+        var id = getId(resName, "string");
         return id == 0 ? "" : sResources.getString(id);
     }
 
     public static int getColor(String resName) {
-        int id = getId(resName, "color");
+        var id = getId(resName, "color");
         return id == 0 ? 0 : sResources.getColor(id);
     }
 
     public static Drawable getDrawable(String resName) {
-        int id = getId(resName, "drawable");
+        var id = getId(resName, "drawable");
         // 尝试去 mipmap 找
         if (id == 0) id = getId(resName, "mipmap");
         return id == 0 ? null : sResources.getDrawable(id);
     }
 
     public static float getDimen(String resName) {
-        int id = getId(resName, "dimen");
+        var id = getId(resName, "dimen");
         return id == 0 ? 0 : sResources.getDimension(id);
     }
 
@@ -97,12 +97,12 @@ public class ModuleRes {
      * 加载模块内的 XML 布局
      *
      * @param layoutName 布局文件名 (不带 .xml)
-     * @param root 父布局 (可以为 null)
+     * @param root       父布局 (可以为 null)
      * @return Inflate 出来的 View
      */
     public static View inflate(String layoutName, ViewGroup root) {
         if (sModuleContext == null) return null;
-        int id = getId(layoutName, "layout");
+        var id = getId(layoutName, "layout");
         if (id == 0) return null;
 
         // 使用模块的 Context 创建 LayoutInflater，这样才能解析 XML 内部引用的模块资源 (@drawable/xxx)

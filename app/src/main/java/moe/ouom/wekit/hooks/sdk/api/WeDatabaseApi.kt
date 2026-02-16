@@ -52,7 +52,10 @@ class WeDatabaseApi : ApiHookItem(), IDexFind {
         val descriptors = mutableMapOf<String, String>()
 
         try {
-            WeLogger.i(TAG, ">>>> 校验数据库 API 缓存 (Process: ${SyncUtils.getProcessName()}) <<<<")
+            WeLogger.i(
+                TAG,
+                ">>>> 校验数据库 API 缓存 (Process: ${SyncUtils.getProcessName()}) <<<<"
+            )
 
             // 定位 MMKernel
             dexClassKernel.find(dexKit, descriptors) {
@@ -151,7 +154,8 @@ class WeDatabaseApi : ApiHookItem(), IDexFind {
                 if (checkMethodFeature(obj) || checkStringFeature(obj)) {
                     return obj
                 }
-            } catch (_: Throwable) {}
+            } catch (_: Throwable) {
+            }
         }
         return null
     }
@@ -165,7 +169,9 @@ class WeDatabaseApi : ApiHookItem(), IDexFind {
                 it.isAccessible = true
                 it.type == String::class.java && it.get(obj) == "MicroMsg.SqliteDB"
             }
-        } catch (_: Exception) { false }
+        } catch (_: Exception) {
+            false
+        }
     }
 
     /**
@@ -176,19 +182,23 @@ class WeDatabaseApi : ApiHookItem(), IDexFind {
             obj.javaClass.declaredMethods.any {
                 it.parameterCount == 0 && it.returnType.name == WCDB_CLASS_NAME
             }
-        } catch (_: Exception) { false }
+        } catch (_: Exception) {
+            false
+        }
     }
 
     private fun getWcdbFromWrapper(wrapperObj: Any): Any? {
         val methods = wrapperObj.javaClass.declaredMethods
         for (method in methods) {
             if (method.parameterCount == 0 &&
-                method.returnType.name == WCDB_CLASS_NAME) {
+                method.returnType.name == WCDB_CLASS_NAME
+            ) {
                 try {
                     method.isAccessible = true
                     val db = method.invoke(wrapperObj)
                     if (db != null) return db
-                } catch (_: Exception) {}
+                } catch (_: Exception) {
+                }
             }
         }
         return null
@@ -197,10 +207,12 @@ class WeDatabaseApi : ApiHookItem(), IDexFind {
     private fun findRawQueryMethod(clazz: Class<*>): Method? {
         try {
             return clazz.getMethod("rawQuery", String::class.java, Array<Any>::class.java)
-        } catch (_: Exception) {}
+        } catch (_: Exception) {
+        }
         try {
             return clazz.getMethod("rawQuery", String::class.java, Array<String>::class.java)
-        } catch (_: Exception) {}
+        } catch (_: Exception) {
+        }
         return null
     }
 
@@ -382,7 +394,8 @@ class WeDatabaseApi : ApiHookItem(), IDexFind {
     fun getMessages(wxid: String, page: Int = 1, pageSize: Int = 20): List<WeMessage> {
         if (wxid.isEmpty()) return emptyList()
         val offset = (page - 1) * pageSize
-        val sql = "SELECT msgId, talker, content, type, createTime, isSend FROM message WHERE talker='$wxid' ORDER BY createTime DESC LIMIT $pageSize OFFSET $offset"
+        val sql =
+            "SELECT msgId, talker, content, type, createTime, isSend FROM message WHERE talker='$wxid' ORDER BY createTime DESC LIMIT $pageSize OFFSET $offset"
 
         return executeQuery(sql).map { row ->
             WeMessage(

@@ -2,6 +2,7 @@ package moe.ouom.wekit.loader.legacy;
 
 import static moe.ouom.wekit.host.HostInfo.PACKAGE_NAME_SELF;
 import static moe.ouom.wekit.host.HostInfo.PACKAGE_NAME_WECHAT;
+
 import androidx.annotation.Keep;
 
 import de.robv.android.xposed.IXposedHookLoadPackage;

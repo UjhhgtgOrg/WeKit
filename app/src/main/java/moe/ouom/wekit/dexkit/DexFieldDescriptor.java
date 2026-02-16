@@ -23,8 +23,8 @@ public class DexFieldDescriptor {
         if (desc == null) {
             throw new NullPointerException();
         }
-        int a = desc.indexOf("->");
-        int b = desc.indexOf(':', a);
+        var a = desc.indexOf("->");
+        var b = desc.indexOf(':', a);
         declaringClass = desc.substring(0, a);
         name = desc.substring(a + 2, b);
         type = desc.substring(b + 1);
@@ -103,15 +103,15 @@ public class DexFieldDescriptor {
 
     public Field getFieldInstance(ClassLoader classLoader) throws NoSuchMethodException {
         try {
-            Class<?> clz = classLoader.loadClass(
+            var clz = classLoader.loadClass(
                     declaringClass.substring(1, declaringClass.length() - 1).replace('/', '.'));
-            for (Field f : clz.getDeclaredFields()) {
+            for (var f : clz.getDeclaredFields()) {
                 if (f.getName().equals(name) && getTypeSig(f.getType()).equals(type)) {
                     return f;
                 }
             }
             while ((clz = clz.getSuperclass()) != null) {
-                for (Field f : clz.getDeclaredFields()) {
+                for (var f : clz.getDeclaredFields()) {
                     if (Modifier.isPrivate(f.getModifiers()) || Modifier
                             .isStatic(f.getModifiers())) {
                         continue;

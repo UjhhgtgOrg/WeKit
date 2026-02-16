@@ -2,7 +2,6 @@ package moe.ouom.wekit.loader;
 
 import androidx.annotation.Nullable;
 
-import moe.ouom.wekit.loader.hookapi.ILoaderService;
 import moe.ouom.wekit.loader.startup.StartupInfo;
 
 
@@ -15,10 +14,9 @@ public class LoaderExtensionHelper {
 
     @Nullable
     public static Class<?> getXposedBridgeClass() {
-        ILoaderService loaderService = StartupInfo.getLoaderService();
+        var loaderService = StartupInfo.getLoaderService();
         return (Class<?>) loaderService.queryExtension(CMD_GET_XPOSED_BRIDGE_CLASS);
     }
-
 
 
 }

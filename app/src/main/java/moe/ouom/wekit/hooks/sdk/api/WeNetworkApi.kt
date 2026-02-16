@@ -86,7 +86,10 @@ class WeNetworkApi : ApiHookItem(), IDexFind {
         /**
          * 查找逻辑
          */
-        private fun findSendMethodRecursive(queueClass: Class<*>, netSceneClass: Class<*>): Method? {
+        private fun findSendMethodRecursive(
+            queueClass: Class<*>,
+            netSceneClass: Class<*>
+        ): Method? {
             val candidates = ArrayList<Method>()
 
             for (method in queueClass.declaredMethods) {

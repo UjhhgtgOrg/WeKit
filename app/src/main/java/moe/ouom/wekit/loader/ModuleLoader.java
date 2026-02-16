@@ -7,7 +7,6 @@ import androidx.annotation.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,7 +17,8 @@ import moe.ouom.wekit.util.log.WeLogger;
 
 public class ModuleLoader {
 
-    private ModuleLoader() {}
+    private ModuleLoader() {
+    }
 
     private static boolean sLoaded = false;
     private static final ArrayList<Throwable> sInitErrors = new ArrayList<>(1);
@@ -32,7 +32,7 @@ public class ModuleLoader {
     @SuppressLint("ObsoleteSdkInt")
     public static ClassLoader createTargetClassLoader(@NonNull File path, @NonNull String dataDirPath) {
         ClassLoader parent = new TransitClassLoader();
-        File dataDir = new File(dataDirPath);
+        var dataDir = new File(dataDirPath);
         if (!dataDir.canWrite()) {
             sInitErrors.add(new IOException("createTargetClassLoader: dataDir is not writable: " + dataDirPath));
             return null;
@@ -66,10 +66,10 @@ public class ModuleLoader {
             return;
         }
         File targetModule = null;
-        boolean useDynamicLoad = false;
+        var useDynamicLoad = false;
         if (allowDynamicLoad) {
             try {
-                String path = findTargetModulePath(hostDataDir);
+                var path = findTargetModulePath(hostDataDir);
                 if (path != null) {
                     targetModule = new File(path);
                 }
@@ -101,8 +101,8 @@ public class ModuleLoader {
         }
         assert targetClassLoader != null;
         // invoke the startup routine
-        Class<?> kUnifiedEntryPoint = targetClassLoader.loadClass("moe.ouom.wekit.loader.startup.UnifiedEntryPoint");
-        Method initialize = kUnifiedEntryPoint.getMethod("entry",
+        var kUnifiedEntryPoint = targetClassLoader.loadClass("moe.ouom.wekit.loader.startup.UnifiedEntryPoint");
+        var initialize = kUnifiedEntryPoint.getMethod("entry",
                 String.class, String.class, ILoaderService.class, ClassLoader.class, IHookBridge.class);
         sLoaded = true;
         initialize.invoke(null, modulePath, hostDataDir, loaderService, hostClassLoader, hookBridge);

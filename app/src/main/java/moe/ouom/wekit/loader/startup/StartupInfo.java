@@ -7,7 +7,6 @@ import androidx.annotation.Nullable;
 
 import java.util.Objects;
 
-import lombok.Getter;
 import moe.ouom.wekit.loader.hookapi.IHookBridge;
 import moe.ouom.wekit.loader.hookapi.ILoaderService;
 
@@ -52,15 +51,15 @@ public class StartupInfo {
     }
 
 
-    public static Boolean isInitMethod(){
-        if (isInitMethod == null){
+    public static Boolean isInitMethod() {
+        if (isInitMethod == null) {
             return false;
         }
         return isInitMethod;
     }
 
 
-    public static void setIsInitMethod(Boolean b){
+    public static void setIsInitMethod(Boolean b) {
         Objects.requireNonNull(b);
         StartupInfo.isInitMethod = b;
     }

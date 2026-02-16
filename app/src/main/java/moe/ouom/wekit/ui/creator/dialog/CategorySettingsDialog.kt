@@ -11,7 +11,6 @@ import moe.ouom.wekit.core.bridge.HookFactoryBridge
 import moe.ouom.wekit.core.model.BaseClickableFunctionHookItem
 import moe.ouom.wekit.core.model.BaseSwitchFunctionHookItem
 import moe.ouom.wekit.util.common.ModuleRes
-import moe.ouom.wekit.util.log.WeLogger
 
 class CategorySettingsDialog(
     context: Context,
@@ -98,7 +97,11 @@ class CategorySettingsDialog(
         contentContainer.addView(view)
     }
 
-    private fun renderClickableItem(item: BaseClickableFunctionHookItem, title: String, summary: String) {
+    private fun renderClickableItem(
+        item: BaseClickableFunctionHookItem,
+        title: String,
+        summary: String
+    ) {
         val view = inflateItem("module_item_switch", contentContainer) ?: return
 
         val tvTitle = view.findViewById<TextView>(ModuleRes.getId("title", "id"))

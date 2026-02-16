@@ -12,10 +12,10 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.api.XposedModule;
-import moe.ouom.wekit.util.common.CheckUtils;
 import moe.ouom.wekit.loader.hookapi.IHookBridge;
 import moe.ouom.wekit.loader.modern.codegen.Lsp100ProxyClassMaker;
 import moe.ouom.wekit.loader.modern.dyn.Lsp100CallbackProxy;
+import moe.ouom.wekit.util.common.CheckUtils;
 import moe.ouom.wekit.util.log.WeLogger;
 
 public class Lsp100HookWrapper {
@@ -80,19 +80,19 @@ public class Lsp100HookWrapper {
             proxyClass = c;
             tag = t;
         }
-        CallbackWrapper wrapper = new CallbackWrapper(callback, priority, tag);
-        UnhookHandle handle = new UnhookHandle(wrapper, method);
-        Class<?> declaringClass = method.getDeclaringClass();
+        var wrapper = new CallbackWrapper(callback, priority, tag);
+        var handle = new UnhookHandle(wrapper, method);
+        var declaringClass = method.getDeclaringClass();
         CallbackListHolder holder;
         synchronized (sRegistryWriteLock) {
             // 1. select the callback list by tag
-            ConcurrentHashMap<Class<?>, ConcurrentHashMap<Member, CallbackListHolder>> taggedCallbackRegistry = sCallbackRegistry.get(tag);
+            var taggedCallbackRegistry = sCallbackRegistry.get(tag);
             if (taggedCallbackRegistry == null) {
                 taggedCallbackRegistry = new ConcurrentHashMap<>();
                 sCallbackRegistry.put(tag, taggedCallbackRegistry);
             }
             // 2. check if the method is already hooked
-            ConcurrentHashMap<Member, CallbackListHolder> callbackList = taggedCallbackRegistry.get(declaringClass);
+            var callbackList = taggedCallbackRegistry.get(declaringClass);
             if (callbackList == null) {
                 callbackList = new ConcurrentHashMap<>();
                 taggedCallbackRegistry.put(declaringClass, callbackList);
@@ -108,7 +108,7 @@ public class Lsp100HookWrapper {
                     throw new IllegalArgumentException("only method and constructor can be hooked, but got " + method);
                 }
                 // 4. create a new holder
-                CallbackListHolder newHolder = new CallbackListHolder();
+                var newHolder = new CallbackListHolder();
                 callbackList.put(method, newHolder);
                 holder = newHolder;
             }
@@ -116,10 +116,10 @@ public class Lsp100HookWrapper {
         // 4. add the callback to the holder
         synchronized (holder.lock) {
             // add and sort descending
-            int newSize = holder.callbacks == null ? 1 : holder.callbacks.length + 1;
-            CallbackWrapper[] newCallbacks = new CallbackWrapper[newSize];
+            var newSize = holder.callbacks == null ? 1 : holder.callbacks.length + 1;
+            var newCallbacks = new CallbackWrapper[newSize];
             if (holder.callbacks != null) {
-                int i = 0;
+                var i = 0;
                 for (; i < holder.callbacks.length; i++) {
                     if (holder.callbacks[i].priority > priority) {
                         newCallbacks[i] = holder.callbacks[i];
@@ -143,23 +143,23 @@ public class Lsp100HookWrapper {
         CheckUtils.checkNonNull(method, "method");
         CheckUtils.checkNonNull(callback, "callback");
         // find the callback holder
-        final int tag = callback.tag;
-        ConcurrentHashMap<Class<?>, ConcurrentHashMap<Member, CallbackListHolder>> taggedCallbackRegistry = sCallbackRegistry.get(tag);
+        final var tag = callback.tag;
+        var taggedCallbackRegistry = sCallbackRegistry.get(tag);
         if (taggedCallbackRegistry == null) {
             return;
         }
-        ConcurrentHashMap<Member, CallbackListHolder> callbackList = taggedCallbackRegistry.get(method.getDeclaringClass());
+        var callbackList = taggedCallbackRegistry.get(method.getDeclaringClass());
         if (callbackList == null) {
             return;
         }
-        CallbackListHolder holder = callbackList.get(method);
+        var holder = callbackList.get(method);
         if (holder == null) {
             return;
         }
         // remove the callback
         synchronized (holder.lock) {
-            ArrayList<CallbackWrapper> newCallbacks = new ArrayList<>();
-            for (CallbackWrapper cb : holder.callbacks) {
+            var newCallbacks = new ArrayList<CallbackWrapper>();
+            for (var cb : holder.callbacks) {
                 if (cb != callback) {
                     newCallbacks.add(cb);
                 }
@@ -171,23 +171,23 @@ public class Lsp100HookWrapper {
     public static boolean isMethodCallbackRegistered(@NonNull Member method, @NonNull CallbackWrapper callback) {
         CheckUtils.checkNonNull(method, "method");
         CheckUtils.checkNonNull(callback, "callback");
-        final int tag = callback.tag;
-        ConcurrentHashMap<Class<?>, ConcurrentHashMap<Member, CallbackListHolder>> taggedCallbackRegistry = sCallbackRegistry.get(tag);
+        final var tag = callback.tag;
+        var taggedCallbackRegistry = sCallbackRegistry.get(tag);
         if (taggedCallbackRegistry == null) {
             return false;
         }
         // find the callback holder
-        ConcurrentHashMap<Member, CallbackListHolder> callbackList = taggedCallbackRegistry.get(method.getDeclaringClass());
+        var callbackList = taggedCallbackRegistry.get(method.getDeclaringClass());
         if (callbackList == null) {
             return false;
         }
-        CallbackListHolder holder = callbackList.get(method);
+        var holder = callbackList.get(method);
         if (holder == null) {
             return false;
         }
         // read only, not need to lock
-        CallbackWrapper[] callbacks = holder.callbacks;
-        for (CallbackWrapper cb : callbacks) {
+        var callbacks = holder.callbacks;
+        for (var cb : callbacks) {
             if (cb == callback) {
                 return true;
             }
@@ -335,31 +335,31 @@ public class Lsp100HookWrapper {
                 final int tag
         ) {
             // lookup by tag
-            ConcurrentHashMap<Class<?>, ConcurrentHashMap<Member, CallbackListHolder>> taggedCallbackRegistry = sCallbackRegistry.get(tag);
+            var taggedCallbackRegistry = sCallbackRegistry.get(tag);
             if (taggedCallbackRegistry == null) {
                 return null;
             }
-            Member member = callback.getMember();
+            var member = callback.getMember();
             // lookup callback list
-            ConcurrentHashMap<Member, CallbackListHolder> callbackList = taggedCallbackRegistry.get(member.getDeclaringClass());
+            var callbackList = taggedCallbackRegistry.get(member.getDeclaringClass());
             if (callbackList == null) {
                 return null;
             }
-            CallbackListHolder holder = callbackList.get(member);
+            var holder = callbackList.get(member);
             if (holder == null) {
                 return null;
             }
             // copy callbacks
-            CallbackWrapper[] callbacks = copyCallbacks(holder);
+            var callbacks = copyCallbacks(holder);
             if (callbacks.length == 0) {
                 return null;
             }
             // create invocation holder
-            InvocationParamWrapper param = new InvocationParamWrapper();
+            var param = new InvocationParamWrapper();
             param.callbacks = callbacks;
             param.before = callback;
             param.isAfter = false;
-            for (int i = 0; i < callbacks.length; i++) {
+            for (var i = 0; i < callbacks.length; i++) {
                 param.index = i;
                 try {
                     callbacks[i].callback.beforeHookedMember(param);
@@ -382,7 +382,7 @@ public class Lsp100HookWrapper {
             param.isAfter = true;
             param.after = callback;
             // call in reserve order
-            for (int i = param.callbacks.length - 1; i >= 0; i--) {
+            for (var i = param.callbacks.length - 1; i >= 0; i--) {
                 param.index = i;
                 try {
                     param.callbacks[i].callback.afterHookedMember(param);
@@ -400,7 +400,7 @@ public class Lsp100HookWrapper {
 
     @NonNull
     private static Class<?> generateProxyClassForCallback(int priority) throws UnsupportedOperationException {
-        Lsp100ProxyClassMaker maker = Lsp100ProxyClassMaker.getInstance();
+        var maker = Lsp100ProxyClassMaker.getInstance();
         return maker.createProxyClass(priority);
     }
 

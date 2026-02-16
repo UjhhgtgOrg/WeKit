@@ -45,11 +45,12 @@ public class ParcelableFixer {
         try {
             // 这步操作只是设置标志位，不会触发 unparcel
             intent.setExtrasClassLoader(sHybridClassLoader);
-        } catch (Throwable ignored) {}
+        } catch (Throwable ignored) {
+        }
     }
 
     private static void hookIntentMethods() {
-        final XC_MethodHook fixClassLoaderHook = new XC_MethodHook() {
+        final var fixClassLoaderHook = new XC_MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) {
                 // 在任何读取 extras 的操作之前，强制修正 ClassLoader
@@ -61,7 +62,7 @@ public class ParcelableFixer {
             @Override
             protected void afterHookedMethod(MethodHookParam param) {
                 // 如果返回值是 Bundle，也顺手修一下 Bundle 的 ClassLoader
-                Object result = param.getResult();
+                var result = param.getResult();
                 if (result instanceof Bundle && sHybridClassLoader != null) {
                     ((Bundle) result).setClassLoader(sHybridClassLoader);
                 }

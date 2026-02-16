@@ -11,7 +11,6 @@ import moe.ouom.wekit.core.bridge.api.IHookFactoryDelegate;
 import moe.ouom.wekit.core.model.BaseClickableFunctionHookItem;
 import moe.ouom.wekit.core.model.BaseHookItem;
 import moe.ouom.wekit.core.model.BaseSwitchFunctionHookItem;
-// 如果下面这一行报错，请先 clean project
 import moe.ouom.wekit.hooks.gen.HookItemEntryList;
 
 public class HookItemFactory implements IHookFactoryDelegate {
@@ -21,8 +20,8 @@ public class HookItemFactory implements IHookFactoryDelegate {
     private static final Map<Class<? extends BaseHookItem>, BaseHookItem> ITEM_MAP = new LinkedHashMap<>();
 
     static {
-        List<BaseHookItem> items = HookItemEntryList.getAllHookItems();
-        for (BaseHookItem item : items) {
+        var items = HookItemEntryList.getAllHookItems();
+        for (var item : items) {
             ITEM_MAP.put(item.getClass(), item);
         }
     }
@@ -52,7 +51,7 @@ public class HookItemFactory implements IHookFactoryDelegate {
 
 
     public static BaseSwitchFunctionHookItem findHookItemByPathStatic(String path) {
-        for (BaseHookItem item : ITEM_MAP.values()) {
+        for (var item : ITEM_MAP.values()) {
             if (item.getPath().equals(path)) {
                 return (BaseSwitchFunctionHookItem) item;
             }
@@ -61,8 +60,8 @@ public class HookItemFactory implements IHookFactoryDelegate {
     }
 
     public static List<BaseSwitchFunctionHookItem> getAllSwitchFunctionItemListStatic() {
-        ArrayList<BaseSwitchFunctionHookItem> result = new ArrayList<>();
-        for (BaseHookItem item : ITEM_MAP.values()) {
+        var result = new ArrayList<BaseSwitchFunctionHookItem>();
+        for (var item : ITEM_MAP.values()) {
             if (item instanceof BaseSwitchFunctionHookItem) {
                 result.add((BaseSwitchFunctionHookItem) item);
             }
@@ -71,8 +70,8 @@ public class HookItemFactory implements IHookFactoryDelegate {
     }
 
     public static List<BaseClickableFunctionHookItem> getAllClickableFunctionItemListStatic() {
-        ArrayList<BaseClickableFunctionHookItem> result = new ArrayList<>();
-        for (BaseHookItem item : ITEM_MAP.values()) {
+        var result = new ArrayList<BaseClickableFunctionHookItem>();
+        for (var item : ITEM_MAP.values()) {
             if (item instanceof BaseClickableFunctionHookItem) {
                 result.add((BaseClickableFunctionHookItem) item);
             }
@@ -85,7 +84,7 @@ public class HookItemFactory implements IHookFactoryDelegate {
     }
 
     public static <T extends BaseHookItem> T getItem(Class<T> clazz) {
-        BaseHookItem item = ITEM_MAP.get(clazz);
+        var item = ITEM_MAP.get(clazz);
         return clazz.cast(item);
     }
 }

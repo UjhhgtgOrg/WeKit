@@ -121,7 +121,8 @@ class DexFinderDialog(
         }
 
         // 显示需要更新的项目数量
-        tvTip.text = "检测到 ${outdatedItems.size} 个功能需要更新 DEX 缓存，点击开始适配后将自动扫描并更新。若直接关闭窗口，相关功能将不会被加载"
+        tvTip.text =
+            "检测到 ${outdatedItems.size} 个功能需要更新 DEX 缓存，点击开始适配后将自动扫描并更新。若直接关闭窗口，相关功能将不会被加载"
     }
 
     /**
@@ -210,7 +211,10 @@ class DexFinderDialog(
             // 执行 Dex 查找,直接获取 descriptors
             val descriptors = item.dexFind(dexKit)
 
-            WeLogger.i("[DexFinderDialog]", "Total descriptors collected: ${descriptors.size}, keys: ${descriptors.keys}")
+            WeLogger.i(
+                "[DexFinderDialog]",
+                "Total descriptors collected: ${descriptors.size}, keys: ${descriptors.keys}"
+            )
 
             // 保存缓存
             DexCacheManager.saveCache(item, descriptors)
@@ -241,6 +245,7 @@ class DexFinderDialog(
                 tvCurrentTask.text = "正在适配: ${progress.path} ($taskCounter/$total)..."
                 tvProgressMain.text = "总进度: ${scanResults.size}/$total"
             }
+
             is ScanProgress.Complete -> {
                 scanResults[progress.path] = ScanResult.Success(progress.path)
                 val completed = scanResults.size
@@ -249,6 +254,7 @@ class DexFinderDialog(
                 progressMain.progress = completed
                 tvProgressMain.text = "总进度: $completed/$total"
             }
+
             is ScanProgress.Failed -> {
                 scanResults[progress.path] = ScanResult.Failed(progress.path, progress.error)
                 val completed = scanResults.size

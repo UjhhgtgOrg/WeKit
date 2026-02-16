@@ -2,7 +2,6 @@ package moe.ouom.wekit.util.common;
 
 import android.content.Context;
 import android.system.Os;
-import android.system.StructUtsname;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -28,40 +27,40 @@ public class CheckAbiVariantModel {
 
     @NonNull
     public static AbiInfo collectAbiInfo(@NonNull Context context) {
-        AbiInfo abiInfo = new AbiInfo();
-        StructUtsname uts = Os.uname();
-        String sysAbi = uts.machine;
+        var abiInfo = new AbiInfo();
+        var uts = Os.uname();
+        var sysAbi = uts.machine;
         abiInfo.sysArchName = sysAbi;
         abiInfo.sysArch = AbiUtils.archStringToArchInt(sysAbi);
 
-        HashSet<String> requestAbis = new HashSet<>();
+        var requestAbis = new HashSet<String>();
         requestAbis.add(AbiUtils.archStringToLibDirName(sysAbi));
-        for (String pkg : HOST_PACKAGES) {
-            String activeAbi = AbiUtils.getApplicationActiveAbi(pkg);
+        for (var pkg : HOST_PACKAGES) {
+            var activeAbi = AbiUtils.getApplicationActiveAbi(pkg);
             if (activeAbi == null) {
                 continue;
             }
-            String abi = AbiUtils.archStringToLibDirName(activeAbi);
+            var abi = AbiUtils.archStringToLibDirName(activeAbi);
             if (!isPackageIgnored(pkg)) {
                 requestAbis.add(abi);
             }
-            AbiInfo.Package pi = new AbiInfo.Package();
+            var pi = new AbiInfo.Package();
             pi.abi = AbiUtils.archStringToArchInt(activeAbi);
             pi.ignored = isPackageIgnored(pkg);
             pi.packageName = pkg;
             abiInfo.packages.put(pkg, pi);
         }
-        String[] modulesAbis = AbiUtils.queryModuleAbiList();
-        HashSet<String> missingAbis = new HashSet<>();
+        var modulesAbis = AbiUtils.queryModuleAbiList();
+        var missingAbis = new HashSet<String>();
         // check if modulesAbis contains all requestAbis
-        for (String abi : requestAbis) {
+        for (var abi : requestAbis) {
             if (!Arrays.asList(modulesAbis).contains(abi)) {
                 missingAbis.add(abi);
             }
         }
         abiInfo.isAbiMatch = missingAbis.isEmpty();
-        int abi = 0;
-        for (String name : requestAbis) {
+        var abi = 0;
+        for (var name : requestAbis) {
             abi |= AbiUtils.archStringToArchInt(name);
         }
         abiInfo.suggestedApkAbiVariant = AbiUtils.getSuggestedAbiVariant(abi);
@@ -69,12 +68,12 @@ public class CheckAbiVariantModel {
     }
 
     public static void setPackageIgnored(@NonNull String packageName, boolean ignored) {
-        WeConfig cfg = WeConfig.getDefaultConfig();
+        var cfg = WeConfig.getDefaultConfig();
         cfg.putBoolean("native_lib_abi_ignore." + packageName, ignored);
     }
 
     public static boolean isPackageIgnored(@NonNull String packageName) {
-        WeConfig cfg = WeConfig.getDefaultConfig();
+        var cfg = WeConfig.getDefaultConfig();
         return cfg.getBoolean("native_lib_abi_ignore." + packageName, false);
     }
 

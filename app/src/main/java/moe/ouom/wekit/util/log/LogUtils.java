@@ -26,12 +26,12 @@ public class LogUtils {
     }
 
     private static String getRunLogDirectory() {
-        String root = getLogRootDirectory();
+        var root = getLogRootDirectory();
         return root != null ? root + "RunLog" + File.separator : null;
     }
 
     private static String getErrorLogDirectory() {
-        String root = getLogRootDirectory();
+        var root = getLogRootDirectory();
         return root != null ? root + "ErrorLog" + File.separator : null;
     }
 
@@ -40,7 +40,7 @@ public class LogUtils {
      * @return 获取调用此方法的调用栈
      */
     public static String getCallStack() {
-        Throwable throwable = new Throwable();
+        var throwable = new Throwable();
         return getStackTrace(throwable);
     }
 
@@ -51,10 +51,10 @@ public class LogUtils {
      * @return 堆栈跟踪
      */
     public static String getStackTrace(Throwable throwable) {
-        StringBuilder result = new StringBuilder();
+        var result = new StringBuilder();
         result.append(throwable).append("\n");
-        StackTraceElement[] stackTraceElements = throwable.getStackTrace();
-        for (StackTraceElement stackTraceElement : stackTraceElements) {
+        var stackTraceElements = throwable.getStackTrace();
+        for (var stackTraceElement : stackTraceElements) {
             //不把当前类加入结果中
             if (stackTraceElement.getClassName().equals(LogUtils.class.getName())) continue;
             result.append(stackTraceElement).append("\n");
@@ -91,7 +91,7 @@ public class LogUtils {
      *
      * @param TAG         (标签 文件名)
      * @param Description 错误的相关描述
-     * @param e     Exception
+     * @param e           Exception
      */
     public static void addError(String TAG, String Description, Throwable e) {
         addLog(TAG, Description, e, true);
@@ -100,21 +100,21 @@ public class LogUtils {
 
     private static void addLog(String fileName, String Description, Object content, boolean isError) {
         try {
-            if (NativeCoreBridge.isNativeCoreInitialized() && !WeConfig.getDefaultConfig().getBooleanOrFalse(PrekEnableLog)){
+            if (NativeCoreBridge.isNativeCoreInitialized() && !WeConfig.getDefaultConfig().getBooleanOrFalse(PrekEnableLog)) {
                 return;
             }
         } catch (Exception e) {
             XposedBridge.log(e);
         }
 
-        String directory = isError ? getErrorLogDirectory() : getRunLogDirectory();
+        var directory = isError ? getErrorLogDirectory() : getRunLogDirectory();
         if (directory == null) {
             // HostInfo not initialized yet, skip file logging
             return;
         }
 
-        String path = directory + fileName + ".log";
-        StringBuilder stringBuffer = new StringBuilder(getTime());
+        var path = directory + fileName + ".log";
+        var stringBuffer = new StringBuilder(getTime());
         stringBuffer.append("\n").append(Description);
         if (content instanceof Exception) {
             stringBuffer.append("\n").append(getStackTrace((Exception) content));
@@ -124,8 +124,8 @@ public class LogUtils {
     }
 
     public static String getTime() {
-        @SuppressLint("SimpleDateFormat") SimpleDateFormat df = new SimpleDateFormat("[yyyy/MM/dd HH:mm:ss]");
-        Calendar calendar = Calendar.getInstance();
+        @SuppressLint("SimpleDateFormat") var df = new SimpleDateFormat("[yyyy/MM/dd HH:mm:ss]");
+        var calendar = Calendar.getInstance();
         return df.format(calendar.getTime());
     }
 

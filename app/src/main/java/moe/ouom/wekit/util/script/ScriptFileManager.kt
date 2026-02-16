@@ -81,7 +81,7 @@ class ScriptFileManager private constructor() {
         }
 
         try {
-            scriptDir = File(applicationContext.getFilesDir().parentFile, SCRIPT_DIR)
+            scriptDir = File(applicationContext.filesDir.parentFile, SCRIPT_DIR)
             ensureScriptDirExists()
             isInitialized = true
             WeLogger.i("[ScriptFileManager] 初始化成功: ${scriptDir.absolutePath}")

@@ -1,7 +1,6 @@
 package moe.ouom.wekit.loader.startup;
 
 import static moe.ouom.wekit.constants.Constants.CLAZZ_BASE_APPLICATION;
-import static moe.ouom.wekit.constants.Constants.CLAZZ_MM_APPLICATION_LIKE;
 
 import android.annotation.SuppressLint;
 import android.app.Application;
@@ -12,7 +11,6 @@ import androidx.annotation.Keep;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 
 import de.robv.android.xposed.XC_MethodHook;
@@ -29,7 +27,8 @@ public class UnifiedEntryPoint {
 
     private static boolean sInitialized = false;
 
-    private UnifiedEntryPoint() {}
+    private UnifiedEntryPoint() {
+    }
 
     @Keep
     public static void entry(
@@ -44,10 +43,10 @@ public class UnifiedEntryPoint {
         }
         sInitialized = true;
         // fix up the class loader
-        HybridClassLoader loader = HybridClassLoader.INSTANCE;
-        ClassLoader self = UnifiedEntryPoint.class.getClassLoader();
+        var loader = HybridClassLoader.INSTANCE;
+        var self = UnifiedEntryPoint.class.getClassLoader();
         assert self != null;
-        ClassLoader parent = self.getParent();
+        var parent = self.getParent();
         HybridClassLoader.setLoaderParentClassLoader(parent);
         injectClassLoader(self, loader);
         callNextStep(modulePath, hostDataDir, loaderService, hostClassLoader, hookBridge);
@@ -69,11 +68,11 @@ public class UnifiedEntryPoint {
                     Context.class,
                     new XC_MethodHook() {
                         @Override
-                        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                        protected void afterHookedMethod(MethodHookParam param) {
                             WeLogger.i("UnifiedEntryPoint", "Shell attached (Application.attachBaseContext done).");
 
-                            Context context = (Context) param.thisObject;
-                            ClassLoader currentClassLoader = context.getClassLoader();
+                            var context = (Context) param.thisObject;
+                            var currentClassLoader = context.getClassLoader();
 
                             // Hook Instrumentation.callApplicationOnCreate 以处理 Tinker 热更新场景
                             try {
@@ -101,28 +100,28 @@ public class UnifiedEntryPoint {
                                                      @NonNull ClassLoader initialClassLoader,
                                                      @Nullable IHookBridge hookBridge) {
         try {
-            Class<?> instrumentationClass = Class.forName("android.app.Instrumentation", false, hostClassLoader);
+            var instrumentationClass = Class.forName("android.app.Instrumentation", false, hostClassLoader);
             XposedHelpers.findAndHookMethod(
                     instrumentationClass,
                     "callApplicationOnCreate",
                     Application.class,
                     new XC_MethodHook() {
                         @Override
-                        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                            Application application = (Application) param.args[0];
-                            Application hostApp = (Application) param.args[0];
+                        protected void afterHookedMethod(MethodHookParam param) {
+                            var application = (Application) param.args[0];
+                            var hostApp = (Application) param.args[0];
                             StartupInfo.setHostApp(hostApp);
 
                             WeLogger.i("UnifiedEntryPoint", "Instrumentation.callApplicationOnCreate captured!");
                             WeLogger.i("UnifiedEntryPoint", "Application: " + application.getClass().getName());
 
-                            ClassLoader realClassLoader = application.getBaseContext().getClassLoader();
+                            var realClassLoader = application.getBaseContext().getClassLoader();
                             WeLogger.i("UnifiedEntryPoint", "Real ClassLoader: " + realClassLoader.getClass().getName());
                             Initiator.init(realClassLoader);
 
                             WeLogger.i("UnifiedEntryPoint", "Invoking StartupAgent immediately...");
                             try {
-                                Class<?> kStartupAgent = Class.forName("moe.ouom.wekit.loader.startup.StartupAgent", false, UnifiedEntryPoint.class.getClassLoader());
+                                var kStartupAgent = Class.forName("moe.ouom.wekit.loader.startup.StartupAgent", false, UnifiedEntryPoint.class.getClassLoader());
                                 kStartupAgent.getMethod("startup", String.class, String.class, ILoaderService.class, ClassLoader.class, IHookBridge.class)
                                         .invoke(null, modulePath, hostDataDir, loaderService, realClassLoader, hookBridge);
                                 WeLogger.i("UnifiedEntryPoint", "StartupAgent invoked successfully.");
@@ -143,7 +142,7 @@ public class UnifiedEntryPoint {
     @SuppressLint("DiscouragedPrivateApi")
     private static void injectClassLoader(ClassLoader self, ClassLoader newParent) {
         try {
-            Field fParent = ClassLoader.class.getDeclaredField("parent");
+            var fParent = ClassLoader.class.getDeclaredField("parent");
             fParent.setAccessible(true);
             fParent.set(self, newParent);
         } catch (Exception e) {
@@ -154,7 +153,7 @@ public class UnifiedEntryPoint {
     @NonNull
     private static Throwable getInvocationTargetExceptionCause(@NonNull Throwable e) {
         while (e instanceof InvocationTargetException) {
-            Throwable cause = ((InvocationTargetException) e).getTargetException();
+            var cause = ((InvocationTargetException) e).getTargetException();
             if (cause != null) {
                 e = cause;
             } else {

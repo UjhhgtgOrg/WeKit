@@ -69,9 +69,9 @@ public class StartupHook {
         if (file.isFile()) {
             file.delete();
         } else if (file.isDirectory()) {
-            File[] listFiles = file.listFiles();
+            var listFiles = file.listFiles();
             if (listFiles != null) {
-                for (File deleteFile : listFiles) {
+                for (var deleteFile : listFiles) {
                     deleteFile(deleteFile);
                 }
             }
@@ -84,7 +84,7 @@ public class StartupHook {
         if (th == null) {
             return;
         }
-        String msg = Log.getStackTraceString(th);
+        var msg = Log.getStackTraceString(th);
         Log.e(BuildConfig.TAG, msg);
         try {
             StartupInfo.getLoaderService().log(th);

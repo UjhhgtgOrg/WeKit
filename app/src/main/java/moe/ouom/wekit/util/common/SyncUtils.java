@@ -9,7 +9,6 @@ import android.os.Looper;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -19,12 +18,12 @@ import moe.ouom.wekit.util.log.WeLogger;
 @SuppressLint("PrivateApi")
 public class SyncUtils {
     /**
-     *     static {
-     *         String pkgName = v2.f219924b;
-     *         boolean zF = vf.a.f("clicfg_matrix_lifecycle_process_supervisor_enable", true);
-     *         o.f(pkgName, "pkgName");
-     *         f260937a = new q(new j0(zF, false, c0.d(pkgName, pkgName.concat(":push"), pkgName.concat(":tools"), pkgName.concat(":appbrand0"), pkgName.concat(":appbrand1"), pkgName.concat(":appbrand2"), pkgName.concat(":appbrand3"), pkgName.concat(":appbrand4"), pkgName.concat(":sandbox"), pkgName.concat(":exdevice"), pkgName.concat(":support"), pkgName.concat(":cuploader"), pkgName.concat(":patch"), pkgName.concat(":hotpot.."), pkgName.concat(":fallback"), pkgName.concat(":dexopt"), pkgName.concat(":recovery"), pkgName.concat(":nospace"), pkgName.concat(":jectl"), pkgName.concat(":opengl_detector"), pkgName.concat(":rubbishbin"), pkgName.concat(":isolated_process0"), pkgName.concat(":isolated_process1"), pkgName.concat(":res_can_worker"), pkgName.concat(":extmig"), pkgName.concat(":backtrace__"), pkgName.concat(":TMAssistantDownloadSDKService"), pkgName.concat(":switch"), pkgName.concat(":hld"), pkgName.concat(":playcore_missing_splits_activity"), pkgName.concat(":hldfl"), pkgName.concat(":magic_emoji"))), true, true, new p(!((Boolean) ((n) h.a(a.f260933d)).getValue()).booleanValue() ? null : new b(new LinkedBlockingQueue(), new kk5.d()), 5, 30L, c.f260934d, d.f260935d), true);
-     *     }
+     * static {
+     * String pkgName = v2.f219924b;
+     * boolean zF = vf.a.f("clicfg_matrix_lifecycle_process_supervisor_enable", true);
+     * o.f(pkgName, "pkgName");
+     * f260937a = new q(new j0(zF, false, c0.d(pkgName, pkgName.concat(":push"), pkgName.concat(":tools"), pkgName.concat(":appbrand0"), pkgName.concat(":appbrand1"), pkgName.concat(":appbrand2"), pkgName.concat(":appbrand3"), pkgName.concat(":appbrand4"), pkgName.concat(":sandbox"), pkgName.concat(":exdevice"), pkgName.concat(":support"), pkgName.concat(":cuploader"), pkgName.concat(":patch"), pkgName.concat(":hotpot.."), pkgName.concat(":fallback"), pkgName.concat(":dexopt"), pkgName.concat(":recovery"), pkgName.concat(":nospace"), pkgName.concat(":jectl"), pkgName.concat(":opengl_detector"), pkgName.concat(":rubbishbin"), pkgName.concat(":isolated_process0"), pkgName.concat(":isolated_process1"), pkgName.concat(":res_can_worker"), pkgName.concat(":extmig"), pkgName.concat(":backtrace__"), pkgName.concat(":TMAssistantDownloadSDKService"), pkgName.concat(":switch"), pkgName.concat(":hld"), pkgName.concat(":playcore_missing_splits_activity"), pkgName.concat(":hldfl"), pkgName.concat(":magic_emoji"))), true, true, new p(!((Boolean) ((n) h.a(a.f260933d)).getValue()).booleanValue() ? null : new b(new LinkedBlockingQueue(), new kk5.d()), 5, 30L, c.f260934d, d.f260935d), true);
+     * }
      * }
      */
     // 微信的进程常量
@@ -75,13 +74,13 @@ public class SyncUtils {
             return mProcType;
         }
 
-        String procName = getProcessName();
-        String[] parts = procName.split(":");
+        var procName = getProcessName();
+        var parts = procName.split(":");
 
         if (parts.length == 1) {
             mProcType = PROC_MAIN;
         } else {
-            String tail = parts[parts.length - 1];
+            var tail = parts[parts.length - 1];
 
             // 按照进程名称匹配
             if ("push".equals(tail)) {
@@ -155,17 +154,17 @@ public class SyncUtils {
         if (mProcName != null) {
             return mProcName;
         }
-        String name = "unknown";
-        int retry = 0;
+        var name = "unknown";
+        var retry = 0;
         do {
             try {
                 Context context = HostInfo.getHostInfo().getApplication();
 
-                List<ActivityManager.RunningAppProcessInfo> runningAppProcesses =
+                var runningAppProcesses =
                         ((ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE))
                                 .getRunningAppProcesses();
                 if (runningAppProcesses != null) {
-                    for (ActivityManager.RunningAppProcessInfo runningAppProcessInfo : runningAppProcesses) {
+                    for (var runningAppProcessInfo : runningAppProcesses) {
                         if (runningAppProcessInfo != null && runningAppProcessInfo.pid == android.os.Process.myPid()) {
                             mProcName = runningAppProcessInfo.processName;
                             return runningAppProcessInfo.processName;

@@ -22,7 +22,8 @@ public abstract class WeConfig implements SharedPreferences, SharedPreferences.E
     private static final ConcurrentHashMap<String, WeConfig> sUinConfig =
             new ConcurrentHashMap<>(4);
 
-    protected WeConfig() {}
+    protected WeConfig() {
+    }
 
     @NonNull
     public static synchronized WeConfig getDefaultConfig() {
@@ -40,7 +41,7 @@ public abstract class WeConfig implements SharedPreferences, SharedPreferences.E
      */
     @NonNull
     public static synchronized WeConfig forAccount(String wxid) {
-        WeConfig cfg = sUinConfig.get(wxid);
+        var cfg = sUinConfig.get(wxid);
         if (cfg != null) {
             return cfg;
         }
@@ -112,8 +113,6 @@ public abstract class WeConfig implements SharedPreferences, SharedPreferences.E
     }
 
 
-
-
     public static void cPutBoolean(@NonNull String key, Boolean b) {
         getCache().edit().putBoolean(key, b).apply();
     }
@@ -129,6 +128,7 @@ public abstract class WeConfig implements SharedPreferences, SharedPreferences.E
     public static boolean cGetBoolean(@NonNull String key) {
         return getCache().getBooleanOrFalse(key);
     }
+
     public static boolean cGetBoolean(@NonNull String key, boolean d) {
         return getCache().getBooleanOrDefault(key, d);
     }
@@ -146,16 +146,19 @@ public abstract class WeConfig implements SharedPreferences, SharedPreferences.E
     }
 
     public boolean getBoolPrek(@NonNull String key) {
-        return getBooleanOrDefault(Constants.PrekXXX+key, false);
+        return getBooleanOrDefault(Constants.PrekXXX + key, false);
     }
+
     public String getStringPrek(@NonNull String key, String def) {
-        return getString(Constants.PrekXXX+key, def);
+        return getString(Constants.PrekXXX + key, def);
     }
+
     public int getIntPrek(@NonNull String key, int def) {
-        return getInt(Constants.PrekXXX+key, def);
+        return getInt(Constants.PrekXXX + key, def);
     }
+
     public long getLongPrek(@NonNull String key, long def) {
-        return getLong(Constants.PrekXXX+key, def);
+        return getLong(Constants.PrekXXX + key, def);
     }
 
     public boolean getBooleanOrDefault(@NonNull String key, boolean def) {
@@ -165,7 +168,6 @@ public abstract class WeConfig implements SharedPreferences, SharedPreferences.E
     public int getIntOrDefault(@NonNull String key, int def) {
         return getInt(key, def);
     }
-
 
 
     @Nullable
@@ -185,7 +187,7 @@ public abstract class WeConfig implements SharedPreferences, SharedPreferences.E
     public abstract Object getObject(@NonNull String key);
 
     public <T> T cGetObject(String key, TypeReference<T> type) {
-        String data = getCache().getString(key);
+        var data = getCache().getString(key);
         if (data == null || data.isEmpty()) {
             return null;
         }
@@ -236,13 +238,13 @@ public abstract class WeConfig implements SharedPreferences, SharedPreferences.E
 
     @Override
     public void registerOnSharedPreferenceChangeListener(
-        @NonNull OnSharedPreferenceChangeListener listener) {
+            @NonNull OnSharedPreferenceChangeListener listener) {
         throw new UnsupportedOperationException("not implemented");
     }
 
     @Override
     public void unregisterOnSharedPreferenceChangeListener(
-        @NonNull OnSharedPreferenceChangeListener listener) {
+            @NonNull OnSharedPreferenceChangeListener listener) {
         throw new UnsupportedOperationException("not implemented");
     }
 

@@ -26,8 +26,8 @@ public class ModuleAppImpl extends Application {
     }
 
     private void initStartupInfo() {
-        final String apkPath = getApplicationInfo().sourceDir;
-        ILoaderService loaderService = new ILoaderService() {
+        final var apkPath = getApplicationInfo().sourceDir;
+        var loaderService = new ILoaderService() {
 
             // not used, just for compatibility
             private IClassLoaderHelper mClassLoaderHelper;

@@ -3,7 +3,6 @@ package moe.ouom.wekit.hooks.item.dev
 import android.content.Context
 import com.afollestad.materialdialogs.MaterialDialog
 import com.afollestad.materialdialogs.input.input
-import moe.ouom.wekit.config.WeConfig
 import moe.ouom.wekit.core.model.BaseClickableFunctionHookItem
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.hooks.sdk.protocol.WePkgHelper
@@ -21,7 +20,9 @@ class WeProfileNameSetter : BaseClickableFunctionHookItem() {
                     allowEmpty = true,
                     waitForPositiveButton = true
                 ) { dialog, text ->
-                    val payload = """{"1":{"1":1,"2":{"1":64,"2":{"1":16,"2":{"1":1,"2":"${escapeJsonString(text.toString())}"}}}}}"""
+                    val payload = """{"1":{"1":1,"2":{"1":64,"2":{"1":16,"2":{"1":1,"2":"${
+                        escapeJsonString(text.toString())
+                    }"}}}}}"""
 
                     WePkgHelper.INSTANCE?.sendCgi(
                         "/cgi-bin/micromsg-bin/oplog",
@@ -40,7 +41,10 @@ class WeProfileNameSetter : BaseClickableFunctionHookItem() {
                         }
 
                         onFail { errType, errCode, errMsg ->
-                            WeLogger.e("WeProfileNameSetter", "失败: type=$errType, code=$errCode, msg=$errMsg")
+                            WeLogger.e(
+                                "WeProfileNameSetter",
+                                "失败: type=$errType, code=$errCode, msg=$errMsg"
+                            )
                             MaterialDialog(it)
                                 .title(text = "出错了！")
                                 .message(text = "微信拒绝了你的请求！\n错误: $errType, $errCode, $errMsg")

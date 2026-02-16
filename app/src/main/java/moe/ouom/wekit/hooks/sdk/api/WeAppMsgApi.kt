@@ -7,13 +7,10 @@ import moe.ouom.wekit.core.model.ApiHookItem
 import moe.ouom.wekit.dexkit.intf.IDexFind
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.util.common.SyncUtils
-import moe.ouom.wekit.util.common.Utils.extractXmlAttr
-import moe.ouom.wekit.util.common.Utils.extractXmlTag
 import moe.ouom.wekit.util.log.WeLogger
 import org.luckypray.dexkit.DexKitBridge
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
-import java.util.regex.Pattern
 
 /**
  * 微信 AppMsg (XML消息) 发送 API
@@ -28,7 +25,7 @@ class WeAppMsgApi : ApiHookItem(), IDexFind {
     // -------------------------------------------------------------------------------------
     private val dexClassAppMsgContent by dexClass() // op0.q
     private val dexClassAppMsgLogic by dexClass()   // com.tencent.mm.pluginsdk.model.app.k0
-    
+
     private val dexMethodParseXml by dexMethod()    // op0.q.u(String)
     private val dexMethodSendAppMsg by dexMethod()  // k0.J(...)
 
@@ -41,7 +38,7 @@ class WeAppMsgApi : ApiHookItem(), IDexFind {
 
     companion object {
         private const val TAG = "WeAppMsgApi"
-        
+
         @SuppressLint("StaticFieldLeak")
         var INSTANCE: WeAppMsgApi? = null
     }
@@ -49,7 +46,10 @@ class WeAppMsgApi : ApiHookItem(), IDexFind {
     @SuppressLint("NonUniqueDexKitData")
     override fun dexFind(dexKit: DexKitBridge): Map<String, String> {
         val descriptors = mutableMapOf<String, String>()
-        WeLogger.i(TAG, ">>>> 开始查找 AppMsg 发送组件 (Process: ${SyncUtils.getProcessName()}) <<<<")
+        WeLogger.i(
+            TAG,
+            ">>>> 开始查找 AppMsg 发送组件 (Process: ${SyncUtils.getProcessName()}) <<<<"
+        )
 
         // 查找 AppMsgContent (op0.q)
         dexClassAppMsgContent.find(dexKit, descriptors) {
@@ -130,7 +130,14 @@ class WeAppMsgApi : ApiHookItem(), IDexFind {
     /**
      * 发送 XML 消息 (AppMsg)
      */
-    fun sendXmlAppMsg(toUser: String, title: String, appId: String, url: String?, data: ByteArray?, xmlContent: String): Boolean {
+    fun sendXmlAppMsg(
+        toUser: String,
+        title: String,
+        appId: String,
+        url: String?,
+        data: ByteArray?,
+        xmlContent: String
+    ): Boolean {
         if (!isValid()) {
             WeLogger.e(TAG, "API 未就绪，无法发送")
             return false

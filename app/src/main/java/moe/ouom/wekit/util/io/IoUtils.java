@@ -32,8 +32,8 @@ public class IoUtils {
     @NonNull
     public static byte[] readFully(@NonNull InputStream is) throws IOException {
         Objects.requireNonNull(is, "is == null");
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        byte[] buf = new byte[4096];
+        var baos = new ByteArrayOutputStream();
+        var buf = new byte[4096];
         try (is) {
             int len;
             while ((len = is.read(buf)) != -1) {
@@ -58,15 +58,15 @@ public class IoUtils {
         if (!file.exists()) {
             throw new IOException("File not found: " + file.getAbsolutePath());
         }
-        long lsize = file.length();
+        var lsize = file.length();
         if (lsize > Integer.MAX_VALUE) {
             throw new IOException("File too large: " + file.getAbsolutePath() + ", size: " + lsize);
         }
-        int size = (int) lsize;
-        byte[] buf = new byte[size];
+        var size = (int) lsize;
+        var buf = new byte[size];
         try (InputStream is = new FileInputStream(file)) {
             int len;
-            int offset = 0;
+            var offset = 0;
             while (offset < size && (len = is.read(buf, offset, size - offset)) != -1) {
                 offset += len;
             }
@@ -94,9 +94,9 @@ public class IoUtils {
         if (offset < 0 || count < 0 || offset + count > buf.length) {
             throw new IndexOutOfBoundsException("offset: " + offset + ", count: " + count + ", buf.length: " + buf.length);
         }
-        int read = 0;
+        var read = 0;
         while (read < count) {
-            int len = is.read(buf, offset + read, count - read);
+            var len = is.read(buf, offset + read, count - read);
             if (len == -1) {
                 throw new IOException("End of stream reached before reading " + count + " bytes");
             }
@@ -117,7 +117,7 @@ public class IoUtils {
     @NonNull
     public static File makeParentDirsOrThrow(@NonNull File file) {
         Objects.requireNonNull(file, "file == null");
-        File parent = file.getParentFile();
+        var parent = file.getParentFile();
         if (parent != null && !parent.exists()) {
             mkdirsOrThrow(parent);
         }
@@ -175,7 +175,7 @@ public class IoUtils {
         Objects.requireNonNull(file, "file == null");
         Objects.requireNonNull(data, "data == null");
         if (!file.exists()) {
-            File parent = file.getParentFile();
+            var parent = file.getParentFile();
             if (parent != null && !parent.exists()) {
                 mkdirsOrThrow(parent);
             }
@@ -224,8 +224,8 @@ public class IoUtils {
     public static byte[] calculateFileMd5(@NonNull InputStream is) throws IOException {
         Objects.requireNonNull(is, "is == null");
         try (is) {
-            MessageDigest md = MessageDigest.getInstance("MD5");
-            byte[] buf = new byte[8192];
+            var md = MessageDigest.getInstance("MD5");
+            var buf = new byte[8192];
             int len;
             while ((len = is.read(buf)) != -1) {
                 md.update(buf, 0, len);
@@ -253,7 +253,7 @@ public class IoUtils {
         if (fileName.endsWith(File.separator)) {
             throw new IllegalArgumentException("fileName ends with File.separatorChar");
         }
-        int index = fileName.lastIndexOf(File.separatorChar);
+        var index = fileName.lastIndexOf(File.separatorChar);
         if (index == -1) {
             return fileName;
         } else {
@@ -273,11 +273,11 @@ public class IoUtils {
     @NonNull
     public static String calculateFileMd5HexString(@NonNull File file, boolean upperCase) throws IOException {
         Objects.requireNonNull(file, "file == null");
-        byte[] md5 = calculateFileMd5(file);
-        char[] hexDigits = upperCase ? HEX_UPPER_DIGITS : HEX_LOWER_DIGITS;
-        char[] hex = new char[md5.length * 2];
-        for (int i = 0; i < md5.length; i++) {
-            int b = md5[i] & 0xFF;
+        var md5 = calculateFileMd5(file);
+        var hexDigits = upperCase ? HEX_UPPER_DIGITS : HEX_LOWER_DIGITS;
+        var hex = new char[md5.length * 2];
+        for (var i = 0; i < md5.length; i++) {
+            var b = md5[i] & 0xFF;
             hex[i * 2] = hexDigits[b >>> 4];
             hex[i * 2 + 1] = hexDigits[b & 0xF];
         }

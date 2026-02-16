@@ -2,8 +2,8 @@ package moe.ouom.wekit.hooks.item.example
 
 import android.util.Log
 import de.robv.android.xposed.XposedHelpers
-import moe.ouom.wekit.core.dsl.dexMethod
 import moe.ouom.wekit.core.dsl.dexClass
+import moe.ouom.wekit.core.dsl.dexMethod
 import moe.ouom.wekit.core.dsl.resultNull
 import moe.ouom.wekit.core.model.BaseSwitchFunctionHookItem
 import moe.ouom.wekit.dexkit.intf.IDexFind
@@ -17,7 +17,8 @@ import org.luckypray.dexkit.DexKitBridge
 
 // 下面这一行在写功能的时候必须保留，否则 ksp 将无法标记此类，这里为了防止被扫描所以注释掉了
 //@HookItem(path = "example/示例写法", desc = "展示新架构的简化写法")
-class SimplifiedExample : BaseSwitchFunctionHookItem() /* 这里也可以继承 BaseClickableFunctionHookItem */, IDexFind {
+class SimplifiedExample :
+    BaseSwitchFunctionHookItem() /* 这里也可以继承 BaseClickableFunctionHookItem */, IDexFind {
 
     // DSL: Dex 方法委托（自动生成 key）
     private val MethodTarget by dexMethod()
@@ -99,13 +100,14 @@ class SimplifiedExample : BaseSwitchFunctionHookItem() /* 这里也可以继承 
 
         // 方式 3: 使用 dexClass 委托直接访问 Class（推荐）
         // 直接使用 .clazz 访问器，自动反射获取 Class
-        val instance = XposedHelpers.newInstance(
+        XposedHelpers.newInstance(
             ExampleClass.clazz,
             "param1", "param2"
         )
 
         // 方式 4: 这里拿 Hook A 作为例子 （使用全局 HOOK 优先级）
-        val clsReceiveLuckyMoney: Class<*> = XposedHelpers.findClass("com.example.LuckyMoneyReceive", classLoader)
+        val clsReceiveLuckyMoney: Class<*> =
+            XposedHelpers.findClass("com.example.LuckyMoneyReceive", classLoader)
         val mOnGYNetEnd = XposedHelpers.findMethodExact(
             clsReceiveLuckyMoney,
             "A",
@@ -123,7 +125,8 @@ class SimplifiedExample : BaseSwitchFunctionHookItem() /* 这里也可以继承 
 
 
         // 方式 5: 这里拿 Hook B 作为例子 （使用自定义 HOOK 优先级）
-        val clsReceiveLuckyMoney2: Class<*> = XposedHelpers.findClass("com.example.LuckyMoneyReceive", classLoader)
+        val clsReceiveLuckyMoney2: Class<*> =
+            XposedHelpers.findClass("com.example.LuckyMoneyReceive", classLoader)
         val mOnGYNetEnd2 = XposedHelpers.findMethodExact(
             clsReceiveLuckyMoney2,
             "B",

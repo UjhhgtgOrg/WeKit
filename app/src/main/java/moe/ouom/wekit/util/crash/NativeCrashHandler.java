@@ -21,14 +21,16 @@ public class NativeCrashHandler {
 
     /**
      * -- GETTER --
-     *  检查是否已安装
+     * 检查是否已安装
      */
     @Getter
     public boolean isInstalled = false;
 
     // Native 方法声明
     private native boolean installNative(String crashLogDir);
+
     private native void uninstallNative();
+
     private native void triggerTestCrashNative(int crashType);
 
     public NativeCrashHandler(@NonNull Context context) {
@@ -48,8 +50,8 @@ public class NativeCrashHandler {
         }
 
         try {
-            String crashLogDir = crashLogManager.getCrashLogDirPath();
-            boolean result = installNative(crashLogDir);
+            var crashLogDir = crashLogManager.getCrashLogDirPath();
+            var result = installNative(crashLogDir);
 
             if (result) {
                 isInstalled = true;

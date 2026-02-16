@@ -10,7 +10,8 @@ class Constants private constructor() {
         const val CLAZZ_BASE_APPLICATION: String = "com.tencent.mm.app.Application"
         const val CLAZZ_MM_APPLICATION_LIKE: String = "com.tencent.mm.app.MMApplicationLike"
         const val CLAZZ_SETTINGS_UI = "com.tencent.mm.plugin.setting.ui.setting.SettingsUI"
-        const val CLAZZ_MAIN_SETTINGS_UI = "com.tencent.mm.plugin.setting.ui.setting_new.MainSettingsUI"
+        const val CLAZZ_MAIN_SETTINGS_UI =
+            "com.tencent.mm.plugin.setting.ui.setting_new.MainSettingsUI"
         const val CLAZZ_ICON_PREFERENCE = "com.tencent.mm.ui.base.preference.IconPreference"
         const val CLAZZ_MMActivity = "com.tencent.mm.ui.MMActivity"
         const val CLAZZ_I_PREFERENCE_SCREEN = "com.tencent.mm.ui.base.preference.IPreferenceScreen"
@@ -29,6 +30,7 @@ class Constants private constructor() {
         const val PrekEnableLog: String = "setting_switch_value_prek_enable_log"
         const val PrekVerboseLog: String = "setting_switch_value_prek_verbose_log"
         const val PrekDatabaseVerboseLog: String = "setting_switch_value_prek_database_verbose_log"
-        const val PrekDisableVersionAdaptation: String = "setting_cfg_value_disable_version_adaptation"
+        const val PrekDisableVersionAdaptation: String =
+            "setting_cfg_value_disable_version_adaptation"
     }
 }

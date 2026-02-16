@@ -51,7 +51,10 @@ class TestCrash : BaseClickableFunctionHookItem() {
                 WeLogger.i("TestCrash", "Installing native crash handler...")
                 val installed = nativeCrashHandler?.install() ?: false
                 if (installed) {
-                    WeLogger.i("TestCrash", "✓ Native crash handler installed successfully for testing")
+                    WeLogger.i(
+                        "TestCrash",
+                        "✓ Native crash handler installed successfully for testing"
+                    )
                 } else {
                     WeLogger.e("TestCrash", "✗ Failed to install native crash handler for testing")
                 }
@@ -233,7 +236,8 @@ class TestCrash : BaseClickableFunctionHookItem() {
                 try {
                     // 重新获取 Application Context
                     val activityThreadClass = Class.forName("android.app.ActivityThread")
-                    val currentApplicationMethod = activityThreadClass.getMethod("currentApplication")
+                    val currentApplicationMethod =
+                        activityThreadClass.getMethod("currentApplication")
                     appContext = currentApplicationMethod.invoke(null) as? Context
                     WeLogger.i("TestCrash", "Application context obtained: ${appContext != null}")
                 } catch (e: Throwable) {
@@ -294,6 +298,7 @@ class TestCrash : BaseClickableFunctionHookItem() {
      */
     private fun triggerArrayIndexOutOfBoundsException() {
         val array = arrayOf(1, 2, 3)
+
         @Suppress("UNUSED_VARIABLE")
         val value = array[10] // 触发 ArrayIndexOutOfBoundsException
     }
@@ -303,6 +308,7 @@ class TestCrash : BaseClickableFunctionHookItem() {
      */
     private fun triggerClassCastException() {
         val obj: Any = "String"
+
         @Suppress("UNUSED_VARIABLE", "UNCHECKED_CAST")
         val number = obj as Int // 触发 ClassCastException
     }

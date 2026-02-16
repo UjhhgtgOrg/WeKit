@@ -15,8 +15,7 @@ object Common {
         val sdf = SimpleDateFormat("MMddHHmm", Locale.getDefault())
         return sdf.format(Date())
     }
-
-
+    
     private fun getShortGitRevision(): String {
         val command = "git rev-parse --short HEAD"
         val processBuilder = ProcessBuilder(*command.split(" ").toTypedArray())

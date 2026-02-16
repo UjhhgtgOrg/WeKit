@@ -56,7 +56,8 @@ public class InMemoryClassLoaderHelper implements IClassLoaderHelper {
                 return elementConstructor1.newInstance(dexFiles);
             } catch (NoSuchMethodException e) {
                 throw new UnsupportedOperationException(e);
-            } catch (IllegalAccessException | InvocationTargetException | InstantiationException e) {
+            } catch (IllegalAccessException | InvocationTargetException |
+                     InstantiationException e) {
                 throw IoUtils.unsafeThrowForIteCause(e);
             }
         } else {
@@ -69,7 +70,8 @@ public class InMemoryClassLoaderHelper implements IClassLoaderHelper {
                 return elementConstructor4.newInstance(new File(""), false, null, dexFiles);
             } catch (NoSuchMethodException e) {
                 throw new UnsupportedOperationException(e);
-            } catch (IllegalAccessException | InvocationTargetException | InstantiationException e) {
+            } catch (IllegalAccessException | InvocationTargetException |
+                     InstantiationException e) {
                 throw IoUtils.unsafeThrowForIteCause(e);
             }
         }
@@ -118,13 +120,13 @@ public class InMemoryClassLoaderHelper implements IClassLoaderHelper {
             }
         }
         // create DexFile
-        DexFile dexFile = MemoryDexLoader.createDexFileFormBytes(dexBytes, classLoader, dexName);
-        Object element = createElement(dexFile);
+        var dexFile = MemoryDexLoader.createDexFileFormBytes(dexBytes, classLoader, dexName);
+        var element = createElement(dexFile);
         try {
-            Object pathList = pathListField.get(classLoader);
-            Object[] oldElements = (Object[]) dexElementsField.get(pathList);
+            var pathList = pathListField.get(classLoader);
+            var oldElements = (Object[]) dexElementsField.get(pathList);
             assert oldElements != null;
-            Object[] newElements = (Object[]) Array.newInstance(kDexPathListElement, oldElements.length + 1);
+            var newElements = (Object[]) Array.newInstance(kDexPathListElement, oldElements.length + 1);
             System.arraycopy(oldElements, 0, newElements, 0, oldElements.length);
             newElements[oldElements.length] = element;
             dexElementsField.set(pathList, newElements);

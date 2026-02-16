@@ -14,9 +14,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import moe.ouom.wekit.util.log.WeLogger;
@@ -82,7 +80,7 @@ public class WeProtoData {
         clear();
         if (b == null) return;
 
-        byte[] body = b;
+        var body = b;
         if (hasPacketPrefix(b)) {
             packetPrefix = Arrays.copyOfRange(b, 0, 4);
             body = Arrays.copyOfRange(b, 4, b.length);
@@ -99,7 +97,7 @@ public class WeProtoData {
     private void parseMessageBytes(byte[] b, boolean analyzeLen) throws IOException {
         if (b == null) return;
 
-        CodedInputStream in = CodedInputStream.newInstance(b);
+        var in = CodedInputStream.newInstance(b);
         while (!in.isAtEnd()) {
             final int tag;
             try {
@@ -110,8 +108,8 @@ public class WeProtoData {
 
             if (tag == 0) break;
 
-            int fieldNumber = tag >>> 3;
-            int wireType = tag & 7;
+            var fieldNumber = tag >>> 3;
+            var wireType = tag & 7;
 
             if (wireType == 4 || wireType == 3 || wireType > 5) {
                 throw new IOException("Unexpected wireType: " + wireType);
@@ -119,24 +117,24 @@ public class WeProtoData {
 
             switch (wireType) {
                 case 0: {
-                    long v = in.readInt64();
+                    var v = in.readInt64();
                     fields.add(new Field(fieldNumber, wireType, v));
                     break;
                 }
                 case 1: {
-                    long v = in.readFixed64();
+                    var v = in.readFixed64();
                     fields.add(new Field(fieldNumber, wireType, v));
                     break;
                 }
                 case 2: {
-                    byte[] subBytes = in.readByteArray();
-                    LenValue lv = new LenValue(subBytes);
+                    var subBytes = in.readByteArray();
+                    var lv = new LenValue(subBytes);
                     if (analyzeLen) analyzeLenValue(lv);
                     fields.add(new Field(fieldNumber, wireType, lv));
                     break;
                 }
                 case 5: {
-                    int v = in.readFixed32();
+                    var v = in.readFixed32();
                     fields.add(new Field(fieldNumber, wireType, v));
                     break;
                 }
@@ -149,7 +147,7 @@ public class WeProtoData {
     private static void analyzeLenValue(LenValue lv) {
         if (lv == null) return;
 
-        WeProtoData sub = tryParseSubMessageStrong(lv.raw);
+        var sub = tryParseSubMessageStrong(lv.raw);
         if (sub != null) {
             lv.subMessage = sub;
             lv.utf8 = null;
@@ -157,7 +155,7 @@ public class WeProtoData {
             return;
         }
 
-        String s = tryDecodeUtf8Roundtrip(lv.raw);
+        var s = tryDecodeUtf8Roundtrip(lv.raw);
         if (s != null) {
             lv.utf8 = s;
             lv.subMessage = null;
@@ -172,20 +170,21 @@ public class WeProtoData {
 
     private static String tryDecodeUtf8Roundtrip(byte[] b) {
         try {
-            String s = new String(b, StandardCharsets.UTF_8);
-            byte[] re = s.getBytes(StandardCharsets.UTF_8);
+            var s = new String(b, StandardCharsets.UTF_8);
+            var re = s.getBytes(StandardCharsets.UTF_8);
             if (Arrays.equals(b, re)) return s;
-        } catch (Exception ignored) { }
+        } catch (Exception ignored) {
+        }
         return null;
     }
 
     private static WeProtoData tryParseSubMessageStrong(byte[] b) {
         try {
             if (b == null || b.length == 0) return null;
-            WeProtoData sub = new WeProtoData();
+            var sub = new WeProtoData();
             sub.parseMessageBytes(b, true);
             if (sub.fields.isEmpty()) return null;
-            byte[] re = sub.toMessageBytes();
+            var re = sub.toMessageBytes();
             if (!Arrays.equals(b, re)) return null;
             return sub;
         } catch (Exception ignored) {
@@ -196,7 +195,7 @@ public class WeProtoData {
     private static WeProtoData ensureSubParsedStrong(LenValue lv) {
         if (lv == null) return null;
         if (lv.subMessage != null) return lv.subMessage;
-        WeProtoData sub = tryParseSubMessageStrong(lv.raw);
+        var sub = tryParseSubMessageStrong(lv.raw);
         if (sub != null) lv.subMessage = sub;
         return lv.subMessage;
     }
@@ -204,21 +203,21 @@ public class WeProtoData {
     private static String ensureUtf8Decoded(LenValue lv) {
         if (lv == null) return null;
         if (lv.utf8 != null) return lv.utf8;
-        String s = tryDecodeUtf8Roundtrip(lv.raw);
+        var s = tryDecodeUtf8Roundtrip(lv.raw);
         if (s != null) lv.utf8 = s;
         return lv.utf8;
     }
 
     public JSONObject toJSON() throws Exception {
-        JSONObject obj = new JSONObject();
-        for (Field f : fields) {
-            String k = String.valueOf(f.fieldNumber);
-            Object jsonVal = fieldValueToJsonValue(f);
+        var obj = new JSONObject();
+        for (var f : fields) {
+            var k = String.valueOf(f.fieldNumber);
+            var jsonVal = fieldValueToJsonValue(f);
 
             if (!obj.has(k)) {
                 obj.put(k, jsonVal);
             } else {
-                Object existing = obj.get(k);
+                var existing = obj.get(k);
                 JSONArray arr;
                 if (existing instanceof JSONArray) {
                     arr = (JSONArray) existing;
@@ -236,16 +235,16 @@ public class WeProtoData {
     private Object fieldValueToJsonValue(Field f) throws Exception {
         if (f.wireType != 2) return f.value;
 
-        LenValue lv = (LenValue) f.value;
+        var lv = (LenValue) f.value;
 
-        LenView v = lv.view;
+        var v = lv.view;
         if (v == LenView.AUTO) {
-            WeProtoData sub = ensureSubParsedStrong(lv);
+            var sub = ensureSubParsedStrong(lv);
             if (sub != null) {
                 lv.view = LenView.SUB;
                 return sub.toJSON();
             }
-            String s = ensureUtf8Decoded(lv);
+            var s = ensureUtf8Decoded(lv);
             if (s != null) {
                 lv.view = LenView.UTF8;
                 return s;
@@ -255,17 +254,17 @@ public class WeProtoData {
         }
 
         if (v == LenView.SUB) {
-            WeProtoData sub = ensureSubParsedStrong(lv);
+            var sub = ensureSubParsedStrong(lv);
             if (sub != null) return sub.toJSON();
-            String s = ensureUtf8Decoded(lv);
+            var s = ensureUtf8Decoded(lv);
             if (s != null) return s;
             return "hex->" + bytesToHex(lv.raw);
         }
 
         if (v == LenView.UTF8) {
-            String s = ensureUtf8Decoded(lv);
+            var s = ensureUtf8Decoded(lv);
             if (s != null) return s;
-            WeProtoData sub = ensureSubParsedStrong(lv);
+            var sub = ensureSubParsedStrong(lv);
             if (sub != null) return sub.toJSON();
             return "hex->" + bytesToHex(lv.raw);
         }
@@ -275,8 +274,8 @@ public class WeProtoData {
 
     public static String bytesToHex(byte[] bytes) {
         if (bytes == null || bytes.length == 0) return "";
-        StringBuilder sb = new StringBuilder(bytes.length * 2);
-        for (byte b : bytes) sb.append(String.format("%02X", b & 0xFF));
+        var sb = new StringBuilder(bytes.length * 2);
+        for (var b : bytes) sb.append(String.format("%02X", b & 0xFF));
         return sb.toString();
     }
 
@@ -285,10 +284,10 @@ public class WeProtoData {
     }
 
     public byte[] toMessageBytes() {
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        CodedOutputStream out = CodedOutputStream.newInstance(bos);
+        var bos = new ByteArrayOutputStream();
+        var out = CodedOutputStream.newInstance(bos);
         try {
-            for (Field f : fields) {
+            for (var f : fields) {
                 switch (f.wireType) {
                     case 0: {
                         long v = (Long) f.value;
@@ -302,12 +301,12 @@ public class WeProtoData {
                         break;
                     }
                     case 2: {
-                        LenValue lv = (LenValue) f.value;
+                        var lv = (LenValue) f.value;
                         if (lv.subMessage != null) {
-                            byte[] newRaw = lv.subMessage.toMessageBytes();
+                            var newRaw = lv.subMessage.toMessageBytes();
                             if (!Arrays.equals(newRaw, lv.raw)) lv.raw = newRaw;
                         } else if (lv.utf8 != null && lv.view == LenView.UTF8) {
-                            byte[] newRaw = lv.utf8.getBytes(StandardCharsets.UTF_8);
+                            var newRaw = lv.utf8.getBytes(StandardCharsets.UTF_8);
                             if (!Arrays.equals(newRaw, lv.raw)) lv.raw = newRaw;
                         }
                         out.writeByteArray(f.fieldNumber, lv.raw != null ? lv.raw : new byte[0]);
@@ -331,18 +330,18 @@ public class WeProtoData {
     }
 
     public byte[] toPacketBytes() {
-        byte[] body = toMessageBytes();
+        var body = toMessageBytes();
         if (packetPrefix == null || packetPrefix.length == 0) return body;
-        byte[] out = new byte[packetPrefix.length + body.length];
+        var out = new byte[packetPrefix.length + body.length];
         System.arraycopy(packetPrefix, 0, out, 0, packetPrefix.length);
         System.arraycopy(body, 0, out, packetPrefix.length, body.length);
         return out;
     }
 
     private int findFieldIndex(int fieldNumber, int occurrenceIndex) {
-        int occ = 0;
-        for (int i = 0; i < fields.size(); i++) {
-            Field f = fields.get(i);
+        var occ = 0;
+        for (var i = 0; i < fields.size(); i++) {
+            var f = fields.get(i);
             if (f.fieldNumber == fieldNumber) {
                 if (occ == occurrenceIndex) return i;
                 occ++;
@@ -352,34 +351,34 @@ public class WeProtoData {
     }
 
     public boolean setVarint(int fieldNumber, int occurrenceIndex, long value) {
-        int idx = findFieldIndex(fieldNumber, occurrenceIndex);
+        var idx = findFieldIndex(fieldNumber, occurrenceIndex);
         if (idx < 0) return false;
         fields.get(idx).value = value;
         return true;
     }
 
     public boolean setFixed64(int fieldNumber, int occurrenceIndex, long value) {
-        int idx = findFieldIndex(fieldNumber, occurrenceIndex);
+        var idx = findFieldIndex(fieldNumber, occurrenceIndex);
         if (idx < 0) return false;
         fields.get(idx).value = value;
         return true;
     }
 
     public boolean setFixed32(int fieldNumber, int occurrenceIndex, int value) {
-        int idx = findFieldIndex(fieldNumber, occurrenceIndex);
+        var idx = findFieldIndex(fieldNumber, occurrenceIndex);
         if (idx < 0) return false;
         fields.get(idx).value = value;
         return true;
     }
 
     public boolean setLenHex(int fieldNumber, int occurrenceIndex, String hex) {
-        int idx = findFieldIndex(fieldNumber, occurrenceIndex);
+        var idx = findFieldIndex(fieldNumber, occurrenceIndex);
         if (idx < 0) return false;
-        Field f = fields.get(idx);
+        var f = fields.get(idx);
         if (f.wireType != 2) return false;
-        LenValue lv = (LenValue) f.value;
+        var lv = (LenValue) f.value;
 
-        String h = stripNonHex(hex);
+        var h = stripNonHex(hex);
         lv.raw = h.isEmpty() ? new byte[0] : hexToBytes(h);
         lv.utf8 = null;
         lv.subMessage = null;
@@ -388,11 +387,11 @@ public class WeProtoData {
     }
 
     public boolean setLenUtf8(int fieldNumber, int occurrenceIndex, String text) {
-        int idx = findFieldIndex(fieldNumber, occurrenceIndex);
+        var idx = findFieldIndex(fieldNumber, occurrenceIndex);
         if (idx < 0) return false;
-        Field f = fields.get(idx);
+        var f = fields.get(idx);
         if (f.wireType != 2) return false;
-        LenValue lv = (LenValue) f.value;
+        var lv = (LenValue) f.value;
 
         if (text == null) text = "";
         lv.utf8 = text;
@@ -403,13 +402,13 @@ public class WeProtoData {
     }
 
     public boolean setLenSubBytes(int fieldNumber, int occurrenceIndex, byte[] subBytes) {
-        int idx = findFieldIndex(fieldNumber, occurrenceIndex);
+        var idx = findFieldIndex(fieldNumber, occurrenceIndex);
         if (idx < 0) return false;
-        Field f = fields.get(idx);
+        var f = fields.get(idx);
         if (f.wireType != 2) return false;
-        LenValue lv = (LenValue) f.value;
+        var lv = (LenValue) f.value;
 
-        WeProtoData sub = tryParseSubMessageStrong(subBytes);
+        var sub = tryParseSubMessageStrong(subBytes);
         lv.raw = subBytes != null ? subBytes : new byte[0];
         lv.subMessage = sub;
         lv.utf8 = null;
@@ -418,7 +417,7 @@ public class WeProtoData {
     }
 
     public boolean removeField(int fieldNumber, int occurrenceIndex) {
-        int idx = findFieldIndex(fieldNumber, occurrenceIndex);
+        var idx = findFieldIndex(fieldNumber, occurrenceIndex);
         if (idx < 0) return false;
         fields.remove(idx);
         return true;
@@ -431,14 +430,14 @@ public class WeProtoData {
     }
 
     private int replaceUtf8ContainsInternal(String needle, String replacement) {
-        int changed = 0;
-        for (Field f : fields) {
+        var changed = 0;
+        for (var f : fields) {
             if (f.wireType != 2) continue;
-            LenValue lv = (LenValue) f.value;
+            var lv = (LenValue) f.value;
 
-            WeProtoData sub = ensureSubParsedStrong(lv);
+            var sub = ensureSubParsedStrong(lv);
             if (sub != null) {
-                int subChanged = sub.replaceUtf8ContainsInternal(needle, replacement);
+                var subChanged = sub.replaceUtf8ContainsInternal(needle, replacement);
                 if (subChanged > 0) {
                     lv.subMessage = sub;
                     lv.raw = sub.toMessageBytes();
@@ -448,9 +447,9 @@ public class WeProtoData {
                 }
             }
 
-            String s = ensureUtf8Decoded(lv);
+            var s = ensureUtf8Decoded(lv);
             if (s != null && s.contains(needle)) {
-                String ns = s.replace(needle, replacement);
+                var ns = s.replace(needle, replacement);
                 if (!ns.equals(s)) {
                     lv.utf8 = ns;
                     lv.raw = ns.getBytes(StandardCharsets.UTF_8);
@@ -470,14 +469,14 @@ public class WeProtoData {
     }
 
     private int replaceUtf8RegexInternal(Pattern pattern, String replacement) {
-        int matchesTotal = 0;
-        for (Field f : fields) {
+        var matchesTotal = 0;
+        for (var f : fields) {
             if (f.wireType != 2) continue;
-            LenValue lv = (LenValue) f.value;
+            var lv = (LenValue) f.value;
 
-            WeProtoData sub = ensureSubParsedStrong(lv);
+            var sub = ensureSubParsedStrong(lv);
             if (sub != null) {
-                int subMatches = sub.replaceUtf8RegexInternal(pattern, replacement);
+                var subMatches = sub.replaceUtf8RegexInternal(pattern, replacement);
                 if (subMatches > 0) {
                     lv.subMessage = sub;
                     lv.raw = sub.toMessageBytes();
@@ -487,13 +486,13 @@ public class WeProtoData {
                 }
             }
 
-            String s = ensureUtf8Decoded(lv);
+            var s = ensureUtf8Decoded(lv);
             if (s != null) {
-                Matcher m = pattern.matcher(s);
-                int cnt = 0;
+                var m = pattern.matcher(s);
+                var cnt = 0;
                 while (m.find()) cnt++;
                 if (cnt > 0) {
-                    String ns = pattern.matcher(s).replaceAll(replacement);
+                    var ns = pattern.matcher(s).replaceAll(replacement);
                     lv.utf8 = ns;
                     lv.raw = ns.getBytes(StandardCharsets.UTF_8);
                     lv.subMessage = null;
@@ -507,9 +506,9 @@ public class WeProtoData {
 
     private static String stripNonHex(String s) {
         if (s == null) return "";
-        StringBuilder out = new StringBuilder(s.length());
-        for (int i = 0; i < s.length(); i++) {
-            char c = s.charAt(i);
+        var out = new StringBuilder(s.length());
+        for (var i = 0; i < s.length(); i++) {
+            var c = s.charAt(i);
             if ((c >= '0' && c <= '9') ||
                     (c >= 'a' && c <= 'f') ||
                     (c >= 'A' && c <= 'F')) out.append(c);
@@ -520,74 +519,75 @@ public class WeProtoData {
     public void fromJSON(JSONObject json) {
         try {
             clear();
-            Iterator<String> keyIt = json.keys();
+            var keyIt = json.keys();
             while (keyIt.hasNext()) {
-                String key = keyIt.next();
-                int fieldNumber = Integer.parseInt(key);
-                Object value = json.get(key);
+                var key = keyIt.next();
+                var fieldNumber = Integer.parseInt(key);
+                var value = json.get(key);
 
                 if (value instanceof JSONObject) {
-                    WeProtoData sub = new WeProtoData();
+                    var sub = new WeProtoData();
                     sub.fromJSON((JSONObject) value);
-                    LenValue lv = new LenValue(sub.toMessageBytes());
+                    var lv = new LenValue(sub.toMessageBytes());
                     lv.subMessage = sub;
                     lv.view = LenView.SUB;
                     fields.add(new Field(fieldNumber, 2, lv));
-                } else if (value instanceof JSONArray) {
-                    JSONArray arr = (JSONArray) value;
-                    for (int i = 0; i < arr.length(); i++) {
-                        Object v = arr.get(i);
+                } else if (value instanceof JSONArray arr) {
+                    for (var i = 0; i < arr.length(); i++) {
+                        var v = arr.get(i);
                         addJsonValueAsField(fieldNumber, v);
                     }
                 } else {
                     addJsonValueAsField(fieldNumber, value);
                 }
             }
-        } catch (Exception ignored) { }
+        } catch (Exception ignored) {
+        }
     }
 
     private void addJsonValueAsField(int fieldNumber, Object value) {
         try {
             if (value instanceof JSONObject) {
-                WeProtoData sub = new WeProtoData();
+                var sub = new WeProtoData();
                 sub.fromJSON((JSONObject) value);
-                LenValue lv = new LenValue(sub.toMessageBytes());
+                var lv = new LenValue(sub.toMessageBytes());
                 lv.subMessage = sub;
                 lv.view = LenView.SUB;
                 fields.add(new Field(fieldNumber, 2, lv));
             } else if (value instanceof Number) {
-                long v = ((Number) value).longValue();
+                var v = ((Number) value).longValue();
                 fields.add(new Field(fieldNumber, 0, v));
-            } else if (value instanceof String) {
-                String s = (String) value;
+            } else if (value instanceof String s) {
                 if (s.startsWith("hex->")) {
-                    byte[] raw = hexToBytes(stripNonHex(s.substring(5)));
-                    LenValue lv = new LenValue(raw);
+                    var raw = hexToBytes(stripNonHex(s.substring(5)));
+                    var lv = new LenValue(raw);
                     lv.view = LenView.HEX;
                     fields.add(new Field(fieldNumber, 2, lv));
                 } else {
-                    byte[] raw = s.getBytes(StandardCharsets.UTF_8);
-                    LenValue lv = new LenValue(raw);
+                    var raw = s.getBytes(StandardCharsets.UTF_8);
+                    var lv = new LenValue(raw);
                     lv.utf8 = s;
                     lv.view = LenView.UTF8;
                     fields.add(new Field(fieldNumber, 2, lv));
                 }
-            } else if (value == null) { } else {
+            } else if (value == null) {
+            } else {
                 WeLogger.w("WeProtoData.fromJSON Unknown type: " + value.getClass().getName());
             }
-        } catch (Exception ignored) { }
+        } catch (Exception ignored) {
+        }
     }
 
     public int applyViewJSON(JSONObject view, boolean deleteMissing) {
         if (view == null) return 0;
 
-        int changes = 0;
+        var changes = 0;
 
         if (deleteMissing) {
             List<Integer> existingNums = new ArrayList<>();
-            for (Field f : fields) existingNums.add(f.fieldNumber);
+            for (var f : fields) existingNums.add(f.fieldNumber);
 
-            for (int i = 0; i < existingNums.size(); i++) {
+            for (var i = 0; i < existingNums.size(); i++) {
                 int fn = existingNums.get(i);
                 if (!view.has(String.valueOf(fn))) {
                     changes += removeAllOccurrences(fn);
@@ -595,9 +595,9 @@ public class WeProtoData {
             }
         }
 
-        Iterator<String> it = view.keys();
+        var it = view.keys();
         while (it.hasNext()) {
-            String key = it.next();
+            var key = it.next();
             int fn;
             try {
                 fn = Integer.parseInt(key);
@@ -605,31 +605,30 @@ public class WeProtoData {
                 continue;
             }
 
-            Object val = view.opt(key);
+            var val = view.opt(key);
             if (val == null || val == JSONObject.NULL) {
                 if (deleteMissing) changes += removeAllOccurrences(fn);
                 continue;
             }
 
-            if (val instanceof JSONArray) {
-                JSONArray arr = (JSONArray) val;
-                List<Integer> idxs = indicesOf(fn);
+            if (val instanceof JSONArray arr) {
+                var idxs = indicesOf(fn);
 
-                int min = Math.min(arr.length(), idxs.size());
-                for (int i = 0; i < min; i++) {
-                    Object v = arr.opt(i);
+                var min = Math.min(arr.length(), idxs.size());
+                for (var i = 0; i < min; i++) {
+                    var v = arr.opt(i);
                     if (v == JSONObject.NULL) continue;
                     changes += applyOne(fields.get(idxs.get(i)), v, deleteMissing);
                 }
 
                 if (deleteMissing && idxs.size() > arr.length()) {
-                    for (int i = idxs.size() - 1; i >= arr.length(); i--) {
+                    for (var i = idxs.size() - 1; i >= arr.length(); i--) {
                         fields.remove((int) idxs.get(i));
                         changes++;
                     }
                 }
             } else {
-                int idx = findFieldIndex(fn, 0);
+                var idx = findFieldIndex(fn, 0);
                 if (idx >= 0) {
                     changes += applyOne(fields.get(idx), val, deleteMissing);
                 }
@@ -667,14 +666,14 @@ public class WeProtoData {
                     return 0;
                 }
                 case 2: {
-                    LenValue lv = (LenValue) f.value;
+                    var lv = (LenValue) f.value;
 
                     if (val instanceof JSONObject) {
-                        WeProtoData sub = ensureSubParsedStrong(lv);
+                        var sub = ensureSubParsedStrong(lv);
                         if (sub == null) {
                             sub = new WeProtoData();
                         }
-                        int c = sub.applyViewJSON((JSONObject) val, deleteMissing);
+                        var c = sub.applyViewJSON((JSONObject) val, deleteMissing);
                         lv.subMessage = sub;
                         lv.raw = sub.toMessageBytes();
                         lv.utf8 = null;
@@ -682,10 +681,9 @@ public class WeProtoData {
                         return Math.max(1, c);
                     }
 
-                    if (val instanceof String) {
-                        String s = (String) val;
+                    if (val instanceof String s) {
                         if (s.startsWith("hex->")) {
-                            byte[] raw = hexToBytes(stripNonHex(s.substring(5)));
+                            var raw = hexToBytes(stripNonHex(s.substring(5)));
                             lv.raw = raw != null ? raw : new byte[0];
                             lv.utf8 = null;
                             lv.subMessage = null;
@@ -711,15 +709,15 @@ public class WeProtoData {
 
     private List<Integer> indicesOf(int fieldNumber) {
         List<Integer> idxs = new ArrayList<>();
-        for (int i = 0; i < fields.size(); i++) {
+        for (var i = 0; i < fields.size(); i++) {
             if (fields.get(i).fieldNumber == fieldNumber) idxs.add(i);
         }
         return idxs;
     }
 
     private int removeAllOccurrences(int fieldNumber) {
-        int removed = 0;
-        for (int i = fields.size() - 1; i >= 0; i--) {
+        var removed = 0;
+        for (var i = fields.size() - 1; i >= 0; i--) {
             if (fields.get(i).fieldNumber == fieldNumber) {
                 fields.remove(i);
                 removed++;

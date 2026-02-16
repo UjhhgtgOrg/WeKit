@@ -1,7 +1,7 @@
 package moe.ouom.wekit.util.script
 
 import moe.ouom.wekit.util.log.WeLogger
-import java.util.*
+import java.util.UUID
 import java.util.concurrent.CopyOnWriteArrayList
 
 /**
@@ -24,6 +24,7 @@ class ScriptLogger {
 
     private val defaultScriptName = "未知"
     private var scriptName: String = defaultScriptName
+
     // 日志条目
     data class LogEntry(
         val id: String = UUID.randomUUID().toString(),

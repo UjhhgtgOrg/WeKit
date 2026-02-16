@@ -10,7 +10,8 @@ import moe.ouom.wekit.util.common.Toasts.showToast
 import moe.ouom.wekit.util.log.WeLogger
 import moe.ouom.wekit.util.script.ScriptLogger
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
+import java.util.Locale
 
 /**
  * 脚本日志Hook项
@@ -187,7 +188,11 @@ class ScriptLogHookItem : BaseClickableFunctionHookItem() {
     /**
      * 显示筛选后的日志
      */
-    private fun showFilteredLogs(context: Context, logs: List<ScriptLogger.LogEntry>, title: String) {
+    private fun showFilteredLogs(
+        context: Context,
+        logs: List<ScriptLogger.LogEntry>,
+        title: String
+    ) {
         val wrappedContext = CommonContextWrapper.createAppCompatContext(context)
 
         if (logs.isEmpty()) {
@@ -254,7 +259,8 @@ class ScriptLogHookItem : BaseClickableFunctionHookItem() {
      */
     private fun copyToClipboard(context: Context, text: String) {
         try {
-            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
+            val clipboard =
+                context.getSystemService(Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
             val clip = android.content.ClipData.newPlainText("Script Log", text)
             clipboard?.setPrimaryClip(clip)
         } catch (e: Exception) {

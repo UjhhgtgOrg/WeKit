@@ -94,7 +94,7 @@ abstract class BaseSettingsDialog(
     abstract fun initList()
 
     // 给子类用的辅助方法：动态添加条目时，也必须用 context 的 inflater
-    protected fun inflateItem(layoutName: String, parent: ViewGroup): android.view.View? {
+    protected fun inflateItem(layoutName: String, parent: ViewGroup): View? {
         val id = ModuleRes.getId(layoutName, "layout")
         if (id == 0) return null
         return layoutInflater.inflate(id, parent, false)
@@ -137,7 +137,10 @@ abstract class BaseSettingsDialog(
                 override fun onAnimationRepeat(a: android.view.animation.Animation?) {}
                 override fun onAnimationEnd(a: android.view.animation.Animation?) {
                     rootView.post {
-                        try { super@BaseSettingsDialog.dismiss() } catch (_: Exception) {}
+                        try {
+                            super@BaseSettingsDialog.dismiss()
+                        } catch (_: Exception) {
+                        }
                     }
                 }
             })

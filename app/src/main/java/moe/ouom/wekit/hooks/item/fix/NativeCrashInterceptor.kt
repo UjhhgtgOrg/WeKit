@@ -55,7 +55,10 @@ class NativeCrashInterceptor : BaseSwitchFunctionHookItem() {
             val installed = nativeCrashHandler?.install() ?: false
 
             if (installed) {
-                WeLogger.i("NativeCrashInterceptor", "Native crash interceptor installed successfully")
+                WeLogger.i(
+                    "NativeCrashInterceptor",
+                    "Native crash interceptor installed successfully"
+                )
             } else {
                 WeLogger.e("NativeCrashInterceptor", "Failed to install native crash interceptor")
             }
@@ -77,12 +80,18 @@ class NativeCrashInterceptor : BaseSwitchFunctionHookItem() {
 
             // 只在主进程中检查待处理的崩溃
             if (!isMainProcess()) {
-                WeLogger.d("NativeCrashInterceptor", "Skipping pending crash check in non-main process")
+                WeLogger.d(
+                    "NativeCrashInterceptor",
+                    "Skipping pending crash check in non-main process"
+                )
                 return
             }
 
             if (manager.hasPendingNativeCrash()) {
-                WeLogger.i("NativeCrashInterceptor", "Pending native crash detected, will show dialog when Activity is ready")
+                WeLogger.i(
+                    "NativeCrashInterceptor",
+                    "Pending native crash detected, will show dialog when Activity is ready"
+                )
 
                 // 读取崩溃日志并输出到 WeLogger
                 logNativeCrashToWeLogger(manager)
@@ -117,7 +126,10 @@ class NativeCrashInterceptor : BaseSwitchFunctionHookItem() {
 
             for (line in lines) {
                 if (lineCount >= maxLines) {
-                    WeLogger.e("NativeCrashInterceptor", "... (日志过长，已截断，完整日志请查看崩溃报告)")
+                    WeLogger.e(
+                        "NativeCrashInterceptor",
+                        "... (日志过长，已截断，完整日志请查看崩溃报告)"
+                    )
                     break
                 }
                 if (line.isNotEmpty()) {
@@ -147,23 +159,35 @@ class NativeCrashInterceptor : BaseSwitchFunctionHookItem() {
             override fun run() {
                 try {
                     if (!hasPendingCrashToShow) {
-                        WeLogger.d("NativeCrashInterceptor", "No pending crash to show, stopping polling")
+                        WeLogger.d(
+                            "NativeCrashInterceptor",
+                            "No pending crash to show, stopping polling"
+                        )
                         return
                     }
 
                     val activity = RuntimeConfig.getLauncherUIActivity()
                     if (activity != null && !activity.isFinishing && !activity.isDestroyed) {
-                        WeLogger.i("NativeCrashInterceptor", "Activity is ready, showing pending crash dialog")
+                        WeLogger.i(
+                            "NativeCrashInterceptor",
+                            "Activity is ready, showing pending crash dialog"
+                        )
                         showPendingCrashDialog()
                         return
                     }
 
                     retryCount++
                     if (retryCount < maxRetries) {
-                        WeLogger.d("NativeCrashInterceptor", "Activity not ready, retry $retryCount/$maxRetries")
+                        WeLogger.d(
+                            "NativeCrashInterceptor",
+                            "Activity not ready, retry $retryCount/$maxRetries"
+                        )
                         handler.postDelayed(this, 500) // 每500ms重试一次
                     } else {
-                        WeLogger.w("NativeCrashInterceptor", "Max retries reached, giving up on showing dialog")
+                        WeLogger.w(
+                            "NativeCrashInterceptor",
+                            "Max retries reached, giving up on showing dialog"
+                        )
                         hasPendingCrashToShow = false
                     }
                 } catch (e: Throwable) {
@@ -254,7 +278,10 @@ class NativeCrashInterceptor : BaseSwitchFunctionHookItem() {
                     // 使用 CommonContextWrapper 包装 Activity Context
                     val wrappedContext = CommonContextWrapper.createAppCompatContext(activity)
 
-                    WeLogger.i("NativeCrashInterceptor", "Creating MaterialDialog for native crash report")
+                    WeLogger.i(
+                        "NativeCrashInterceptor",
+                        "Creating MaterialDialog for native crash report"
+                    )
 
                     pendingDialog = MaterialDialog(wrappedContext)
                         .title(text = "检测到上次 Native 崩溃")
@@ -359,23 +386,29 @@ class NativeCrashInterceptor : BaseSwitchFunctionHookItem() {
                     summary.append(line).append("\n")
                     foundCrashTime = true
                 }
+
                 line.startsWith("Crash Type:") -> {
                     summary.append(line).append("\n\n")
                 }
+
                 line.startsWith("Signal:") -> {
                     summary.append(line).append("\n")
                     foundSignal = true
                 }
+
                 line.startsWith("Description:") -> {
                     summary.append(line).append("\n")
                 }
+
                 line.startsWith("Fault Address:") -> {
                     summary.append(line).append("\n\n")
                 }
+
                 line.contains("Stack Trace") -> {
                     foundStackTrace = true
                     summary.append("堆栈信息（前5行）:\n")
                 }
+
                 foundStackTrace -> {
                     if (line.trim().isNotEmpty() && !line.contains("====")) {
                         summary.append(line).append("\n")
@@ -400,7 +433,8 @@ class NativeCrashInterceptor : BaseSwitchFunctionHookItem() {
      */
     private fun copyToClipboard(context: Context, text: String) {
         try {
-            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
+            val clipboard =
+                context.getSystemService(Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
             val clip = android.content.ClipData.newPlainText("Native Crash Log", text)
             clipboard?.setPrimaryClip(clip)
             WeLogger.i("NativeCrashInterceptor", "Native crash log copied to clipboard")
@@ -419,7 +453,10 @@ class NativeCrashInterceptor : BaseSwitchFunctionHookItem() {
             val intent = android.content.Intent(android.content.Intent.ACTION_SEND)
             intent.type = "text/plain"
             intent.putExtra(android.content.Intent.EXTRA_SUBJECT, "WeKit Native Crash Log")
-            intent.putExtra(android.content.Intent.EXTRA_TEXT, crashLogManager?.readCrashLog(logFile) ?: "")
+            intent.putExtra(
+                android.content.Intent.EXTRA_TEXT,
+                crashLogManager?.readCrashLog(logFile) ?: ""
+            )
             intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
 
             val chooser = android.content.Intent.createChooser(intent, "分享 Native 崩溃日志")
@@ -495,7 +532,8 @@ class NativeCrashInterceptor : BaseSwitchFunctionHookItem() {
         try {
             val context = appContext ?: return
             Handler(Looper.getMainLooper()).post {
-                android.widget.Toast.makeText(context, message, android.widget.Toast.LENGTH_SHORT).show()
+                android.widget.Toast.makeText(context, message, android.widget.Toast.LENGTH_SHORT)
+                    .show()
             }
         } catch (e: Throwable) {
             WeLogger.e("[NativeCrashInterceptor] Failed to show toast", e)

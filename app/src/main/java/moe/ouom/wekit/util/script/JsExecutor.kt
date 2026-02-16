@@ -9,8 +9,8 @@ import org.mozilla.javascript.ScriptRuntime
 import org.mozilla.javascript.Scriptable
 import java.text.MessageFormat
 import java.util.Locale
-import java.util.ResourceBundle
 import java.util.MissingResourceException
+import java.util.ResourceBundle
 import javax.script.ScriptEngine
 import javax.script.ScriptEngineManager
 

@@ -10,9 +10,9 @@ import moe.ouom.wekit.core.model.ApiHookItem
 import moe.ouom.wekit.dexkit.intf.IDexFind
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.hooks.sdk.protocol.intf.WeReqCallback
-import moe.ouom.wekit.util.WeProtoData
 import moe.ouom.wekit.util.Initiator.loadClass
 import moe.ouom.wekit.util.ProtoJsonBuilder
+import moe.ouom.wekit.util.WeProtoData
 import moe.ouom.wekit.util.log.WeLogger
 import org.json.JSONObject
 import org.luckypray.dexkit.DexKitBridge
@@ -25,19 +25,18 @@ import java.lang.reflect.Proxy
 
 @HookItem(path = "protocol/通用发包服务")
 class WePkgHelper : ApiHookItem(), IDexFind {
-
-    // 核心 Protobuf 类 //
+    // 核心 Protobuf 类
     val dexClsProtoBase by dexClass()
     private val dexClsRawReq by dexClass()
     private val dexClsGenericResp by dexClass()
     val dexClsConfigBuilder by dexClass()
 
-    // 业务特定请求类 //
+    // 业务特定请求类
     private val dexClsNewSendMsgReq by dexClass()
     val dexClsOplogReq by dexClass()
     private val dexClsNetScenePat by dexClass()
 
-    // 网络 //
+    // 网络
     val dexClsNetSceneBase by dexClass()
     private val dexClsNetQueue by dexClass()
     private val dexClsKernel by dexClass()
@@ -62,6 +61,7 @@ class WePkgHelper : ApiHookItem(), IDexFind {
 
     companion object {
         const val TAG = "PkgHelper"
+
         @Volatile
         var INSTANCE: WePkgHelper? = null
     }
@@ -290,7 +290,8 @@ class WePkgHelper : ApiHookItem(), IDexFind {
                         dispatchMethod.methodSign
                     )
                     descriptors[dexClsNetDispatcher.key] = dispatchMethod.className
-                    descriptors[dexMethodNetDispatch.key] = dexMethodNetDispatch.getDescriptorString() ?: ""
+                    descriptors[dexMethodNetDispatch.key] =
+                        dexMethodNetDispatch.getDescriptorString() ?: ""
                 }
             }
         }
@@ -375,14 +376,13 @@ class WePkgHelper : ApiHookItem(), IDexFind {
         return descriptors
     }
 
-
     /**
      * 验证一个类是否继承自微信的 ProtoBuf 基类
      */
     private fun isExtendsBaseProtoBuf(cls: Class<*>?): Boolean {
         var current = cls
         while (current != null && current != Any::class.java) {
-            if (current.getName().contains("protobuf")
+            if (current.name.contains("protobuf")
             ) {
                 return true
             }
@@ -391,12 +391,26 @@ class WePkgHelper : ApiHookItem(), IDexFind {
         return false
     }
 
-    fun sendCgi(uri: String, cgiId: Int, funcId: Int, routeId: Int, jsonPayload: String, dslBlock: WeReqDsl.() -> Unit) {
+    fun sendCgi(
+        uri: String,
+        cgiId: Int,
+        funcId: Int,
+        routeId: Int,
+        jsonPayload: String,
+        dslBlock: WeReqDsl.() -> Unit
+    ) {
         val dsl = WeReqDsl().apply(dslBlock)
         sendCgi(uri, cgiId, funcId, routeId, jsonPayload, dsl as WeReqCallback)
     }
 
-    fun sendCgi(uri: String, cgiId: Int, funcId: Int, routeId: Int, jsonPayload: String, callback: WeReqCallback? = null) {
+    fun sendCgi(
+        uri: String,
+        cgiId: Int,
+        funcId: Int,
+        routeId: Int,
+        jsonPayload: String,
+        callback: WeReqCallback? = null
+    ) {
         val loader = classLoader ?: return
         Thread {
             try {
@@ -415,7 +429,10 @@ class WePkgHelper : ApiHookItem(), IDexFind {
 
                 // 发送逻辑
                 if (nativeNetScene != null) {
-                    val netQueue = XposedHelpers.callStaticMethod(dexClsKernel.clazz, dexMethodGetNetQueue.method.name)
+                    val netQueue = XposedHelpers.callStaticMethod(
+                        dexClsKernel.clazz,
+                        dexMethodGetNetQueue.method.name
+                    )
                     val cgiType = XposedHelpers.callMethod(nativeNetScene, "getType") as Int
 
                     val callbackProxy = Proxy.newProxyInstance(
@@ -425,7 +442,11 @@ class WePkgHelper : ApiHookItem(), IDexFind {
                         when (method.name) {
                             "hashCode" -> return@newProxyInstance System.identityHashCode(proxy)
                             "equals" -> return@newProxyInstance proxy === args?.get(0)
-                            "toString" -> return@newProxyInstance "WeKitNativeCallback@${Integer.toHexString(System.identityHashCode(proxy))}"
+                            "toString" -> return@newProxyInstance "WeKitNativeCallback@${
+                                Integer.toHexString(
+                                    System.identityHashCode(proxy)
+                                )
+                            }"
                         }
 
                         if (method.name == "onSceneEnd" && args != null) {
@@ -535,7 +556,8 @@ class WePkgHelper : ApiHookItem(), IDexFind {
 
                         try {
                             val loader = netScene.javaClass.classLoader
-                            val v0Class = XposedHelpers.findClass("com.tencent.mm.network.v0", loader)
+                            val v0Class =
+                                XposedHelpers.findClass("com.tencent.mm.network.v0", loader)
                             val rrField = netScene.javaClass.declaredFields.firstOrNull {
                                 v0Class.isAssignableFrom(it.type)
                             }
@@ -550,9 +572,11 @@ class WePkgHelper : ApiHookItem(), IDexFind {
                             if (rrObj != null) {
                                 val respWrapper = XposedHelpers.getObjectField(rrObj, "b")
                                 val protoObj = XposedHelpers.getObjectField(respWrapper, "a")
-                                bytes = XposedHelpers.callMethod(protoObj, "toByteArray") as? ByteArray
+                                bytes =
+                                    XposedHelpers.callMethod(protoObj, "toByteArray") as? ByteArray
                                 if (bytes != null) {
-                                    json = WeProtoData().also { it.fromBytes(bytes) }.toJSON().toString()
+                                    json = WeProtoData().also { it.fromBytes(bytes) }.toJSON()
+                                        .toString()
                                 }
                             }
                         } catch (e: Throwable) {
@@ -597,7 +621,11 @@ class WePkgHelper : ApiHookItem(), IDexFind {
                                 .toString() else "{}"
                         userCallback?.onSuccess(json, bytes)
                     } else {
-                        userCallback?.onFail(errType, errCode, args[2] as? String ?: "null (No Error Message)")
+                        userCallback?.onFail(
+                            errType,
+                            errCode,
+                            args[2] as? String ?: "null (No Error Message)"
+                        )
                     }
                 }
                 return 0

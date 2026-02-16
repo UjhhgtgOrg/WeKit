@@ -42,21 +42,24 @@ public class ShadowSafTransientActivity extends Activity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         setTheme(android.R.style.Theme_Translucent_NoTitleBar);
         super.onCreate(savedInstanceState);
-        Bundle extras = getIntent().getExtras();
+        var extras = getIntent().getExtras();
         if (extras == null) {
-            finish(); return;
+            finish();
+            return;
         }
         mTargetAction = extras.getInt(PARAM_TARGET_ACTION, -1);
         mSequence = extras.getInt(PARAM_SEQUENCE, -1);
         mFileName = extras.getString(PARAM_FILE_NAME);
         mMimeType = extras.getString(PARAM_MINE_TYPE);
         if (mTargetAction < 0 || mSequence < 0) {
-            finish(); return;
+            finish();
+            return;
         }
-        Request request = sRequestMap.get(mSequence);
+        var request = sRequestMap.get(mSequence);
         if (request == null) {
             WeLogger.e("sequence not found: " + mSequence);
-            finish(); return;
+            finish();
+            return;
         }
         Intent intent;
         switch (mTargetAction) {
@@ -94,8 +97,8 @@ public class ShadowSafTransientActivity extends Activity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         if (requestCode == mOriginRequest) {
-            Uri uri = data != null ? data.getData() : null;
-            Request request = sRequestMap.get(mSequence);
+            var uri = data != null ? data.getData() : null;
+            var request = sRequestMap.get(mSequence);
             if (request != null) {
                 request.callback.onResult(uri);
             }
@@ -104,20 +107,8 @@ public class ShadowSafTransientActivity extends Activity {
         }
     }
 
-    public static class Request {
-        public final int sequence;
-        public final int targetAction;
-        public final String mimeType;
-        public final String fileName;
-        public final RequestResultCallback callback;
-
-        public Request(int sequence, int targetAction, String mimeType, String fileName, RequestResultCallback callback) {
-            this.sequence = sequence;
-            this.targetAction = targetAction;
-            this.mimeType = mimeType;
-            this.fileName = fileName;
-            this.callback = callback;
-        }
+    public record Request(int sequence, int targetAction, String mimeType, String fileName,
+                          RequestResultCallback callback) {
     }
 
     private static final ConcurrentHashMap<Integer, Request> sRequestMap = new ConcurrentHashMap<>();
@@ -126,10 +117,10 @@ public class ShadowSafTransientActivity extends Activity {
     public static void startActivityForRequest(@NonNull Context host, int targetAction,
                                                @Nullable String mimeType, @Nullable String fileName,
                                                @NonNull RequestResultCallback callback) {
-        int sequence = sSequenceGenerator.incrementAndGet();
-        Request request = new Request(sequence, targetAction, mimeType, fileName, callback);
+        var sequence = sSequenceGenerator.incrementAndGet();
+        var request = new Request(sequence, targetAction, mimeType, fileName, callback);
         sRequestMap.put(sequence, request);
-        Intent start = new Intent(host, ShadowSafTransientActivity.class);
+        var start = new Intent(host, ShadowSafTransientActivity.class);
         start.putExtra(PARAM_SEQUENCE, sequence);
         start.putExtra(PARAM_TARGET_ACTION, targetAction);
         start.putExtra(PARAM_FILE_NAME, fileName);
@@ -141,6 +132,7 @@ public class ShadowSafTransientActivity extends Activity {
     public interface RequestResultCallback {
         @UiThread
         void onResult(@Nullable Uri uri);
+
         @UiThread
         void onException(@NonNull Throwable e);
     }

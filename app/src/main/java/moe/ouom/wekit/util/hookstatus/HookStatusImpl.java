@@ -5,7 +5,8 @@ package moe.ouom.wekit.util.hookstatus;
  */
 public class HookStatusImpl {
 
-    private HookStatusImpl() {}
+    private HookStatusImpl() {
+    }
 
     /**
      * To be changed by the hook

@@ -163,7 +163,12 @@ class ScriptEvalManager private constructor() {
     /**
      * 执行所有脚本的指定方法
      */
-    private fun executeAllScripts(methodName: String, uri: String, cgiId: Int, jsonData: JSONObject): JSONObject? {
+    private fun executeAllScripts(
+        methodName: String,
+        uri: String,
+        cgiId: Int,
+        jsonData: JSONObject
+    ): JSONObject? {
         checkInitialized()
 
         val enabledScripts = scriptFileManager.getEnabledScripts()
@@ -181,7 +186,10 @@ class ScriptEvalManager private constructor() {
                         modified = true
                         WeLogger.d("[ScriptEvalManager] 脚本 ${script.name}.$methodName 执行成功")
                     } catch (e: Exception) {
-                        WeLogger.e("[ScriptEvalManager] 解析脚本 ${script.name}.$methodName 结果失败", e)
+                        WeLogger.e(
+                            "[ScriptEvalManager] 解析脚本 ${script.name}.$methodName 结果失败",
+                            e
+                        )
                     }
                 }
             }
@@ -257,7 +265,11 @@ class ScriptEvalManager private constructor() {
     /**
      * 测试执行指定的JavaScript代码片段
      */
-    fun testExecuteCode(scriptContent: String, codeSnippet: String, scriptName: String = "测试脚本"): String? {
+    fun testExecuteCode(
+        scriptContent: String,
+        codeSnippet: String,
+        scriptName: String = "测试脚本"
+    ): String? {
         checkInitialized()
 
         val jsCode = """

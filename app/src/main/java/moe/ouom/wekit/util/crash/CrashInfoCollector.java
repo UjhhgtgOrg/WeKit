@@ -2,7 +2,6 @@ package moe.ouom.wekit.util.crash;
 
 import android.app.ActivityManager;
 import android.content.Context;
-import android.content.pm.PackageInfo;
 import android.os.Build;
 import android.os.Debug;
 import android.os.Process;
@@ -16,7 +15,6 @@ import java.io.StringWriter;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
-import java.util.Map;
 
 /**
  * 崩溃信息收集工具类
@@ -40,58 +38,57 @@ public class CrashInfoCollector {
      */
     @NonNull
     public static String collectCrashInfo(@NonNull Context context, @NonNull Throwable throwable, @NonNull String crashType) {
-        StringBuilder sb = new StringBuilder();
 
         // 崩溃头部信息
-        sb.append("========================================\n");
-        sb.append("WeKit Crash Report\n");
-        sb.append("========================================\n\n");
 
-        // 崩溃时间
-        sb.append("Crash Time: ").append(getCurrentTime()).append("\n");
-        sb.append("Crash Type: ").append(crashType).append("\n\n");
+        String sb = "========================================\n" +
+                "WeKit Crash Report\n" +
+                "========================================\n\n" +
 
-        // 设备信息
-        sb.append("========================================\n");
-        sb.append("Device Information\n");
-        sb.append("========================================\n");
-        sb.append(collectDeviceInfo()).append("\n");
+                // 崩溃时间
+                "Crash Time: " + getCurrentTime() + "\n" +
+                "Crash Type: " + crashType + "\n\n" +
 
-        // 应用信息
-        sb.append("========================================\n");
-        sb.append("Application Information\n");
-        sb.append("========================================\n");
-        sb.append(collectAppInfo(context)).append("\n");
+                // 设备信息
+                "========================================\n" +
+                "Device Information\n" +
+                "========================================\n" +
+                collectDeviceInfo() + "\n" +
 
-        // 内存信息
-        sb.append("========================================\n");
-        sb.append("Memory Information\n");
-        sb.append("========================================\n");
-        sb.append(collectMemoryInfo(context)).append("\n");
+                // 应用信息
+                "========================================\n" +
+                "Application Information\n" +
+                "========================================\n" +
+                collectAppInfo(context) + "\n" +
 
-        // 线程信息
-        sb.append("========================================\n");
-        sb.append("Thread Information\n");
-        sb.append("========================================\n");
-        sb.append(collectThreadInfo()).append("\n");
+                // 内存信息
+                "========================================\n" +
+                "Memory Information\n" +
+                "========================================\n" +
+                collectMemoryInfo(context) + "\n" +
 
-        // 异常堆栈
-        sb.append("========================================\n");
-        sb.append("Exception Stack Trace\n");
-        sb.append("========================================\n");
-        sb.append(getStackTraceString(throwable)).append("\n");
+                // 线程信息
+                "========================================\n" +
+                "Thread Information\n" +
+                "========================================\n" +
+                collectThreadInfo() + "\n" +
 
-        // 所有线程堆栈
-        sb.append("========================================\n");
-        sb.append("All Threads Stack Trace\n");
-        sb.append("========================================\n");
-        sb.append(collectAllThreadsStackTrace()).append("\n");
+                // 异常堆栈
+                "========================================\n" +
+                "Exception Stack Trace\n" +
+                "========================================\n" +
+                getStackTraceString(throwable) + "\n" +
 
-        sb.append("========================================\n");
-        sb.append("End of Crash Report\n");
-        sb.append("========================================\n");
+                // 所有线程堆栈
+                "========================================\n" +
+                "All Threads Stack Trace\n" +
+                "========================================\n" +
+                collectAllThreadsStackTrace() + "\n" +
+                "========================================\n" +
+                "End of Crash Report\n" +
+                "========================================\n";
 
-        return sb.toString();
+        return sb;
     }
 
     /**
@@ -99,7 +96,7 @@ public class CrashInfoCollector {
      */
     @NonNull
     private static String getCurrentTime() {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.getDefault());
+        var sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.getDefault());
         return sdf.format(new Date());
     }
 
@@ -108,7 +105,7 @@ public class CrashInfoCollector {
      */
     @NonNull
     private static String collectDeviceInfo() {
-        StringBuilder sb = new StringBuilder();
+        var sb = new StringBuilder();
         sb.append("Brand: ").append(Build.BRAND).append("\n");
         sb.append("Model: ").append(Build.MODEL).append("\n");
         sb.append("Device: ").append(Build.DEVICE).append("\n");
@@ -123,7 +120,7 @@ public class CrashInfoCollector {
         sb.append("CPU ABI: ").append(Build.CPU_ABI).append("\n");
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             sb.append("Supported ABIs: ");
-            for (String abi : Build.SUPPORTED_ABIS) {
+            for (var abi : Build.SUPPORTED_ABIS) {
                 sb.append(abi).append(" ");
             }
             sb.append("\n");
@@ -136,9 +133,9 @@ public class CrashInfoCollector {
      */
     @NonNull
     private static String collectAppInfo(@NonNull Context context) {
-        StringBuilder sb = new StringBuilder();
+        var sb = new StringBuilder();
         try {
-            PackageInfo packageInfo = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
+            var packageInfo = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
             sb.append("Package Name: ").append(packageInfo.packageName).append("\n");
             sb.append("Version Name: ").append(packageInfo.versionName).append("\n");
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
@@ -160,14 +157,14 @@ public class CrashInfoCollector {
      */
     @NonNull
     private static String collectMemoryInfo(@NonNull Context context) {
-        StringBuilder sb = new StringBuilder();
+        var sb = new StringBuilder();
         try {
             // 应用内存信息
-            Runtime runtime = Runtime.getRuntime();
-            long maxMemory = runtime.maxMemory() / 1024 / 1024;
-            long totalMemory = runtime.totalMemory() / 1024 / 1024;
-            long freeMemory = runtime.freeMemory() / 1024 / 1024;
-            long usedMemory = totalMemory - freeMemory;
+            var runtime = Runtime.getRuntime();
+            var maxMemory = runtime.maxMemory() / 1024 / 1024;
+            var totalMemory = runtime.totalMemory() / 1024 / 1024;
+            var freeMemory = runtime.freeMemory() / 1024 / 1024;
+            var usedMemory = totalMemory - freeMemory;
 
             sb.append("Max Memory: ").append(maxMemory).append(" MB\n");
             sb.append("Total Memory: ").append(totalMemory).append(" MB\n");
@@ -175,16 +172,16 @@ public class CrashInfoCollector {
             sb.append("Free Memory: ").append(freeMemory).append(" MB\n");
 
             // Native内存信息
-            Debug.MemoryInfo memoryInfo = new Debug.MemoryInfo();
+            var memoryInfo = new Debug.MemoryInfo();
             Debug.getMemoryInfo(memoryInfo);
             sb.append("Native Heap Size: ").append(memoryInfo.nativePss).append(" KB\n");
             sb.append("Dalvik Heap Size: ").append(memoryInfo.dalvikPss).append(" KB\n");
             sb.append("Total PSS: ").append(memoryInfo.getTotalPss()).append(" KB\n");
 
             // 系统内存信息
-            ActivityManager activityManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+            var activityManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
             if (activityManager != null) {
-                ActivityManager.MemoryInfo systemMemInfo = new ActivityManager.MemoryInfo();
+                var systemMemInfo = new ActivityManager.MemoryInfo();
                 activityManager.getMemoryInfo(systemMemInfo);
                 sb.append("System Available Memory: ").append(systemMemInfo.availMem / 1024 / 1024).append(" MB\n");
                 sb.append("System Total Memory: ").append(systemMemInfo.totalMem / 1024 / 1024).append(" MB\n");
@@ -201,9 +198,9 @@ public class CrashInfoCollector {
      */
     @NonNull
     private static String collectThreadInfo() {
-        StringBuilder sb = new StringBuilder();
+        var sb = new StringBuilder();
         try {
-            Thread currentThread = Thread.currentThread();
+            var currentThread = Thread.currentThread();
             sb.append("Current Thread: ").append(currentThread.getName()).append("\n");
             sb.append("Thread ID: ").append(currentThread.getId()).append("\n");
             sb.append("Thread Priority: ").append(currentThread.getPriority()).append("\n");
@@ -211,7 +208,7 @@ public class CrashInfoCollector {
             sb.append("Thread Group: ").append(currentThread.getThreadGroup() != null ? currentThread.getThreadGroup().getName() : "null").append("\n");
 
             // 活跃线程数
-            ThreadGroup rootGroup = Thread.currentThread().getThreadGroup();
+            var rootGroup = Thread.currentThread().getThreadGroup();
             while (rootGroup.getParent() != null) {
                 rootGroup = rootGroup.getParent();
             }
@@ -227,8 +224,8 @@ public class CrashInfoCollector {
      */
     @NonNull
     private static String getStackTraceString(@NonNull Throwable throwable) {
-        StringWriter sw = new StringWriter();
-        PrintWriter pw = new PrintWriter(sw);
+        var sw = new StringWriter();
+        var pw = new PrintWriter(sw);
         throwable.printStackTrace(pw);
         pw.flush();
         return sw.toString();
@@ -239,14 +236,14 @@ public class CrashInfoCollector {
      */
     @NonNull
     private static String collectAllThreadsStackTrace() {
-        StringBuilder sb = new StringBuilder();
+        var sb = new StringBuilder();
         try {
-            Map<Thread, StackTraceElement[]> allStackTraces = Thread.getAllStackTraces();
+            var allStackTraces = Thread.getAllStackTraces();
             sb.append("Total Threads: ").append(allStackTraces.size()).append("\n\n");
 
-            for (Map.Entry<Thread, StackTraceElement[]> entry : allStackTraces.entrySet()) {
-                Thread thread = entry.getKey();
-                StackTraceElement[] stackTrace = entry.getValue();
+            for (var entry : allStackTraces.entrySet()) {
+                var thread = entry.getKey();
+                var stackTrace = entry.getValue();
 
                 sb.append("Thread: ").append(thread.getName())
                         .append(" (ID: ").append(thread.getId())
@@ -255,7 +252,7 @@ public class CrashInfoCollector {
                         .append(")\n");
 
                 if (stackTrace != null && stackTrace.length > 0) {
-                    for (StackTraceElement element : stackTrace) {
+                    for (var element : stackTrace) {
                         sb.append("    at ").append(element.toString()).append("\n");
                     }
                 } else {
@@ -275,10 +272,10 @@ public class CrashInfoCollector {
     @NonNull
     private static String getProcessName(@NonNull Context context) {
         try {
-            int pid = Process.myPid();
-            ActivityManager activityManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+            var pid = Process.myPid();
+            var activityManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
             if (activityManager != null) {
-                for (ActivityManager.RunningAppProcessInfo processInfo : activityManager.getRunningAppProcesses()) {
+                for (var processInfo : activityManager.getRunningAppProcesses()) {
                     if (processInfo.pid == pid) {
                         return processInfo.processName;
                     }
@@ -286,8 +283,8 @@ public class CrashInfoCollector {
             }
 
             // 备用方法：读取 /proc/self/cmdline
-            BufferedReader reader = new BufferedReader(new FileReader("/proc/self/cmdline"));
-            String processName = reader.readLine();
+            var reader = new BufferedReader(new FileReader("/proc/self/cmdline"));
+            var processName = reader.readLine();
             reader.close();
             if (processName != null) {
                 processName = processName.trim();

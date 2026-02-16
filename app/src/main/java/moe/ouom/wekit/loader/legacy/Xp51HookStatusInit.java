@@ -2,21 +2,20 @@ package moe.ouom.wekit.loader.legacy;
 
 import androidx.annotation.Keep;
 
-import java.lang.reflect.Field;
-
 import de.robv.android.xposed.XposedBridge;
 
 public class Xp51HookStatusInit {
 
-    private Xp51HookStatusInit() {}
+    private Xp51HookStatusInit() {
+    }
 
     @Keep
     public static void init(ClassLoader classLoader) throws ReflectiveOperationException {
-        Class<?> kHookStatusImpl = classLoader.loadClass("moe.ouom.wekit.util.hookstatus.HookStatusImpl");
-        Field f = kHookStatusImpl.getDeclaredField("sZygoteHookMode");
+        var kHookStatusImpl = classLoader.loadClass("moe.ouom.wekit.util.hookstatus.HookStatusImpl");
+        var f = kHookStatusImpl.getDeclaredField("sZygoteHookMode");
         f.setAccessible(true);
         f.set(null, true);
-        boolean dexObfsEnabled = !"de.robv.android.xposed.XposedBridge".equals(XposedBridge.class.getName());
+        var dexObfsEnabled = !"de.robv.android.xposed.XposedBridge".equals(XposedBridge.class.getName());
         String hookProvider = null;
         if (dexObfsEnabled) {
             f = kHookStatusImpl.getDeclaredField("sIsLsposedDexObfsEnabled");

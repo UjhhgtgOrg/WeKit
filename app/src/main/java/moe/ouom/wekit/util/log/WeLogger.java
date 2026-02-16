@@ -9,8 +9,8 @@ import de.robv.android.xposed.XposedBridge;
 import moe.ouom.wekit.BuildConfig;
 
 public class WeLogger {
-
-    private WeLogger() {}
+    private WeLogger() {
+    }
 
     private static final String TAG = BuildConfig.TAG;
 
@@ -28,9 +28,9 @@ public class WeLogger {
     }
 
     public static void e(String tag, @NonNull String msg) {
-        android.util.Log.e(TAG, tag + ": "+ msg);
+        android.util.Log.e(TAG, tag + ": " + msg);
         try {
-            LogUtils.addError("common", tag + ": "+ msg);
+            LogUtils.addError("common", tag + ": " + msg);
         } catch (ExceptionInInitializerError | NoClassDefFoundError error) {
             Log.e(BuildConfig.TAG, "common", error);
         }
@@ -44,8 +44,9 @@ public class WeLogger {
             Log.e(BuildConfig.TAG, "common", error);
         }
     }
+
     public static void w(String tag, @NonNull String msg) {
-        android.util.Log.w(TAG, tag + ": "+ msg);
+        android.util.Log.w(TAG, tag + ": " + msg);
         try {
             LogUtils.addRunLog("common", msg);
         } catch (ExceptionInInitializerError | NoClassDefFoundError error) {
@@ -61,8 +62,9 @@ public class WeLogger {
             Log.e(BuildConfig.TAG, "common", error);
         }
     }
+
     public static void i(String tag, @NonNull String msg) {
-        android.util.Log.i(TAG, tag + ": "+ msg);
+        android.util.Log.i(TAG, tag + ": " + msg);
         try {
             LogUtils.addRunLog("common", msg);
         } catch (ExceptionInInitializerError | NoClassDefFoundError error) {
@@ -79,8 +81,9 @@ public class WeLogger {
         }
 
     }
+
     public static void d(String tag, @NonNull String msg) {
-        android.util.Log.d(TAG, tag + ": "+ msg);
+        android.util.Log.d(TAG, tag + ": " + msg);
         try {
             LogUtils.addRunLog("common", msg);
         } catch (ExceptionInInitializerError | NoClassDefFoundError error) {
@@ -96,8 +99,9 @@ public class WeLogger {
             Log.e(BuildConfig.TAG, "common", error);
         }
     }
+
     public static void v(String tag, @NonNull String msg) {
-        android.util.Log.v(TAG, tag + ": "+ msg);
+        android.util.Log.v(TAG, tag + ": " + msg);
         try {
             LogUtils.addRunLog("common", msg);
         } catch (ExceptionInInitializerError | NoClassDefFoundError error) {
@@ -181,7 +185,7 @@ public class WeLogger {
         } catch (ExceptionInInitializerError | NoClassDefFoundError error) {
             Log.e(BuildConfig.TAG, "common", error);
         }
-        if (output){
+        if (output) {
             XposedBridge.log(e);
         }
     }
@@ -312,6 +316,7 @@ public class WeLogger {
 
     /**
      * 打印当前调用堆栈
+     *
      * @param logLevel 日志级别（Log.VERBOSE/DEBUG/INFO/WARN/ERROR）
      */
     public static void printStackTrace(int logLevel) {
@@ -320,9 +325,10 @@ public class WeLogger {
 
     /**
      * 打印当前调用堆栈
+     *
      * @param logLevel 日志级别
-     * @param tag 自定义TAG
-     * @param prefix 堆栈信息前缀
+     * @param tag      自定义TAG
+     * @param prefix   堆栈信息前缀
      */
     @SuppressLint("DefaultLocale")
     public static void printStackTrace(int logLevel, @NonNull String tag, @NonNull String prefix) {
@@ -337,13 +343,13 @@ public class WeLogger {
     @SuppressLint("DefaultLocale")
     @NonNull
     public static String getStackTraceString() {
-        StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+        var stackTrace = Thread.currentThread().getStackTrace();
 
-        StringBuilder stackTraceMsg = new StringBuilder().append("\n");
-        boolean startRecording = false;
+        var stackTraceMsg = new StringBuilder().append("\n");
+        var startRecording = false;
 
-        for (StackTraceElement element : stackTrace) {
-            String className = element.getClassName();
+        for (var element : stackTrace) {
+            var className = element.getClassName();
             if (className.contains("LSPHooker")) {
                 startRecording = true;
                 continue;
@@ -374,24 +380,24 @@ public class WeLogger {
 
     public static void logChunked(int priority, @NonNull String tag, @NonNull String msg) {
         if (msg.length() <= CHUNK_SIZE) {
-            Log.println(priority, BuildConfig.TAG,"[" +  tag + "]" + msg);
+            Log.println(priority, BuildConfig.TAG, "[" + tag + "]" + msg);
             return;
         }
 
-        int len = msg.length();
-        int chunkCount = (len + CHUNK_SIZE - 1) / CHUNK_SIZE;
+        var len = msg.length();
+        var chunkCount = (len + CHUNK_SIZE - 1) / CHUNK_SIZE;
         if (chunkCount > MAX_CHUNKS) {
-            String head = msg.substring(0, Math.min(len, CHUNK_SIZE));
-            Log.println(priority, BuildConfig.TAG,"[" +  tag + "]" + "[chunked] too long (" + len + " chars, " + chunkCount
+            var head = msg.substring(0, Math.min(len, CHUNK_SIZE));
+            Log.println(priority, BuildConfig.TAG, "[" + tag + "]" + "[chunked] too long (" + len + " chars, " + chunkCount
                     + " chunks). head:\n" + head);
-            Log.println(priority, BuildConfig.TAG,"[" +  tag + "]" + "[chunked] truncated. Consider writing to file for full dump.");
+            Log.println(priority, BuildConfig.TAG, "[" + tag + "]" + "[chunked] truncated. Consider writing to file for full dump.");
             return;
         }
 
         for (int i = 0, part = 1; i < len; i += CHUNK_SIZE, part++) {
-            int end = Math.min(i + CHUNK_SIZE, len);
-            String chunk = msg.substring(i, end);
-            Log.println(priority, BuildConfig.TAG,"[" +  tag + "]" + "[part " + part + "/" + chunkCount + "] " + chunk);
+            var end = Math.min(i + CHUNK_SIZE, len);
+            var chunk = msg.substring(i, end);
+            Log.println(priority, BuildConfig.TAG, "[" + tag + "]" + "[part " + part + "/" + chunkCount + "] " + chunk);
         }
     }
 

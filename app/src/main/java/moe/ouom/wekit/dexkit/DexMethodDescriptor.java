@@ -46,12 +46,12 @@ public class DexMethodDescriptor implements Serializable {
         if (desc == null) {
             throw new NullPointerException();
         }
-        int a = desc.indexOf("->");
-        int b = desc.indexOf('(', a);
+        var a = desc.indexOf("->");
+        var b = desc.indexOf('(', a);
         if (a < 0 || b < 0) {
             throw new IllegalArgumentException(desc);
         }
-        String clz = desc.substring(0, a);
+        var clz = desc.substring(0, a);
         // 如果是点分格式，转换为JVM格式
         if (!clz.startsWith("L") && !clz.startsWith("[")) {
             declaringClass = "L" + clz.replace('.', '/') + ";";
@@ -86,10 +86,10 @@ public class DexMethodDescriptor implements Serializable {
     }
 
     public static String getMethodTypeSig(final Method method) {
-        final StringBuilder buf = new StringBuilder();
+        final var buf = new StringBuilder();
         buf.append("(");
-        final Class<?>[] types = method.getParameterTypes();
-        for (Class<?> type : types) {
+        final var types = method.getParameterTypes();
+        for (var type : types) {
             buf.append(getTypeSig(type));
         }
         buf.append(")");
@@ -98,10 +98,10 @@ public class DexMethodDescriptor implements Serializable {
     }
 
     public static String getConstructorTypeSig(final Constructor<?> ctor) {
-        final StringBuilder buf = new StringBuilder();
+        final var buf = new StringBuilder();
         buf.append("(");
-        final Class<?>[] types = ctor.getParameterTypes();
-        for (Class<?> type : types) {
+        final var types = ctor.getParameterTypes();
+        for (var type : types) {
             buf.append(getTypeSig(type));
         }
         buf.append(")");
@@ -179,17 +179,17 @@ public class DexMethodDescriptor implements Serializable {
 
     public Method getMethodInstance(ClassLoader classLoader) throws NoSuchMethodException {
         try {
-            Class<?> clz = classLoader.loadClass(
-                declaringClass.substring(1, declaringClass.length() - 1).replace('/', '.'));
-            for (Method m : clz.getDeclaredMethods()) {
+            var clz = classLoader.loadClass(
+                    declaringClass.substring(1, declaringClass.length() - 1).replace('/', '.'));
+            for (var m : clz.getDeclaredMethods()) {
                 if (m.getName().equals(name) && getMethodTypeSig(m).equals(signature)) {
                     return m;
                 }
             }
             while ((clz = clz.getSuperclass()) != null) {
-                for (Method m : clz.getDeclaredMethods()) {
+                for (var m : clz.getDeclaredMethods()) {
                     if (Modifier.isPrivate(m.getModifiers()) || Modifier
-                        .isStatic(m.getModifiers())) {
+                            .isStatic(m.getModifiers())) {
                         continue;
                     }
                     if (m.getName().equals(name) && getMethodTypeSig(m).equals(signature)) {
@@ -200,31 +200,31 @@ public class DexMethodDescriptor implements Serializable {
             throw new NoSuchMethodException(declaringClass + "->" + name + signature);
         } catch (ClassNotFoundException e) {
             throw (NoSuchMethodException) new NoSuchMethodException(
-                declaringClass + "->" + name + signature).initCause(e);
+                    declaringClass + "->" + name + signature).initCause(e);
         }
     }
 
     public List<String> getParameterTypes() {
-        String params = signature.substring(1, signature.indexOf(')'));
+        var params = signature.substring(1, signature.indexOf(')'));
         return splitParameterTypes(params);
     }
 
     public String getReturnType() {
-        int index = signature.indexOf(')');
+        var index = signature.indexOf(')');
         return signature.substring(index + 1);
     }
 
     public static List<String> splitParameterTypes(String s) {
-        int i = 0;
-        ArrayList<String> list = new ArrayList<>();
+        var i = 0;
+        var list = new ArrayList<String>();
         while (i < s.length()) {
-            char c = s.charAt(i);
+            var c = s.charAt(i);
             if (c == 'L') {
-                int j = s.indexOf(';', i);
+                var j = s.indexOf(';', i);
                 list.add(s.substring(i, j + 1));
                 i = j + 1;
             } else if (c == '[') {
-                int j = i;
+                var j = i;
                 while (j < s.length() && s.charAt(j) == '[') {
                     j++;
                 }

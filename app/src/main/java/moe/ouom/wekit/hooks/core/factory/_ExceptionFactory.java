@@ -27,12 +27,12 @@ public class _ExceptionFactory {
      */
     private static boolean check(BaseHookItem item, Throwable throwable) {
         // 每个 item 最多只保存 3 个 Throwable, 不然添加太多会占用太多不必要的内存
-        List<Throwable> exceptionsList = exceptionMap.get(item);
+        var exceptionsList = exceptionMap.get(item);
         if (exceptionsList == null || exceptionsList.size() < 3) {
             return false;
         }
         // 判断是否已经添加过了 添加过则不再重复添加
-        for (Throwable ex : exceptionsList) {
+        for (var ex : exceptionsList) {
             if (Objects.equals(ex.getMessage(), throwable.getMessage())) {
                 return true;
             }
@@ -44,7 +44,7 @@ public class _ExceptionFactory {
         if (check(item, throwable)) {
             return;
         }
-        List<Throwable> exceptionsList = exceptionMap.get(item);
+        var exceptionsList = exceptionMap.get(item);
         if (exceptionsList == null) {
             exceptionsList = new ArrayList<>();
         }
@@ -53,18 +53,19 @@ public class _ExceptionFactory {
         XposedBridge.log(throwable);
         try {
             LogUtils.addError("item_" + item.getItemName(), throwable);
-        } catch (NoClassDefFoundError ignored) {}
+        } catch (NoClassDefFoundError ignored) {
+        }
 
 
     }
 
     public static String getStackTrace(BaseHookItem hookItem) {
-        StringBuilder builder = new StringBuilder();
-        List<Throwable> exceptionsList = exceptionMap.get(hookItem);
+        var builder = new StringBuilder();
+        var exceptionsList = exceptionMap.get(hookItem);
         if (exceptionsList == null) {
             return builder.toString();
         }
-        for (Throwable ex : exceptionsList) {
+        for (var ex : exceptionsList) {
             builder.append(Log.getStackTraceString(ex));
             builder.append("\n");
         }

@@ -1,7 +1,7 @@
 package moe.ouom.wekit.loader.startup;
 
 import android.content.Context;
-import java.lang.reflect.Field;
+
 import moe.ouom.wekit.util.log.WeLogger;
 
 public class HybridClassLoader extends ClassLoader {
@@ -45,17 +45,17 @@ public class HybridClassLoader extends ClassLoader {
             try {
                 WeLogger.i("HybridClassLoader: Local sHostClassLoader is null, trying reflection lookup...");
 
-                ClassLoader myLoader = HybridClassLoader.class.getClassLoader();
+                var myLoader = HybridClassLoader.class.getClassLoader();
                 assert myLoader != null;
-                ClassLoader parentLoader = myLoader.getParent();
+                var parentLoader = myLoader.getParent();
 
                 if (parentLoader != null) {
-                    Class<?> originalClass = parentLoader.loadClass(HybridClassLoader.class.getName());
+                    var originalClass = parentLoader.loadClass(HybridClassLoader.class.getName());
 
                     if (originalClass != null && originalClass != HybridClassLoader.class) {
-                        Field targetField = originalClass.getDeclaredField("sHostClassLoader");
+                        var targetField = originalClass.getDeclaredField("sHostClassLoader");
                         targetField.setAccessible(true);
-                        Object remoteValue = targetField.get(null);
+                        var remoteValue = targetField.get(null);
 
                         if (remoteValue instanceof ClassLoader) {
                             sHostClassLoader = (ClassLoader) remoteValue;
@@ -92,7 +92,7 @@ public class HybridClassLoader extends ClassLoader {
             }
         }
         // 关键点：这里使用了 getHostClassLoader() 而不是直接访问 sHostClassLoader
-        ClassLoader host = getHostClassLoader();
+        var host = getHostClassLoader();
         if (host != null && isHostClass(name)) {
             try {
                 return host.loadClass(name);

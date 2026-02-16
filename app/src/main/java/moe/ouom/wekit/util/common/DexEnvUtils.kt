@@ -38,7 +38,7 @@ object DexEnvUtils {
         }
     }
 
-    private fun extractElementPath(element: Any): String? {
+    private fun extractElementPath(element: Any): String {
         val path = (readField(element, "path") as? File)?.path
         if (!path.isNullOrBlank()) return path
         val zip = (readField(element, "zip") as? File)?.path

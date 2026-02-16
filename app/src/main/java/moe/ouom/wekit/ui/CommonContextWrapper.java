@@ -27,8 +27,8 @@ import moe.ouom.wekit.util.log.WeLogger;
  * 解决宿主与模块之间的 "ClassCastException" 类隔离冲突问题。
  * <p>
  * UPDATE LOG:
- *      2025.1.19 - 移除了 Theme.setTo(baseTheme)，防止宿主资源 ID 污染模块 Theme
- *                - 代理 getAssets() 以确保资源加载链路完整
+ * 2025.1.19 - 移除了 Theme.setTo(baseTheme)，防止宿主资源 ID 污染模块 Theme
+ * - 代理 getAssets() 以确保资源加载链路完整
  */
 public class CommonContextWrapper extends ContextWrapper {
 
@@ -57,7 +57,7 @@ public class CommonContextWrapper extends ContextWrapper {
             this.mTheme.applyStyle(themeResId, true);
         } else {
             // 尝试自动获取默认 Theme
-            int defaultTheme = getResourceIdSafe("Theme.WeKit", "style");
+            var defaultTheme = getResourceIdSafe("Theme.WeKit", "style");
             if (defaultTheme != 0) {
                 this.mTheme.applyStyle(defaultTheme, true);
             } else {
@@ -110,7 +110,7 @@ public class CommonContextWrapper extends ContextWrapper {
                 // 2026.1.19: 不能使用上面的写法，它使用宿主 Context 创建解析器，导致无法识别模块 ID
 
                 // 必须使用模块 Context 创建原始 Inflater
-                LayoutInflater moduleInflater = LayoutInflater.from(mModuleContext);
+                var moduleInflater = LayoutInflater.from(mModuleContext);
 
                 // 然后 cloneInContext 传入 'this' (Wrapper)，将 Theme 和 Token 桥接回来
                 // 再包裹我们的 ModuleLayoutInflater 以处理 ClassLoader 问题
@@ -125,7 +125,7 @@ public class CommonContextWrapper extends ContextWrapper {
         if (ModuleRes.getContext() == null) {
             return base;
         }
-        int themeId = ModuleRes.getId("Theme.WeKit", "style");
+        var themeId = ModuleRes.getId("Theme.WeKit", "style");
         return new CommonContextWrapper(base, themeId);
     }
 
@@ -153,52 +153,48 @@ public class CommonContextWrapper extends ContextWrapper {
 
         @Override
         protected View onCreateView(String name, AttributeSet attrs) throws ClassNotFoundException {
-            for (String prefix : sAndroidPrefix) {
+            for (var prefix : sAndroidPrefix) {
                 try {
-                    View view = createView(name, prefix, attrs);
+                    var view = createView(name, prefix, attrs);
                     if (view != null) return view;
-                } catch (ClassNotFoundException ignored) { }
+                } catch (ClassNotFoundException ignored) {
+                }
             }
             return super.onCreateView(name, attrs);
         }
     }
 
-    private static class ModuleFactory implements LayoutInflater.Factory2 {
-        private final ClassLoader mClassLoader;
-        private static final HashMap<String, Constructor<? extends View>> sConstructorCache = new HashMap<>();
-
-        public ModuleFactory(ClassLoader cl) {
-            this.mClassLoader = cl;
-        }
+    private record ModuleFactory(ClassLoader mClassLoader) implements LayoutInflater.Factory2 {
+            private static final HashMap<String, Constructor<? extends View>> sConstructorCache = new HashMap<>();
 
         @Nullable
-        @Override
-        public View onCreateView(@Nullable View parent, @NonNull String name, @NonNull Context context, @NonNull AttributeSet attrs) {
-            if (name.startsWith("android.")) {
-                return null;
-            }
-            return createView(name, context, attrs);
-        }
-
-        @Nullable
-        @Override
-        public View onCreateView(@NonNull String name, @NonNull Context context, @NonNull AttributeSet attrs) {
-            return onCreateView(null, name, context, attrs);
-        }
-
-        private View createView(String name, Context context, AttributeSet attrs) {
-            Constructor<? extends View> constructor = sConstructorCache.get(name);
-            try {
-                if (constructor == null) {
-                    Class<?> clazz = mClassLoader.loadClass(name);
-                    constructor = clazz.asSubclass(View.class).getConstructor(Context.class, AttributeSet.class);
-                    constructor.setAccessible(true);
-                    sConstructorCache.put(name, constructor);
+            @Override
+            public View onCreateView(@Nullable View parent, @NonNull String name, @NonNull Context context, @NonNull AttributeSet attrs) {
+                if (name.startsWith("android.")) {
+                    return null;
                 }
-                return constructor.newInstance(context, attrs);
-            } catch (Exception e) {
-                return null;
+                return createView(name, context, attrs);
+            }
+
+            @Nullable
+            @Override
+            public View onCreateView(@NonNull String name, @NonNull Context context, @NonNull AttributeSet attrs) {
+                return onCreateView(null, name, context, attrs);
+            }
+
+            private View createView(String name, Context context, AttributeSet attrs) {
+                var constructor = sConstructorCache.get(name);
+                try {
+                    if (constructor == null) {
+                        var clazz = mClassLoader.loadClass(name);
+                        constructor = clazz.asSubclass(View.class).getConstructor(Context.class, AttributeSet.class);
+                        constructor.setAccessible(true);
+                        sConstructorCache.put(name, constructor);
+                    }
+                    return constructor.newInstance(context, attrs);
+                } catch (Exception e) {
+                    return null;
+                }
             }
         }
-    }
 }

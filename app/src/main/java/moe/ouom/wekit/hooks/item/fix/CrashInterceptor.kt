@@ -80,7 +80,10 @@ class CrashInterceptor : BaseSwitchFunctionHookItem() {
 
             // 只检查Java崩溃
             if (manager.hasPendingJavaCrash()) {
-                WeLogger.i("CrashInterceptor", "Pending Java crash detected, will show dialog when Activity is ready")
+                WeLogger.i(
+                    "CrashInterceptor",
+                    "Pending Java crash detected, will show dialog when Activity is ready"
+                )
                 hasPendingCrashToShow = true
                 showToast("检测到上次 Java 崩溃,正在准备崩溃报告...")
                 startActivityPolling()
@@ -105,7 +108,10 @@ class CrashInterceptor : BaseSwitchFunctionHookItem() {
 
                     val activity = RuntimeConfig.getLauncherUIActivity()
                     if (activity != null && !activity.isFinishing && !activity.isDestroyed) {
-                        WeLogger.i("CrashInterceptor", "Activity is ready, showing pending crash dialog")
+                        WeLogger.i(
+                            "CrashInterceptor",
+                            "Activity is ready, showing pending crash dialog"
+                        )
                         showPendingCrashDialog()
                         return
                     }
@@ -349,6 +355,7 @@ class CrashInterceptor : BaseSwitchFunctionHookItem() {
                     foundException = true
                     summary.append("异常信息:\n")
                 }
+
                 foundException -> {
                     if (line.trim().isNotEmpty() && !line.contains("====")) {
                         summary.append(line).append("\n")
@@ -365,7 +372,8 @@ class CrashInterceptor : BaseSwitchFunctionHookItem() {
 
     private fun copyToClipboard(context: Context, text: String) {
         try {
-            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
+            val clipboard =
+                context.getSystemService(Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
             val clip = android.content.ClipData.newPlainText("Crash Log", text)
             clipboard?.setPrimaryClip(clip)
             showToast("已复制到剪贴板")
@@ -378,7 +386,8 @@ class CrashInterceptor : BaseSwitchFunctionHookItem() {
         try {
             val context = appContext ?: return
             Handler(Looper.getMainLooper()).post {
-                android.widget.Toast.makeText(context, message, android.widget.Toast.LENGTH_SHORT).show()
+                android.widget.Toast.makeText(context, message, android.widget.Toast.LENGTH_SHORT)
+                    .show()
             }
         } catch (e: Throwable) {
             WeLogger.e("[CrashInterceptor] Failed to show toast", e)

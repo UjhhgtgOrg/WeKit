@@ -110,6 +110,7 @@ abstract class BaseHookItem {
      * 返回 false 表示不执行 entry 的事件 不可重写
      */
     fun initOnce(): Boolean = true
+
     /**
      * Hook 入口方法
      */
@@ -137,7 +138,8 @@ abstract class BaseHookItem {
     protected fun hookBefore(method: Member, action: HookAction): XC_MethodHook.Unhook {
         return XposedBridge.hookMethod(
             method,
-            object : XC_MethodHook(WeConfig.dGetInt(Constants.PrekCfgXXX + "wekit_hook_priority", 50)) {
+            object :
+                XC_MethodHook(WeConfig.dGetInt(Constants.PrekCfgXXX + "wekit_hook_priority", 50)) {
                 override fun beforeHookedMethod(param: MethodHookParam) {
                     tryExecute(param, action)
                 }
@@ -152,7 +154,8 @@ abstract class BaseHookItem {
     protected fun hookAfter(method: Member, action: HookAction): XC_MethodHook.Unhook {
         return XposedBridge.hookMethod(
             method,
-            object : XC_MethodHook(WeConfig.dGetInt(Constants.PrekCfgXXX + "wekit_hook_priority", 50)) {
+            object :
+                XC_MethodHook(WeConfig.dGetInt(Constants.PrekCfgXXX + "wekit_hook_priority", 50)) {
                 override fun afterHookedMethod(param: MethodHookParam) {
                     tryExecute(param, action)
                 }
@@ -175,7 +178,8 @@ abstract class BaseHookItem {
 
         return XposedBridge.hookMethod(
             m,
-            object : XC_MethodHook(WeConfig.dGetInt(Constants.PrekCfgXXX + "wekit_hook_priority", 50)) {
+            object :
+                XC_MethodHook(WeConfig.dGetInt(Constants.PrekCfgXXX + "wekit_hook_priority", 50)) {
                 override fun beforeHookedMethod(param: MethodHookParam) {
                     tryExecute(param, action)
                 }
@@ -198,7 +202,8 @@ abstract class BaseHookItem {
 
         return XposedBridge.hookMethod(
             m,
-            object : XC_MethodHook(WeConfig.dGetInt(Constants.PrekCfgXXX + "wekit_hook_priority", 50)) {
+            object :
+                XC_MethodHook(WeConfig.dGetInt(Constants.PrekCfgXXX + "wekit_hook_priority", 50)) {
                 override fun afterHookedMethod(param: MethodHookParam) {
                     tryExecute(param, action)
                 }
@@ -218,7 +223,8 @@ abstract class BaseHookItem {
         return XposedBridge.hookAllMethods(
             clazz,
             methodName,
-            object : XC_MethodHook(WeConfig.dGetInt(Constants.PrekCfgXXX + "wekit_hook_priority", 50)) {
+            object :
+                XC_MethodHook(WeConfig.dGetInt(Constants.PrekCfgXXX + "wekit_hook_priority", 50)) {
                 override fun beforeHookedMethod(param: MethodHookParam) {
                     tryExecute(param, action)
                 }
@@ -238,7 +244,8 @@ abstract class BaseHookItem {
         return XposedBridge.hookAllMethods(
             clazz,
             methodName,
-            object : XC_MethodHook(WeConfig.dGetInt(Constants.PrekCfgXXX + "wekit_hook_priority", 50)) {
+            object :
+                XC_MethodHook(WeConfig.dGetInt(Constants.PrekCfgXXX + "wekit_hook_priority", 50)) {
                 override fun afterHookedMethod(param: MethodHookParam) {
                     tryExecute(param, action)
                 }
@@ -289,7 +296,11 @@ abstract class BaseHookItem {
     /**
      * 带执行优先级的 hook (before)
      */
-    protected fun hookBefore(method: Member, priority: Int, action: HookAction): XC_MethodHook.Unhook {
+    protected fun hookBefore(
+        method: Member,
+        priority: Int,
+        action: HookAction
+    ): XC_MethodHook.Unhook {
         return XposedBridge.hookMethod(
             method,
             object : XC_MethodHook(priority) {
@@ -304,7 +315,11 @@ abstract class BaseHookItem {
     /**
      * 带执行优先级的 hook (after)
      */
-    protected fun hookAfter(method: Member, priority: Int, action: HookAction): XC_MethodHook.Unhook {
+    protected fun hookAfter(
+        method: Member,
+        priority: Int,
+        action: HookAction
+    ): XC_MethodHook.Unhook {
         return XposedBridge.hookMethod(
             method,
             object : XC_MethodHook(priority) {

@@ -17,7 +17,6 @@ import java.lang.reflect.Field;
 import moe.ouom.wekit.BuildConfig;
 import moe.ouom.wekit.loader.hookapi.IHookBridge;
 import moe.ouom.wekit.loader.hookapi.ILoaderService;
-import moe.ouom.wekit.security.SignatureVerifier;
 import moe.ouom.wekit.util.log.WeLogger;
 
 
@@ -53,16 +52,12 @@ public class StartupAgent {
         StartupInfo.setLoaderService(loaderService);
         StartupInfo.setHookBridge(hookBridge);
         StartupInfo.setInHostProcess(true);
+
         // bypass hidden api
         ensureHiddenApiAccess();
         checkWriteXorExecuteForModulePath(modulePath);
         // we want context
-        Context ctx = getBaseApplication(hostClassLoader);
-
-        boolean signatureValid = SignatureVerifier.verifySignature(ctx);
-        if (!signatureValid) {
-            WeLogger.e(TAG, "签名校验失败！模块已被篡改，功能将被禁用");
-        }
+        var ctx = getBaseApplication(hostClassLoader);
 
         StartupHook.getInstance().initializeAfterAppCreate(ctx);
     }
@@ -72,14 +67,14 @@ public class StartupAgent {
             return;
         }
         WeLogger.w(BuildConfig.TAG, "initializeHookBridgeForEarlyStartup w/o context");
-        File hostDataDirFile = new File(hostDataDir);
+        var hostDataDirFile = new File(hostDataDir);
         if (!hostDataDirFile.exists()) {
             throw new IllegalStateException("Host data dir not found: " + hostDataDir);
         }
     }
 
     private static void checkWriteXorExecuteForModulePath(@NonNull String modulePath) {
-        File moduleFile = new File(modulePath);
+        var moduleFile = new File(modulePath);
         if (moduleFile.canWrite()) {
             android.util.Log.w(BuildConfig.TAG, "Module path is writable: " + modulePath);
             android.util.Log.w(BuildConfig.TAG, "This may cause issues on Android 15+, please check your Xposed framework");
@@ -88,23 +83,23 @@ public class StartupAgent {
 
     public static Context getBaseApplication(@NonNull ClassLoader classLoader) {
         try {
-            Class<?> tinkerAppClz = classLoader.loadClass("com.tencent.tinker.loader.app.TinkerApplication");
-            java.lang.reflect.Method getInstanceMethod = tinkerAppClz.getMethod("getInstance");
-            Context app = (Context) getInstanceMethod.invoke(null);
+            var tinkerAppClz = classLoader.loadClass("com.tencent.tinker.loader.app.TinkerApplication");
+            var getInstanceMethod = tinkerAppClz.getMethod("getInstance");
+            var app = (Context) getInstanceMethod.invoke(null);
 
             if (app != null) {
                 return app;
             }
         } catch (Throwable e) {
-            Log.w(BuildConfig.TAG,"Failed to call TinkerApplication.getInstance()", e);
+            Log.w(BuildConfig.TAG, "Failed to call TinkerApplication.getInstance()", e);
         }
 
         // 只有在 TinkerApplication 还没初始化或者反射失败时，才使用 ActivityThread 作为最后的保底手段
         try {
-            @SuppressLint("PrivateApi") Class<?> activityThreadClz = classLoader.loadClass("android.app.ActivityThread");
-            @SuppressLint("DiscouragedPrivateApi") java.lang.reflect.Method currentAppMethod = activityThreadClz.getDeclaredMethod("currentApplication");
+            @SuppressLint("PrivateApi") var activityThreadClz = classLoader.loadClass("android.app.ActivityThread");
+            @SuppressLint("DiscouragedPrivateApi") var currentAppMethod = activityThreadClz.getDeclaredMethod("currentApplication");
             currentAppMethod.setAccessible(true);
-            Context app = (Context) currentAppMethod.invoke(null);
+            var app = (Context) currentAppMethod.invoke(null);
 
             if (app != null) {
                 return app;

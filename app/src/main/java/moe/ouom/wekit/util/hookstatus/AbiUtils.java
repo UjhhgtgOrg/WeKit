@@ -9,9 +9,7 @@ import androidx.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.HashSet;
-import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import moe.ouom.wekit.host.HostInfo;
@@ -37,16 +35,16 @@ public class AbiUtils {
     @Nullable
     public static String getApplicationActiveAbi(@NonNull String packageName) {
         Context ctx = HostInfo.getApplication();
-        PackageManager pm = ctx.getPackageManager();
+        var pm = ctx.getPackageManager();
         try {
             // find apk path
-            String libDir = pm.getApplicationInfo(packageName, 0).nativeLibraryDir;
+            var libDir = pm.getApplicationInfo(packageName, 0).nativeLibraryDir;
             if (libDir == null) {
                 return null;
             }
             // find abi
-            HashSet<String> abiList = new HashSet<>(4);
-            for (String abi : new String[]{"arm", "arm64", "x86", "x86_64"}) {
+            var abiList = new HashSet<String>(4);
+            for (var abi : new String[]{"arm", "arm64", "x86", "x86_64"}) {
                 if (new File(libDir, abi).exists()) {
                     abiList.add(abi);
                 } else if (libDir.endsWith(abi)) {
@@ -84,7 +82,7 @@ public class AbiUtils {
         } catch (Exception e) {
             throw new RuntimeException("getModuleFlavorName, getApkAbiList failed: " + e.getMessage(), e);
         }
-        int abiFlags = getAbiFlags(abis);
+        var abiFlags = getAbiFlags(abis);
         if ((abiFlags & (ABI_ARM32 | ABI_ARM64 | ABI_X86 | ABI_X86_64)) == (ABI_ARM32 | ABI_ARM64 | ABI_X86 | ABI_X86_64)) {
             sCachedModuleAbiFlavor = "universal";
         } else if ((abiFlags & (ABI_ARM32 | ABI_ARM64)) == (ABI_ARM32 | ABI_ARM64)) {
@@ -100,8 +98,8 @@ public class AbiUtils {
     }
 
     private static int getAbiFlags(String[] abis) {
-        int abiFlags = 0;
-        for (String abi : abis) {
+        var abiFlags = 0;
+        for (var abi : abis) {
             switch (abi) {
                 case "armeabi-v7a":
                     abiFlags |= ABI_ARM32;
@@ -171,13 +169,13 @@ public class AbiUtils {
 
     @NonNull
     public static String[] getApkAbiList(@NonNull String apkPath) throws IOException {
-        ZipFile zipFile = new ZipFile(apkPath);
-        HashSet<String> abiList = new HashSet<>(4);
-        Enumeration<? extends ZipEntry> it = zipFile.entries();
+        var zipFile = new ZipFile(apkPath);
+        var abiList = new HashSet<String>(4);
+        var it = zipFile.entries();
         while (it.hasMoreElements()) {
-            ZipEntry entry = it.nextElement();
+            var entry = it.nextElement();
             if (entry.getName().startsWith("lib/")) {
-                String abi = entry.getName().substring(4, entry.getName().indexOf('/', 4));
+                var abi = entry.getName().substring(4, entry.getName().indexOf('/', 4));
                 abiList.add(abi);
             }
         }
@@ -242,7 +240,7 @@ public class AbiUtils {
     }
 
     public static String archIntToNames(int abi) {
-        ArrayList<String> results = new ArrayList<>(4);
+        var results = new ArrayList<String>(4);
         if ((abi & ABI_ARM32) != 0) {
             results.add("armeabi-v7a");
         }
@@ -258,8 +256,8 @@ public class AbiUtils {
         if (results.isEmpty()) {
             return "none";
         }
-        StringBuilder sb = new StringBuilder();
-        for (String s : results) {
+        var sb = new StringBuilder();
+        for (var s : results) {
             sb.append(s).append('|');
         }
         return sb.substring(0, sb.length() - 1);

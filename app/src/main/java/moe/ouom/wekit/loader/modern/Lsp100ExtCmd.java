@@ -7,13 +7,14 @@ import java.lang.reflect.Method;
 import java.util.Objects;
 
 import io.github.libxposed.api.XposedInterface;
-import moe.ouom.wekit.util.common.CheckUtils;
 import moe.ouom.wekit.loader.ModuleLoader;
 import moe.ouom.wekit.loader.modern.codegen.Lsp100ProxyClassMaker;
+import moe.ouom.wekit.util.common.CheckUtils;
 
 public class Lsp100ExtCmd {
 
-    private Lsp100ExtCmd() {}
+    private Lsp100ExtCmd() {
+    }
 
     public static Object handleQueryExtension(@NonNull String cmd, @Nullable Object[] arg) {
         CheckUtils.checkNonNull(cmd, "cmd");

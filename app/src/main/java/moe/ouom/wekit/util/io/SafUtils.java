@@ -78,7 +78,7 @@ public class SafUtils {
             if (mimeType == null) {
                 mimeType = "application/octet-stream";
             }
-            ShadowSafTransientActivity.RequestResultCallback internalCb = new ShadowSafTransientActivity.RequestResultCallback() {
+            var internalCb = new ShadowSafTransientActivity.RequestResultCallback() {
                 @Override
                 public void onResult(@Nullable Uri uri) {
                     if (uri != null) {
@@ -144,7 +144,7 @@ public class SafUtils {
 
         public void commit() {
             Objects.requireNonNull(resultCallback);
-            ShadowSafTransientActivity.RequestResultCallback internalCb = new ShadowSafTransientActivity.RequestResultCallback() {
+            var internalCb = new ShadowSafTransientActivity.RequestResultCallback() {
                 @Override
                 public void onResult(@Nullable Uri uri) {
                     if (uri != null) {
@@ -203,7 +203,7 @@ public class SafUtils {
 
         public void commit() {
             Objects.requireNonNull(resultCallback);
-            ShadowSafTransientActivity.RequestResultCallback internalCb = new ShadowSafTransientActivity.RequestResultCallback() {
+            var internalCb = new ShadowSafTransientActivity.RequestResultCallback() {
                 @Override
                 public void onResult(@Nullable Uri uri) {
                     if (uri != null) {
@@ -231,7 +231,7 @@ public class SafUtils {
 
     @UiThread
     private static void complainAboutNoSafActivity(@NonNull Context context, @NonNull Throwable e) {
-        String msg = WeLogger.getStackTraceString();
+        var msg = WeLogger.getStackTraceString();
         new AlertDialog.Builder(context)
                 .setTitle("ActivityNotFoundException")
                 .setMessage("找不到处理 SAF Intent 的 Activity，可能是系统问题。\n" +
@@ -239,8 +239,8 @@ public class SafUtils {
                 .setCancelable(true)
                 .setPositiveButton(android.R.string.ok, null)
                 .setNeutralButton(android.R.string.copy, (dialog, which) -> {
-                    ClipboardManager clipboard = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
-                    ClipData clip = ClipData.newPlainText("wekit-error", msg);
+                    var clipboard = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
+                    var clip = ClipData.newPlainText("wekit-error", msg);
                     clipboard.setPrimaryClip(clip);
                 })
                 .show();

@@ -30,9 +30,9 @@ public interface IHookBridge {
 
     interface IMemberHookCallback {
 
-        void beforeHookedMember(@NonNull IMemberHookParam param) throws Throwable;
+        void beforeHookedMember(@NonNull IMemberHookParam param);
 
-        void afterHookedMember(@NonNull IMemberHookParam param) throws Throwable;
+        void afterHookedMember(@NonNull IMemberHookParam param);
 
     }
 

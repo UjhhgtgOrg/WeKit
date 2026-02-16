@@ -121,7 +121,8 @@ class HookQueryCashierPkg : BaseClickableFunctionHookItem(), IWePkgInterceptor {
         }
     }
 
-    private inner class ConfigDialog(context: Context) : BaseRikkaDialog(context, "收银台余额配置") {
+    private class ConfigDialog(context: Context) :
+        BaseRikkaDialog(context, "收银台余额配置") {
         override fun initPreferences() {
             addCategory("金额设置")
 

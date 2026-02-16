@@ -43,10 +43,11 @@ interface IDexFind {
         if (missingKeys.isNotEmpty()) {
             throw IllegalStateException(
                 "Cache incomplete for ${this::class.java.simpleName}: missing keys $missingKeys. " +
-                "This will trigger a rescan."
+                        "This will trigger a rescan."
             )
         }
     }
+
     /**
      * 收集所有 dex 委托属性
      */
@@ -58,8 +59,7 @@ interface IDexFind {
         clazz.declaredFields.forEach { field ->
             try {
                 field.isAccessible = true
-                val value = field.get(this)
-                when (value) {
+                when (val value = field.get(this)) {
                     is DexClassDelegate -> result[value.key] = value
                     is DexMethodDelegate -> result[value.key] = value
                 }

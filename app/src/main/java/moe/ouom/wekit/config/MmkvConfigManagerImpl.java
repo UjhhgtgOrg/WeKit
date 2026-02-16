@@ -97,8 +97,8 @@ public class MmkvConfigManagerImpl extends WeConfig {
             if (!(o instanceof Entry)) {
                 return false;
             }
-            Entry<String, Object> entry = (Entry<String, Object>) o;
-            for (Entry<String, Object> e : this) {
+            var entry = (Entry<String, Object>) o;
+            for (var e : this) {
                 if (e.equals(entry)) {
                     return true;
                 }
@@ -119,7 +119,7 @@ public class MmkvConfigManagerImpl extends WeConfig {
 
                 @Override
                 public Entry<String, Object> next() {
-                    String key = iterator.next();
+                    var key = iterator.next();
                     return mCacheMap.computeIfAbsent(key, VirtEntry::new);
                 }
             };
@@ -149,7 +149,7 @@ public class MmkvConfigManagerImpl extends WeConfig {
 
         @Override
         public boolean containsAll(@NonNull Collection<?> c) {
-            for (Object o : c) {
+            for (var o : c) {
                 if (!contains(o)) {
                     return false;
                 }
@@ -191,7 +191,7 @@ public class MmkvConfigManagerImpl extends WeConfig {
 
         @Override
         public boolean contains(@Nullable Object o) {
-            for (Object val : this) {
+            for (var val : this) {
                 if (Objects.equals(o, val)) {
                     return true;
                 }
@@ -241,7 +241,7 @@ public class MmkvConfigManagerImpl extends WeConfig {
 
         @Override
         public boolean containsAll(@NonNull Collection<?> c) {
-            for (Object o : c) {
+            for (var o : c) {
                 if (!contains(o)) {
                     return false;
                 }
@@ -307,7 +307,7 @@ public class MmkvConfigManagerImpl extends WeConfig {
         @Override
         public Object put(String key, Object value) {
             Objects.requireNonNull(key);
-            Object obj = getObject(key);
+            var obj = getObject(key);
             putObject(key, value);
             return obj;
         }
@@ -316,7 +316,7 @@ public class MmkvConfigManagerImpl extends WeConfig {
         @Override
         public Object remove(@Nullable Object key) {
             Objects.requireNonNull(key);
-            Object obj = getObject((String) key);
+            var obj = getObject((String) key);
             if (obj != null) {
                 mmkv.remove((String) key);
             }
@@ -325,9 +325,9 @@ public class MmkvConfigManagerImpl extends WeConfig {
 
         @Override
         public void putAll(@NonNull Map<? extends String, ?> m) {
-            for (Entry<? extends String, ?> entry : m.entrySet()) {
-                String key = entry.getKey();
-                Object value = entry.getValue();
+            for (var entry : m.entrySet()) {
+                var key = entry.getKey();
+                var value = entry.getValue();
                 putObject(key, value);
             }
         }
@@ -341,11 +341,11 @@ public class MmkvConfigManagerImpl extends WeConfig {
         @Override
         public Set<String> keySet() {
             Set<String> keys = new HashSet<>();
-            String[] allKeys = mmkv.allKeys();
+            var allKeys = mmkv.allKeys();
             if (allKeys == null) {
                 return keys;
             }
-            for (String s : allKeys) {
+            for (var s : allKeys) {
                 if (!s.endsWith(TYPE_SUFFIX)) {
                     keys.add(s);
                 }
@@ -407,13 +407,13 @@ public class MmkvConfigManagerImpl extends WeConfig {
             case TYPE_BYTES:
                 return mmkv.getBytes(key, null);
             case TYPE_SERIALIZABLE: {
-                byte[] bytes = mmkv.getBytes(key, null);
+                var bytes = mmkv.getBytes(key, null);
                 if (bytes == null) {
                     return null;
                 }
-                ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
+                var inputStream = new ByteArrayInputStream(bytes);
                 try {
-                    ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
+                    var objectInputStream = new ObjectInputStream(inputStream);
                     return objectInputStream.readObject();
                 } catch (Exception e) {
                     WeLogger.e(e);
@@ -494,13 +494,13 @@ public class MmkvConfigManagerImpl extends WeConfig {
         } else if (v instanceof byte[]) {
             putBytes(key, (byte[]) v);
         } else if (v instanceof String[]) {
-            HashSet<String> set = new HashSet<>(((String[]) v).length);
+            var set = new HashSet<String>(((String[]) v).length);
             Collections.addAll(set, (String[]) v);
             putStringSet(key, set);
         } else if (v instanceof Serializable) {
             try {
-                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
+                var outputStream = new ByteArrayOutputStream();
+                var objectOutputStream = new ObjectOutputStream(outputStream);
                 objectOutputStream.writeObject(v);
                 mmkv.putBytes(key, outputStream.toByteArray());
                 mmkv.putInt(key.concat(TYPE_SUFFIX), TYPE_SERIALIZABLE);

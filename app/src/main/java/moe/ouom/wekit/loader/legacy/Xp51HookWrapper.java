@@ -102,8 +102,8 @@ public class Xp51HookWrapper {
             if (!mAlive) {
                 return;
             }
-            String tag = TAG_PREFIX + mHookId;
-            Xp51HookParam hcbParam = new Xp51HookParam();
+            var tag = TAG_PREFIX + mHookId;
+            var hcbParam = new Xp51HookParam();
             hcbParam.mParam = param;
             param.setObjectExtra(tag, hcbParam);
             mCallback.beforeHookedMember(hcbParam);
@@ -114,8 +114,8 @@ public class Xp51HookWrapper {
             if (!mAlive) {
                 return;
             }
-            String tag = TAG_PREFIX + mHookId;
-            Xp51HookParam hcbParam = (Xp51HookParam) param.getObjectExtra(tag);
+            var tag = TAG_PREFIX + mHookId;
+            var hcbParam = (Xp51HookParam) param.getObjectExtra(tag);
             if (hcbParam == null) {
                 throw new AssertionError("hcbParam is null, tag: " + tag);
             }

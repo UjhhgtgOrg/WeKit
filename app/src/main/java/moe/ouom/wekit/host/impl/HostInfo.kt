@@ -38,7 +38,10 @@ fun init(applicationContext: Application) {
 
 private fun getHostInfo(context: Context): PackageInfo {
     try {
-        return context.packageManager.getPackageInfo(context.packageName, PackageManager.GET_META_DATA)
+        return context.packageManager.getPackageInfo(
+            context.packageName,
+            PackageManager.GET_META_DATA
+        )
     } catch (e: PackageManager.NameNotFoundException) {
         WeLogger.e("Can not get PackageInfo!", e)
         throw e
@@ -68,7 +71,12 @@ val isAndroidxFileProviderAvailable: Boolean by lazy {
     // check if androidx.core.content.FileProvider is available
     val pm = ctx.packageManager
     try {
-        pm.getProviderInfo(ComponentName(hostInfo.packageName, "androidx.core.content.FileProvider"), 0)
+        pm.getProviderInfo(
+            ComponentName(
+                hostInfo.packageName,
+                "androidx.core.content.FileProvider"
+            ), 0
+        )
         true
     } catch (e: PackageManager.NameNotFoundException) {
         false

@@ -35,6 +35,7 @@ object ProtoJsonBuilder {
                 val nestedBytes = makeBytes(value)
                 writeLengthDelimitedTag(os, tag, nestedBytes)
             }
+
             is JSONArray -> {
                 for (i in 0 until value.length()) {
                     writeTagData(os, tag, value.get(i))

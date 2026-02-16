@@ -29,7 +29,8 @@ class MainSettingsDialog(context: Context) : BaseRikkaDialog(context, "WeKit") {
             "脚本管理" to "ic_script_management",
         )
         categories.forEach { (name, iconName) ->
-            addPreference(title = name, iconName = iconName,
+            addPreference(
+                title = name, iconName = iconName,
                 onClick = { anchor, summaryView ->
                     CategorySettingsDialog(context, name).show()
                 })
@@ -103,7 +104,9 @@ class MainSettingsDialog(context: Context) : BaseRikkaDialog(context, "WeKit") {
         val buildTimeStr = try {
             val date = Date(BuildConfig.BUILD_TIMESTAMP)
             SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(date)
-        } catch (_: Exception) { "N/A" }
+        } catch (_: Exception) {
+            "N/A"
+        }
         addPreference(title = "编译时间", summary = buildTimeStr)
         addPreference("Build UUID", BuildConfig.BUILD_UUID)
 

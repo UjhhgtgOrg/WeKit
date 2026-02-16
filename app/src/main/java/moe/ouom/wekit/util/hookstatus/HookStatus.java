@@ -1,7 +1,6 @@
 package moe.ouom.wekit.util.hookstatus;
 
 import android.content.ActivityNotFoundException;
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -96,15 +95,15 @@ public class HookStatus {
 
     public static boolean callTaichiContentProvider(@NonNull Context context) {
         try {
-            ContentResolver contentResolver = context.getContentResolver();
-            Uri uri = Uri.parse("content://me.weishu.exposed.CP/");
-            Bundle result = new Bundle();
+            var contentResolver = context.getContentResolver();
+            var uri = Uri.parse("content://me.weishu.exposed.CP/");
+            var result = new Bundle();
             try {
                 result = contentResolver.call(uri, "active", null, null);
             } catch (RuntimeException e) {
                 // TaiChi is killed, try invoke
                 try {
-                    Intent intent = new Intent("me.weishu.exp.ACTION_ACTIVE");
+                    var intent = new Intent("me.weishu.exp.ACTION_ACTIVE");
                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                     context.startActivity(intent);
                 } catch (ActivityNotFoundException anfe) {
@@ -155,8 +154,8 @@ public class HookStatus {
     }
 
     private static void initHookStatusImplInHostProcess() throws LinkageError {
-        Class<?> xposedClass = LoaderExtensionHelper.getXposedBridgeClass();
-        boolean dexObfsEnabled = false;
+        var xposedClass = LoaderExtensionHelper.getXposedBridgeClass();
+        var dexObfsEnabled = false;
         if (xposedClass != null) {
             dexObfsEnabled = !"de.robv.android.xposed.XposedBridge".equals(xposedClass.getName());
         }
@@ -189,7 +188,7 @@ public class HookStatus {
 
     public static String getHookProviderNameForLegacyApi() {
         if (isZygoteHookMode()) {
-            String name = getZygoteHookProvider();
+            var name = getZygoteHookProvider();
             if (name != null) {
                 return name;
             }
@@ -209,7 +208,7 @@ public class HookStatus {
 
     public static boolean isTaiChiInstalled(@NonNull Context context) {
         try {
-            PackageManager pm = context.getPackageManager();
+            var pm = context.getPackageManager();
             pm.getPackageInfo("me.weishu.exp", 0);
             return true;
         } catch (PackageManager.NameNotFoundException e) {
@@ -222,10 +221,10 @@ public class HookStatus {
     }
 
     public static HashMap<String, String> getHostABI() {
-        CharSequence[] scope = HostInfo.getApplication().getResources().getTextArray(R.array.xposed_scope);
-        HashMap<String, String> result = new HashMap<>(4);
-        for (CharSequence s : scope) {
-            String abi = AbiUtils.getApplicationActiveAbi(s.toString());
+        var scope = HostInfo.getApplication().getResources().getTextArray(R.array.xposed_scope);
+        var result = new HashMap<String, String>(4);
+        for (var s : scope) {
+            var abi = AbiUtils.getApplicationActiveAbi(s.toString());
             if (abi != null) {
                 result.put(s.toString(), abi);
             }

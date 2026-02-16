@@ -210,7 +210,7 @@ public final class XposedService {
     @NonNull
     public Privilege getFrameworkPrivilege() {
         try {
-            int value = mService.getFrameworkPrivilege();
+            var value = mService.getFrameworkPrivilege();
             return (value >= 0 && value <= 3) ? Privilege.values()[value + 1] : Privilege.FRAMEWORK_PRIVILEGE_UNKNOWN;
         } catch (RemoteException e) {
             throw new ServiceException(e);

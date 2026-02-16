@@ -29,20 +29,21 @@ public class FileUtils {
     private static final int BYTE_SIZE = 1024;
 
     private static void renameSuffix(String path, String suffix) {
-        File file = new File(path);
-        String oldName = path.substring(0, path.lastIndexOf("."));
+        var file = new File(path);
+        var oldName = path.substring(0, path.lastIndexOf("."));
         file.renameTo(new File(file.getAbsolutePath(), oldName + suffix));
     }
 
     public static void writeBytesToFile(String path, byte[] data) {
-        File file = new File(path);
+        var file = new File(path);
         try {
-            if (!Objects.requireNonNull(file.getParentFile()).exists()) file.getParentFile().mkdirs();
+            if (!Objects.requireNonNull(file.getParentFile()).exists())
+                file.getParentFile().mkdirs();
             if (!file.exists()) file.createNewFile();
         } catch (IOException e) {
             WeLogger.e("FileUtils", e);
         }
-        try (BufferedOutputStream bufOut = new BufferedOutputStream(new FileOutputStream(path))) {
+        try (var bufOut = new BufferedOutputStream(new FileOutputStream(path))) {
             bufOut.write(data);
         } catch (IOException ioException) {
             throw new RuntimeException(ioException);
@@ -66,7 +67,7 @@ public class FileUtils {
         }
         MessageDigest digest = null;
         FileInputStream in = null;
-        byte[] buffer = new byte[1024];
+        var buffer = new byte[1024];
         int len;
         try {
             digest = MessageDigest.getInstance("MD5");
@@ -79,13 +80,13 @@ public class FileUtils {
             WeLogger.e("FileUtils", e);
             return null;
         }
-        BigInteger bigInt = new BigInteger(1, digest.digest());
+        var bigInt = new BigInteger(1, digest.digest());
         return bigInt.toString(16).toUpperCase();
     }
 
     public static byte[] readAllBytes(InputStream inp) throws IOException {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        byte[] buffer = new byte[4096];
+        var out = new ByteArrayOutputStream();
+        var buffer = new byte[4096];
         int read;
         while ((read = inp.read(buffer)) != -1) out.write(buffer, 0, read);
         return out.toByteArray();
@@ -93,8 +94,8 @@ public class FileUtils {
 
     public static byte[] readAllByte(InputStream stream, int size) {
         try {
-            byte[] buffer = new byte[BYTE_SIZE];
-            ByteArrayOutputStream bytearrayOut = new ByteArrayOutputStream();
+            var buffer = new byte[BYTE_SIZE];
+            var bytearrayOut = new ByteArrayOutputStream();
             int read;
             while ((read = stream.read(buffer)) != -1) {
                 bytearrayOut.write(buffer, 0, read);
@@ -118,9 +119,9 @@ public class FileUtils {
         if (!targetDir.exists()) {
             targetDir.mkdirs();
         }
-        File[] files = sourceDir.listFiles();
+        var files = sourceDir.listFiles();
         assert files != null;
-        for (File f : files) {
+        for (var f : files) {
             if (f.isDirectory()) {
                 copyDir(f, new File(targetDir.getPath(), f.getName()));
             } else if (f.isFile()) {
@@ -137,10 +138,10 @@ public class FileUtils {
         try {
             if (file == null) return;
             if (file.isFile()) file.delete();
-            File[] files = file.listFiles();
+            var files = file.listFiles();
             if (files == null) return;
 
-            for (File f : files) {
+            for (var f : files) {
                 if (f.isDirectory()) {
                     deleteFile(f);
                 } else {
@@ -165,10 +166,10 @@ public class FileUtils {
         if (file.exists()) {
             // 如果是目录则递归计算其内容的总大小
             if (file.isDirectory()) {
-                File[] children = file.listFiles();
+                var children = file.listFiles();
                 long size = 0;
                 if (children == null) return 0;
-                for (File f : children)
+                for (var f : children)
                     size += getDirSize(f);
                 return size;
             } else {
@@ -181,15 +182,15 @@ public class FileUtils {
     }
 
     public static String readFileText(String filePath) throws IOException {
-        File path = new File(filePath);
+        var path = new File(filePath);
         // 此路径无文件
         if (!path.exists()) {
             throw new IOException("path not found: " + path.getAbsolutePath());
         } else if (path.isDirectory()) /*此文件是目录*/ {
             throw new IOException("Non-file type: " + path.getAbsolutePath());
         }
-        StringBuilder stringBuilder = new StringBuilder();
-        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+        var stringBuilder = new StringBuilder();
+        try (var reader = new BufferedReader(new FileReader(filePath))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 stringBuilder.append(line);
@@ -209,16 +210,19 @@ public class FileUtils {
      */
     public static void writeTextToFile(String path, String content, boolean isAppend) {
         try {
-            File file = new File(path);
+            var file = new File(path);
             try {
                 // 先创建文件夹
-                if (!Objects.requireNonNull(file.getParentFile()).exists()) file.getParentFile().mkdirs();
+                if (!Objects.requireNonNull(file.getParentFile()).exists())
+                    file.getParentFile().mkdirs();
                 // 再创建文件 FileOutputStream 会自动创建文件但是不能创建多级目录
                 if (!file.exists()) file.createNewFile();
-            } catch (IOException ignored) {}
-            try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file, isAppend), StandardCharsets.UTF_8))) {
+            } catch (IOException ignored) {
+            }
+            try (var writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file, isAppend), StandardCharsets.UTF_8))) {
                 writer.write(content);
-            } catch (IOException ignored) {}
+            } catch (IOException ignored) {
+            }
         } catch (Exception e) {
             XposedBridge.log(e);
         }
@@ -226,7 +230,7 @@ public class FileUtils {
     }
 
     public static void copyFile(String sourceFile, String targetPath) throws IOException {
-        File file = new File(sourceFile);
+        var file = new File(sourceFile);
         if (!file.exists()) {
             throw new IOException("path not found: " + file.getAbsolutePath());
         } else if (file.isDirectory()) {
@@ -251,8 +255,8 @@ public class FileUtils {
                 throw new IOException("create file fail: " + target.getAbsolutePath());
             }
         }
-        StringBuilder builder = new StringBuilder();
-        try (inputStream; BufferedReader sourceFileReader = new BufferedReader(new InputStreamReader(inputStream)); BufferedWriter destStream = new BufferedWriter(new FileWriter(target))) {
+        var builder = new StringBuilder();
+        try (inputStream; var sourceFileReader = new BufferedReader(new InputStreamReader(inputStream)); var destStream = new BufferedWriter(new FileWriter(target))) {
             String line;
             while ((line = sourceFileReader.readLine()) != null) {
                 builder.append(line);
@@ -276,8 +280,8 @@ public class FileUtils {
                 throw new IOException("create file fail: " + target.getAbsolutePath());
             }
         }
-        try (BufferedInputStream sourceFile = new BufferedInputStream(inputStream); BufferedOutputStream destStream = new BufferedOutputStream(new FileOutputStream(target))) {
-            byte[] bytes = new byte[BYTE_SIZE];
+        try (var sourceFile = new BufferedInputStream(inputStream); var destStream = new BufferedOutputStream(new FileOutputStream(target))) {
+            var bytes = new byte[BYTE_SIZE];
             int len;
             while ((len = sourceFile.read(bytes)) != -1) {
                 destStream.write(bytes, 0, len);

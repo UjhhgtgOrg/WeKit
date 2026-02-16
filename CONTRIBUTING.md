@@ -220,8 +220,6 @@ wekit/
 │   └── proguard-rules.pro     # 混淆规则
 ├── build-logic/               # 自定义构建逻辑
 │   └── convention/            # 构建约定插件
-├── buildSrc/                  # Gradle 构建脚本
-│   └── src/main/kotlin/       # 依赖版本管理
 ├── libs/                      # 子模块库
 │   └── common/
 │       ├── annotation-scanner/# KSP 注解处理器

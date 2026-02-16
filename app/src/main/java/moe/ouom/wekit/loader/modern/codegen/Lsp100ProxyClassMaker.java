@@ -3,14 +3,12 @@ package moe.ouom.wekit.loader.modern.codegen;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Locale;
 import java.util.Objects;
 
 import io.github.libxposed.api.XposedInterface;
-import moe.ouom.wekit.loader.hookapi.IClassLoaderHelper;
 import moe.ouom.wekit.loader.modern.Lsp100HookImpl;
 import moe.ouom.wekit.loader.modern.Lsp100HookWrapper;
 import moe.ouom.wekit.loader.modern.dyn.Lsp100CallbackProxy;
@@ -26,7 +24,7 @@ public class Lsp100ProxyClassMaker {
     private static Throwable sLoadClassException = null;
 
     public Class<?> createProxyClass(int priority) {
-        String className = getClassNameForPriority(priority);
+        var className = getClassNameForPriority(priority);
         // is already loaded?
         try {
             return Lsp100ProxyClassMaker.class.getClassLoader().loadClass(className);
@@ -41,12 +39,12 @@ public class Lsp100ProxyClassMaker {
             } catch (ClassNotFoundException ignored) {
             }
         }
-        byte[] dex = makeClassByteCodeForPriority(priority);
+        var dex = makeClassByteCodeForPriority(priority);
         return loadProxyClassForPriority(className, dex, priority);
     }
 
     private Class<?> loadProxyClassForPriority(@NonNull String className, @NonNull byte[] dex, int priority) {
-        IClassLoaderHelper helper = Lsp100HookImpl.INSTANCE.getClassLoaderHelper();
+        var helper = Lsp100HookImpl.INSTANCE.getClassLoaderHelper();
         if (helper == null) {
             throw new UnsupportedOperationException("ClassLoaderHelper not set");
         }
@@ -102,7 +100,7 @@ public class Lsp100ProxyClassMaker {
         Class<?> templateClass = Lsp100CallbackProxy.P0000000050.class;
         {
             // get XposedHooker annotation class name
-            Annotation[] annotations = templateClass.getAnnotations();
+            var annotations = templateClass.getAnnotations();
             // pick the first annotation
             if (annotations.length > 0) {
                 mXposedHookerClassName = annotations[0].annotationType().getName();
@@ -110,8 +108,8 @@ public class Lsp100ProxyClassMaker {
         }
         try {
             // get BeforeInvocation annotation class name
-            Method before = templateClass.getMethod("before", XposedInterface.BeforeHookCallback.class);
-            Annotation[] annotations = before.getAnnotations();
+            var before = templateClass.getMethod("before", XposedInterface.BeforeHookCallback.class);
+            var annotations = before.getAnnotations();
             // pick the first annotation
             if (annotations.length > 0) {
                 mBeforeInvocationClassName = annotations[0].annotationType().getName();
@@ -121,9 +119,9 @@ public class Lsp100ProxyClassMaker {
         }
         try {
             // get AfterInvocation annotation class name
-            Method after = templateClass.getMethod("after",
+            var after = templateClass.getMethod("after",
                     XposedInterface.AfterHookCallback.class, Lsp100HookWrapper.InvocationParamWrapper.class);
-            Annotation[] annotations = after.getAnnotations();
+            var annotations = after.getAnnotations();
             // pick the first annotation
             if (annotations.length > 0) {
                 mAfterInvocationClassName = annotations[0].annotationType().getName();
@@ -136,7 +134,7 @@ public class Lsp100ProxyClassMaker {
 
     @NonNull
     private byte[] makeClassByteCodeForPriority(int priority) {
-        String className = getClassNameForPriority(priority);
+        var className = getClassNameForPriority(priority);
         return impl1(
                 className,
                 priority,
@@ -160,11 +158,11 @@ public class Lsp100ProxyClassMaker {
             @Nullable String classNameBeforeInvocation,
             @Nullable String classNameAfterInvocation
     ) {
-        Method wrapperMethod = sWrapperMethod;
+        var wrapperMethod = sWrapperMethod;
         if (wrapperMethod == null) {
             throw new UnsupportedOperationException("Wrapper method not set");
         }
-        Object[] args = new Object[]{
+        var args = new Object[]{
                 targetClassName,
                 tagValue,
                 classNameXposedInterfaceHooker,
@@ -179,7 +177,7 @@ public class Lsp100ProxyClassMaker {
             return (byte[]) Objects.requireNonNull(wrapperMethod.invoke(null, version, args));
         } catch (ReflectiveOperationException e) {
             if (e instanceof InvocationTargetException) {
-                Throwable targetException = ((InvocationTargetException) e).getTargetException();
+                var targetException = ((InvocationTargetException) e).getTargetException();
                 if (targetException instanceof RuntimeException) {
                     throw (RuntimeException) targetException;
                 }

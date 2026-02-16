@@ -62,6 +62,7 @@ class WeMessageApi : ApiHookItem(), IDexFind {
 
     // 查找 Service 接口 (sc0.e)
     private val dexClassVoiceServiceInterface by dexClass()
+
     // Service 实现类
     private val dexClassVoiceServiceImpl by dexClass()
     private val dexMethodVoiceSend by dexMethod()
@@ -124,7 +125,10 @@ class WeMessageApi : ApiHookItem(), IDexFind {
         val descriptors = mutableMapOf<String, String>()
 
         try {
-            WeLogger.i(TAG, ">>>> 开始查找消息发送 API (Process: ${SyncUtils.getProcessName()}) <<<<")
+            WeLogger.i(
+                TAG,
+                ">>>> 开始查找消息发送 API (Process: ${SyncUtils.getProcessName()}) <<<<"
+            )
 
             // ---------------------------------------------------------------------------------
             // 基础组件查找
@@ -186,14 +190,28 @@ class WeMessageApi : ApiHookItem(), IDexFind {
                 }
             }
             dexMethodShareFile.find(dexKit, descriptors = descriptors) {
-                matcher { paramTypes("com.tencent.mm.opensdk.modelmsg.WXMediaMessage", "java.lang.String", "java.lang.String", "java.lang.String", "int", "java.lang.String") }
+                matcher {
+                    paramTypes(
+                        "com.tencent.mm.opensdk.modelmsg.WXMediaMessage",
+                        "java.lang.String",
+                        "java.lang.String",
+                        "java.lang.String",
+                        "int",
+                        "java.lang.String"
+                    )
+                }
             }
 
             // ---------------------------------------------------------------------------------
             // 图片组件查找
             // ---------------------------------------------------------------------------------
             dexClassImageSender.find(dexKit, descriptors = descriptors) {
-                matcher { usingStrings("MicroMsg.ImgUpload.MsgImgSyncSendFSC", "/cgi-bin/micromsg-bin/uploadmsgimg") }
+                matcher {
+                    usingStrings(
+                        "MicroMsg.ImgUpload.MsgImgSyncSendFSC",
+                        "/cgi-bin/micromsg-bin/uploadmsgimg"
+                    )
+                }
             }
 
             val senderDesc = descriptors[dexClassImageSender.key]
@@ -222,12 +240,18 @@ class WeMessageApi : ApiHookItem(), IDexFind {
                     }.singleOrNull()
 
                     if (mapFieldData != null) {
-                        descriptors["${javaClass.simpleName}:$KEY_MAP_FIELD"] = mapFieldData.descriptor
+                        descriptors["${javaClass.simpleName}:$KEY_MAP_FIELD"] =
+                            mapFieldData.descriptor
                     }
                 }
 
                 dexClassMvvmBase.find(dexKit, descriptors) {
-                    matcher { usingStrings("MicroMsg.Mvvm.MvvmPlugin", "onAccountInitialized start") }
+                    matcher {
+                        usingStrings(
+                            "MicroMsg.Mvvm.MvvmPlugin",
+                            "onAccountInitialized start"
+                        )
+                    }
                 }
 
                 val mvvmBaseDesc = descriptors[dexClassMvvmBase.key]
@@ -314,7 +338,13 @@ class WeMessageApi : ApiHookItem(), IDexFind {
                         add {
                             modifiers = Modifier.PUBLIC or Modifier.STATIC
                             returnType = "java.lang.String"
-                            paramTypes("java.lang.String", "java.lang.String", "java.lang.String", "java.lang.String", "int")
+                            paramTypes(
+                                "java.lang.String",
+                                "java.lang.String",
+                                "java.lang.String",
+                                "java.lang.String",
+                                "int"
+                            )
                         }
                     }
                 }
@@ -376,7 +406,9 @@ class WeMessageApi : ApiHookItem(), IDexFind {
                 if (implClassData != null) {
                     // 遍历所有接口，找到第一个非系统接口作为 Service 接口
                     val targetInterface = implClassData.interfaces.firstOrNull {
-                        !it.name.startsWith("java.") && !it.name.startsWith("android.") && !it.name.startsWith("kotlin.") && !it.name.startsWith("ki0.")
+                        !it.name.startsWith("java.") && !it.name.startsWith("android.") && !it.name.startsWith(
+                            "kotlin."
+                        ) && !it.name.startsWith("ki0.")
                     }
                     if (targetInterface != null) {
                         // 将找到的接口名填入 map，防止 HookItemLoader 认为缓存缺失
@@ -415,8 +447,10 @@ class WeMessageApi : ApiHookItem(), IDexFind {
                 p6Method = dexMethodImageSendEntry.method
 
                 try {
-                    wxFileObjectClass = classLoader.loadClass("com.tencent.mm.opensdk.modelmsg.WXFileObject")
-                    wxMediaMessageClass = classLoader.loadClass("com.tencent.mm.opensdk.modelmsg.WXMediaMessage")
+                    wxFileObjectClass =
+                        classLoader.loadClass("com.tencent.mm.opensdk.modelmsg.WXFileObject")
+                    wxMediaMessageClass =
+                        classLoader.loadClass("com.tencent.mm.opensdk.modelmsg.WXMediaMessage")
                 } catch (e: Exception) {
                     WeLogger.e(TAG, "初始化文件发送组件时失败", e)
                 }
@@ -425,12 +459,14 @@ class WeMessageApi : ApiHookItem(), IDexFind {
                 // 图片组件初始化
                 // -----------------------------------------------------------------------------
                 val taskClazz = dexClassImageTask.clazz
-                taskConstructor = taskClazz.declaredConstructors.firstOrNull { it.parameterCount == 5 }
+                taskConstructor =
+                    taskClazz.declaredConstructors.firstOrNull { it.parameterCount == 5 }
                 taskConstructor?.isAccessible = true
 
                 if (taskConstructor != null) {
                     crossParamsClass = taskConstructor!!.parameterTypes[4]
-                    crossParamsConstructor = crossParamsClass?.declaredConstructors?.firstOrNull { it.parameterCount == 0 }
+                    crossParamsConstructor =
+                        crossParamsClass?.declaredConstructors?.firstOrNull { it.parameterCount == 0 }
                     crossParamsConstructor?.isAccessible = true
                 } else {
                     WeLogger.e(TAG, "警告: 未找到 ImageTask 构造函数")
@@ -491,7 +527,8 @@ class WeMessageApi : ApiHookItem(), IDexFind {
 
                 dexClassVoiceParams.clazz.let { clazz ->
                     voiceParamsClass = clazz
-                    val intFields = clazz.declaredFields.filter { it.type == Int::class.javaPrimitiveType }
+                    val intFields =
+                        clazz.declaredFields.filter { it.type == Int::class.javaPrimitiveType }
                     if (intFields.isNotEmpty()) {
                         voiceDurationField = intFields.firstOrNull()
                         voiceDurationField?.isAccessible = true
@@ -610,7 +647,8 @@ class WeMessageApi : ApiHookItem(), IDexFind {
             val paramsObj = XposedHelpers.newInstance(paramsClass)
             assignValueToFirstFieldByType(paramsObj, Int::class.javaPrimitiveType!!, 4)
 
-            val taskObj = XposedHelpers.newInstance(taskClass, imgPath, 0, getSelfAlias(), toUser, paramsObj)
+            val taskObj =
+                XposedHelpers.newInstance(taskClass, imgPath, 0, getSelfAlias(), toUser, paramsObj)
             assignValueToLastFieldByType(taskObj, String::class.java, "media_generate_send_img")
 
             sendImageMethod?.invoke(serviceObj, taskObj)
@@ -630,7 +668,11 @@ class WeMessageApi : ApiHookItem(), IDexFind {
             WeLogger.i(TAG, "[sendText] 准备发送文本消息: $text")
             val sendMsgObject = getSendMsgObjectMethod?.invoke(null) ?: return false
             val constructor = netSceneSendMsgClass?.getConstructor(
-                String::class.java, String::class.java, Int::class.javaPrimitiveType, Int::class.javaPrimitiveType, Any::class.java
+                String::class.java,
+                String::class.java,
+                Int::class.javaPrimitiveType,
+                Int::class.javaPrimitiveType,
+                Any::class.java
             ) ?: return false
             val msgObj = constructor.newInstance(toUser, text, 1, 0, null)
             postToQueueMethod?.invoke(sendMsgObject, msgObj) as? Boolean ?: false
@@ -665,7 +707,8 @@ class WeMessageApi : ApiHookItem(), IDexFind {
             if (selfWxid.isEmpty()) throw IllegalStateException("无法获取 Wxid")
 
             // 获取 Service 实例
-            val serviceInterface = voiceServiceInterfaceClass ?: throw IllegalStateException("VoiceService interface not found")
+            val serviceInterface = voiceServiceInterfaceClass
+                ?: throw IllegalStateException("VoiceService interface not found")
 
             // 尝试通过 ServiceManager 获取
             var finalServiceObj: Any? = null
@@ -692,10 +735,13 @@ class WeMessageApi : ApiHookItem(), IDexFind {
             if (finalServiceObj == null) throw IllegalStateException("无法获取 VoiceService 实例")
 
             // 准备文件
-            val fileName = voiceNameGenMethod?.invoke(null, selfWxid, "amr_") as? String ?: throw IllegalStateException("VoiceName Gen Failed")
+            val fileName = voiceNameGenMethod?.invoke(null, selfWxid, "amr_") as? String
+                ?: throw IllegalStateException("VoiceName Gen Failed")
             val accPath = getAccPath()
             val voice2Root = if (accPath.endsWith("/")) "${accPath}voice2/" else "$accPath/voice2/"
-            val destFullPath = pathGenMethod?.invoke(null, voice2Root, "msg_", fileName, ".amr", 2) as? String ?: throw IllegalStateException("Path Gen Failed")
+            val destFullPath =
+                pathGenMethod?.invoke(null, voice2Root, "msg_", fileName, ".amr", 2) as? String
+                    ?: throw IllegalStateException("Path Gen Failed")
 
             if (!copyFileViaVFS(path, destFullPath)) return false
 
@@ -721,7 +767,8 @@ class WeMessageApi : ApiHookItem(), IDexFind {
         val title = extractXmlTag(xmlContent, "title")
 
         WeLogger.d(TAG, "解析信息: AppId=$appId, Title=$title")
-        return WeAppMsgApi.INSTANCE?.sendXmlAppMsg(toUser, title, appId, null, null, xmlContent) ?: false
+        return WeAppMsgApi.INSTANCE?.sendXmlAppMsg(toUser, title, appId, null, null, xmlContent)
+            ?: false
     }
 
     /**

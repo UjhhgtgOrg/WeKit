@@ -10,34 +10,12 @@ import java.nio.ByteBuffer;
 import java.util.Objects;
 
 import dalvik.system.DexFile;
-import dalvik.system.InMemoryDexClassLoader;
 import moe.ouom.wekit.util.io.IoUtils;
 
 public class MemoryDexLoader {
-
     private MemoryDexLoader() {
         throw new AssertionError("No instance for you!");
     }
-
-    @NonNull
-    public static ClassLoader createClassLoaderWithDex(@NonNull byte[] dexFile, @Nullable ClassLoader parent) {
-        if (dexFile.length == 0) {
-            throw new IllegalArgumentException("dexFile is empty");
-        }
-        if (parent == null) {
-            parent = Runtime.class.getClassLoader();
-        }
-        return createClassLoaderWithDexAboveOreo(dexFile, parent);
-    }
-
-    @NonNull
-    private static ClassLoader createClassLoaderWithDexAboveOreo(@NonNull byte[] dexFile, @NonNull ClassLoader parent) {
-        ByteBuffer byteBuffer = ByteBuffer.wrap(dexFile);
-        return new InMemoryDexClassLoader(byteBuffer, parent);
-    }
-
-    @NonNull
-    private static native ClassLoader nativeCreateClassLoaderWithDexBelowOreo(@NonNull byte[] dexFile, @NonNull ClassLoader parent);
 
     /**
      * Create a DexFile instance from a byte array. Applications generally should not create a DexFile directly.
@@ -81,9 +59,9 @@ public class MemoryDexLoader {
             constructor3.setAccessible(true);
         } catch (NoSuchMethodException ignored) {
         }
-        ByteBuffer byteBuffer = ByteBuffer.wrap(dexBytes);
+        var byteBuffer = ByteBuffer.wrap(dexBytes);
         if (constructor3 != null) {
-            ByteBuffer[] byteBuffers = new ByteBuffer[]{byteBuffer};
+            var byteBuffers = new ByteBuffer[]{byteBuffer};
             try {
                 return constructor3.newInstance(byteBuffers, definingContext, null);
             } catch (ReflectiveOperationException e) {
