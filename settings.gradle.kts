@@ -11,6 +11,8 @@ pluginManagement {
         gradlePluginPortal()
     }
 }
+
+@Suppress("UnstableApiUsage")
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
@@ -63,9 +65,7 @@ includeBuild("build-logic")
 
 include(
     ":app",
-//    ":libs:ui:xView",
     ":libs:common:libxposed:api",
     ":libs:common:libxposed:service",
-//    ":libs:common:ezxhelper",
     ":libs:common:annotation-scanner",
 )

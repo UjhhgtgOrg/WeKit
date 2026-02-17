@@ -15,19 +15,11 @@ import moe.ouom.wekit.util.log.WeLogger;
 /**
  * Entry point for started Xposed API 100.
  * (Develop Xposed Modules Using Modern Xposed API)
- *
  */
-
-
 public class ModernHookEntry extends XposedModule {
-    private static ModuleLoadedParam mModule;
-    private static PackageLoadedParam mModuleLoadedParam;
-
     public ModernHookEntry(@NonNull XposedInterface base, @NonNull ModuleLoadedParam param) {
         super(base, param);
-        mModule = param;
     }
-
 
     @Override
     public void onPackageLoaded(@NonNull PackageLoadedParam param) {
@@ -37,7 +29,6 @@ public class ModernHookEntry extends XposedModule {
             if (param.isFirstPackage()) {
                 var modulePath = this.getApplicationInfo().sourceDir;
                 StartupInfo.setModulePath(modulePath);
-                mModuleLoadedParam = param;
                 handleLoadPackage(param.getClassLoader(), param.getApplicationInfo(), modulePath, processName);
             }
         }
@@ -52,8 +43,5 @@ public class ModernHookEntry extends XposedModule {
         } catch (ReflectiveOperationException e) {
             throw new RuntimeException(e);
         }
-
-
     }
-
 }

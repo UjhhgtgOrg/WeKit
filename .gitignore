@@ -15,8 +15,6 @@
 local.properties
 
 # Project exclude paths
-/build-logic/convention/build/
-/build-logic/convention/build/classes/kotlin/main/
 /libs/common/libxposed/api/build/
 /libs/common/libxposed/api/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/
 /libs/common/libxposed/service/build/

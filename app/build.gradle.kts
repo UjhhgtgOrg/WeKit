@@ -4,13 +4,14 @@ import java.io.ByteArrayOutputStream
 import java.util.Locale
 import java.util.UUID
 import java.security.MessageDigest
+import java.text.SimpleDateFormat
+import java.util.Date
 
 plugins {
-    id("build-logic.android.application")
     alias(libs.plugins.protobuf)
     alias(libs.plugins.serialization)
     alias(libs.plugins.android.application)
-    id("com.google.devtools.ksp") version "2.3.4"
+    alias(libs.plugins.google.devtools.ksp)
     alias(libs.plugins.jetbrains.kotlin.android)
     alias(libs.plugins.kotlin.compose)
 }
@@ -60,12 +61,43 @@ val generateMethodHashes = tasks.register("generateMethodHashes") {
     }
 }
 
+private fun getBuildVersionCode(): Int {
+    val appVerCode: Int by lazy {
+        val versionCode = SimpleDateFormat("yyMMddHH", Locale.ENGLISH).format(Date())
+        versionCode.toInt()
+    }
+    return appVerCode
+}
+
+private fun getCurrentDate(): String {
+    val sdf = SimpleDateFormat("MMddHHmm", Locale.getDefault())
+    return sdf.format(Date())
+}
+
+private fun getShortGitRevision(): String {
+    val command = "git rev-parse --short HEAD"
+    val processBuilder = ProcessBuilder(*command.split(" ").toTypedArray())
+    val process = processBuilder.start()
+
+    val output = process.inputStream.bufferedReader().use { it.readText() }
+    val exitCode = process.waitFor()
+
+    return if (exitCode == 0) {
+        output.trim()
+    } else {
+        "no_commit"
+    }
+}
+
+private fun getBuildVersionName(): String {
+    return "${getShortGitRevision()}.${getCurrentDate()}"
+}
 
 android {
-    namespace = "moe.ouom.wekit"
-    compileSdk = Version.compileSdkVersion
+    namespace = libs.versions.namespace.get()
+    compileSdk = libs.versions.targetSdk.get().toInt()
 
-    val buildUUID = UUID.randomUUID()
+    val buildUuid = UUID.randomUUID()
     println(
         """
         __        __  _____   _  __  ___   _____ 
@@ -78,30 +110,23 @@ android {
         """
     )
 
-    println("buildUUID: $buildUUID")
-
-    signingConfigs {
-        create("release") {
-            val storePath = project.findProperty("KEYSTORE_FILE") as String? ?: "wekit.jks"
-            val resolved = file(storePath)
-            if (resolved.exists()) {
-                storeFile = resolved
-                storePassword = project.findProperty("KEYSTORE_PASSWORD") as String? ?: ""
-                keyAlias = project.findProperty("KEY_ALIAS") as String? ?: "key0"
-                keyPassword = project.findProperty("KEY_PASSWORD") as String? ?: ""
-            } else {
-                println("🔐 Release keystore not found at '${resolved.path}'. Will fallback for PR/builds without secrets.")
-            }
-        }
-    }
+    println("build uuid: $buildUuid")
 
     defaultConfig {
-        applicationId = "moe.ouom.wekit"
-        buildConfigField("String", "BUILD_UUID", "\"${buildUUID}\"")
+        applicationId = libs.versions.namespace.get()
+        minSdk = libs.versions.minSdk.get().toInt()
+        targetSdk = libs.versions.targetSdk.get().toInt()
+        versionCode = getBuildVersionCode()
+        versionName = getBuildVersionName()
+
+        buildConfigField("String", "BUILD_UUID", "\"${buildUuid}\"")
         buildConfigField("String", "TAG", "\"[WeKit-TAG]\"")
         buildConfigField("long", "BUILD_TIMESTAMP", "${System.currentTimeMillis()}L")
         // noinspection ChromeOsAbiSupport
-        ndk { abiFilters += "arm64-v8a" }
+        ndk {
+            abiFilters.clear()
+            abiFilters += "arm64-v8a"
+        }
 
         @Suppress("UnstableApiUsage")
         externalNativeBuild {
@@ -126,18 +151,16 @@ android {
     externalNativeBuild {
         cmake {
             path = file("src/main/cpp/CMakeLists.txt")
-            version = "3.22.1"
+            version = "3.22.1+"
         }
     }
 
     buildTypes {
-        val debugSigning = signingConfigs.getByName("debug")
-
         release {
             isMinifyEnabled = true
             isShrinkResources = true
 
-            signingConfig = debugSigning
+            signingConfig = signingConfigs.getByName("debug")
 
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -147,13 +170,15 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.toVersion(libs.versions.jdk.get().toInt())
+        targetCompatibility = JavaVersion.toVersion(libs.versions.jdk.get().toInt())
     }
+
     kotlin {
         compilerOptions {
-            jvmTarget.set(JvmTarget.fromTarget("17"))
+            jvmTarget.set(JvmTarget.fromTarget(libs.versions.jdk.get()))
         }
+        jvmToolchain(libs.versions.jdk.get().toInt())
     }
 
     packaging {
@@ -169,7 +194,11 @@ android {
         }
     }
 
+    @Suppress("UnstableApiUsage")
     androidResources {
+        localeFilters.clear()
+        localeFilters += setOf("zh", "en")
+
         additionalParameters += listOf(
             "--allow-reserved-package-id",
             "--package-id", "0x69"
@@ -182,7 +211,6 @@ android {
         viewBinding = true
     }
 }
-
 
 fun isHooksDirPresent(task: Task): Boolean {
     return task.outputs.files.any { outputDir ->
@@ -225,7 +253,7 @@ val killWeChat = tasks.register("kill-wechat") {
     onlyIf { hasConnectedDevice() }
     doLast {
         val adbFile = adbProvider.orNull?.asFile ?: return@doLast
-        for (i in 1..10) {  // 貌似国内定制系统中的的微信一次杀不死？
+        for (i in 1..1) {  // 貌似国内定制系统中的的微信一次杀不死？
             project.exec {
                 commandLine(adbFile, "shell", "am", "force-stop", packageName)
                 isIgnoreExitValue = true
@@ -233,7 +261,7 @@ val killWeChat = tasks.register("kill-wechat") {
             }
         }
 
-        logger.lifecycle("✅  kill-wechat executed.")
+        logger.lifecycle("✅ kill-wechat executed.")
     }
 }
 
@@ -301,67 +329,52 @@ protobuf {
 configurations.configureEach { exclude(group = "androidx.appcompat", module = "appcompat") }
 
 dependencies {
-    implementation(libs.core.ktx)
-
-    implementation(libs.appcompat)
-
-    implementation(libs.material)
-    implementation(libs.activity)
-    implementation(libs.constraintlayout) { exclude("androidx.appcompat", "appcompat") }
-
-    implementation(platform(libs.compose.bom))
-
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.appcompat)
+    implementation(libs.android.material)
+    implementation(libs.androidx.activity)
+    implementation(libs.androidx.constraintLayout) { exclude("androidx.appcompat", "appcompat") }
+    implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material.icons.extended)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.recyclerview)
 
     implementation(libs.kotlinx.io.jvm)
-    implementation(libs.dexkit)
-    implementation(libs.hiddenApiBypass)
     implementation(libs.gson)
-
-    implementation(libs.ktor.serialization.kotlinx.json)
     implementation(libs.grpc.protobuf)
-
-    implementation(libs.androidx.lifecycle.runtime.ktx)
-    implementation(libs.mmkv)
-    implementation(projects.libs.common.libxposed.service)
-
-    compileOnly(libs.xposed)
-    compileOnly(projects.libs.common.libxposed.api)
-
-    implementation(libs.dexlib2)
     implementation(libs.google.guava)
     implementation(libs.google.protobuf.java)
     implementation(libs.kotlinx.serialization.protobuf)
+    implementation(libs.mmkv)
 
-    implementation(libs.sealedEnum.runtime)
-    ksp(libs.sealedEnum.ksp)
+    compileOnly(libs.xposed.api)
+    compileOnly(projects.libs.common.libxposed.api)
+    implementation(projects.libs.common.libxposed.service)
+    implementation(libs.dexlib2)
+    implementation(libs.dexkit)
+    implementation(libs.hiddenApiBypass)
+
     implementation(projects.libs.common.annotationScanner)
     ksp(projects.libs.common.annotationScanner)
 
-    implementation(libs.material.preference)
-    implementation(libs.dev.appcompat)
+    implementation(libs.rikka.rikkax.material.preference)
+    implementation(libs.rikka.rikkax.appcompat)
 
-    implementation(libs.recyclerview)
 
     implementation(libs.material.dialogs.core)
     implementation(libs.material.dialogs.input)
-    implementation(libs.preference)
+    implementation(libs.androidx.preference)
     implementation(libs.fastjson2)
 
-    implementation(libs.glide)
-    implementation(libs.byte.buddy)
-    implementation(libs.byte.buddy.android)
     implementation(libs.dalvik.dx)
     implementation(libs.okhttp3.okhttp)
-    implementation(libs.markdown.core)
-    implementation(libs.blurView)
+    implementation(libs.markwon.core)
     implementation(libs.hutool.core)
-    implementation(libs.nanohttpd)
 
     implementation(libs.rhino.android)
 

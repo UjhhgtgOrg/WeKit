@@ -12,7 +12,6 @@ import moe.ouom.wekit.util.common.SyncUtils;
 import moe.ouom.wekit.util.log.WeLogger;
 
 public abstract class BaseClickableFunctionHookItem extends BaseHookItem {
-
     private boolean enabled;
     private final int targetProcess = targetProcess();
     private final boolean alwaysRun = alwaysRun();
