@@ -11,7 +11,6 @@ object PathUtils {
     val moduleDataPath: Path?
         get() {
             try {
-
                 val directory = storageDirectory.resolve("Android").resolve("data").resolve(hostInfo.packageName).resolve("WeKit")
                 return directory.apply {
                     createDirectories()

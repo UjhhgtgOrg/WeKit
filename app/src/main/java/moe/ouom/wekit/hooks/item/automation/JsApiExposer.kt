@@ -1,5 +1,9 @@
 package moe.ouom.wekit.hooks.item.automation
 
+import android.os.Handler
+import android.os.Looper
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import moe.ouom.wekit.hooks.sdk.api.WeMessageApi
 import moe.ouom.wekit.utils.io.PathUtils
 import moe.ouom.wekit.utils.log.WeLogger
@@ -24,15 +28,17 @@ import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.createDirectories
 import kotlin.io.path.deleteRecursively
+import kotlin.io.path.exists
 import kotlin.io.path.fileSize
 import kotlin.io.path.isDirectory
 import kotlin.io.path.outputStream
+import kotlin.io.path.readText
+import kotlin.io.path.writeText
 
 object JsApiExposer {
     private const val TAG = "JsApiExposer"
     private const val TAG_LOG_API = "JsApiExposer.LogApi"
     private const val TAG_HTTP_API = "JsApiExposer.HttpApi"
-    private const val MAX_CACHE_SIZE_IN_MIB = 500
 
     private val httpClient by lazy {
         OkHttpClient.Builder()
@@ -45,8 +51,10 @@ object JsApiExposer {
     fun exposeApis(scope: ScriptableObject) {
         exposeHttpApis(scope)
         exposeLogApis(scope)
-        exposeCacheApis(scope)
+        exposeStorageApis(scope)
     }
+
+    private const val MAX_CACHE_SIZE_IN_MIB = 500
 
     @OptIn(ExperimentalPathApi::class)
     private fun exposeHttpApis(scope: ScriptableObject) {
@@ -395,35 +403,71 @@ object JsApiExposer {
     }
 
     @Suppress("JavaCollectionWithNullableTypeArgument")
-    private val cacheStore = ConcurrentHashMap<String, Any?>()
+    private val storage = ConcurrentHashMap<String, Any?>()
 
-    private fun exposeCacheApis(scope: ScriptableObject) {
-        val cacheObj = NativeObject()
+    private val DATA_DIR_PATH by lazy {
+        PathUtils.moduleDataPath!!.resolve("data").apply { createDirectories() }
+    }
 
-        // cache.get(key) -> object
-        ScriptableObject.putProperty(cacheObj, "get",
+    private val storageFile get() = DATA_DIR_PATH.resolve("js_data.json")
+
+    init {
+        loadStorageFromDisk()
+    }
+
+    private val saveHandler = Handler(Looper.getMainLooper())
+    private val saveRunnable = Runnable {
+        try {
+            storageFile.writeText(Gson().toJson(storage))
+        } catch (e: Exception) {
+            WeLogger.e(TAG, "Failed to save js storage to disk", e)
+        }
+    }
+
+    private fun loadStorageFromDisk() {
+        try {
+            if (!storageFile.exists()) return
+            val json = storageFile.readText()
+            val map = Gson().fromJson<Map<String, Any?>>(json, object : TypeToken<Map<String, Any?>>() {}.type)
+            map?.forEach { (k, v) -> storage[k] = v }
+        } catch (e: Exception) {
+            WeLogger.e(TAG, "Failed to load js storage from disk", e)
+        }
+    }
+
+    // prevent blocking js execution (if the file grows too large, but that would be a misuse of this API anyway)
+    private fun saveStorageToDisk() {
+        saveHandler.removeCallbacks(saveRunnable)
+        saveHandler.postDelayed(saveRunnable, 500)
+    }
+
+    private fun exposeStorageApis(scope: ScriptableObject) {
+        val storageObj = NativeObject()
+
+        // storage.get(key) -> object
+        ScriptableObject.putProperty(storageObj, "get",
             object : BaseFunction() {
                 override fun call(cx: Context, scope: Scriptable, thisObj: Scriptable, args: Array<Any?>): Any? {
                     val key = args.getOrNull(0)?.toString() ?: return null
-                    val value = cacheStore[key]
+                    val value = storage[key]
 
                     return value ?: Context.getUndefinedValue()
                 }
             }
         )
 
-        // cache.getOrDefault(key, defaultValue) -> object
-        ScriptableObject.putProperty(cacheObj, "getOrDefault",
+        // storage.getOrDefault(key, defaultValue) -> object
+        ScriptableObject.putProperty(storageObj, "getOrDefault",
             object : BaseFunction() {
                 override fun call(cx: Context, scope: Scriptable, thisObj: Scriptable, args: Array<Any?>): Any? {
                     val key = args.getOrNull(0)?.toString() ?: return args.getOrNull(1)
-                    return cacheStore.getOrDefault(key, args.getOrNull(1)) ?: Context.getUndefinedValue()
+                    return storage.getOrDefault(key, args.getOrNull(1)) ?: Context.getUndefinedValue()
                 }
             }
         )
 
-        // cache.set(key, object)
-        ScriptableObject.putProperty(cacheObj, "set",
+        // storage.set(key, object)
+        ScriptableObject.putProperty(storageObj, "set",
             object : BaseFunction() {
                 override fun call(cx: Context, scope: Scriptable, thisObj: Scriptable, args: Array<Any?>): Any? {
                     val key = args.getOrNull(0)?.toString() ?: return null
@@ -431,86 +475,90 @@ object JsApiExposer {
 
                     if (value is Undefined) {
                         WeLogger.w(TAG, "js tries to set undefined into cache, removing that key instead")
-                        cacheStore.remove(key)
+                        storage.remove(key)
                     } else {
-                        cacheStore[key] = value
+                        storage[key] = value
                     }
+
+                    saveStorageToDisk()
                     return null
                 }
             }
         )
 
-        // cache.clear()
-        ScriptableObject.putProperty(cacheObj, "clear",
+        // storage.clear()
+        ScriptableObject.putProperty(storageObj, "clear",
             object : BaseFunction() {
                 override fun call(cx: Context, scope: Scriptable, thisObj: Scriptable, args: Array<Any?>): Any? {
-                    cacheStore.clear()
+                    storage.clear()
+                    saveStorageToDisk()
                     return null
                 }
             }
         )
 
-        // cache.remove(key)
-        ScriptableObject.putProperty(cacheObj, "remove",
+        // storage.remove(key)
+        ScriptableObject.putProperty(storageObj, "remove",
             object : BaseFunction() {
                 override fun call(cx: Context, scope: Scriptable, thisObj: Scriptable, args: Array<Any?>): Any? {
                     val key = args.getOrNull(0)?.toString() ?: return null
-                    cacheStore.remove(key)
+                    storage.remove(key)
+                    saveStorageToDisk()
                     return null
                 }
             }
         )
 
-        // cache.pop(key) -> object
-        ScriptableObject.putProperty(cacheObj, "pop",
+        // storage.pop(key) -> object
+        ScriptableObject.putProperty(storageObj, "pop",
             object : BaseFunction() {
                 override fun call(cx: Context, scope: Scriptable, thisObj: Scriptable, args: Array<Any?>): Any? {
                     val key = args.getOrNull(0)?.toString() ?: return Context.getUndefinedValue()
-                    return cacheStore.remove(key) ?: Context.getUndefinedValue()
+                    return (storage.remove(key) ?: Context.getUndefinedValue()).also { saveStorageToDisk() }
                 }
             }
         )
 
-        // cache.hasKey(key) -> bool
-        ScriptableObject.putProperty(cacheObj, "hasKey",
+        // storage.hasKey(key) -> bool
+        ScriptableObject.putProperty(storageObj, "hasKey",
             object : BaseFunction() {
                 override fun call(cx: Context, scope: Scriptable, thisObj: Scriptable, args: Array<Any?>): Any {
                     val key = args.getOrNull(0)?.toString() ?: return false
-                    return cacheStore.containsKey(key)
+                    return storage.containsKey(key)
                 }
             }
         )
 
-        // cache.isEmpty() -> bool
-        ScriptableObject.putProperty(cacheObj, "isEmpty",
+        // storage.isEmpty() -> bool
+        ScriptableObject.putProperty(storageObj, "isEmpty",
             object : BaseFunction() {
                 override fun call(cx: Context, scope: Scriptable, thisObj: Scriptable, args: Array<Any?>): Any {
-                    return cacheStore.isEmpty()
+                    return storage.isEmpty()
                 }
             }
         )
 
-        // cache.keys() -> Array
-        ScriptableObject.putProperty(cacheObj, "keys",
+        // storage.keys() -> Array
+        ScriptableObject.putProperty(storageObj, "keys",
             object : BaseFunction() {
                 override fun call(cx: Context, scope: Scriptable, thisObj: Scriptable, args: Array<Any?>): Any {
                     // Converts Kotlin Set to a JS Array
-                    return cx.newArray(scope, cacheStore.keys.toTypedArray())
+                    return cx.newArray(scope, storage.keys.toTypedArray())
                 }
             }
         )
 
-        // cache.size() -> int
-        ScriptableObject.putProperty(cacheObj, "size",
+        // storage.size() -> int
+        ScriptableObject.putProperty(storageObj, "size",
             object : BaseFunction() {
                 override fun call(cx: Context, scope: Scriptable, thisObj: Scriptable, args: Array<Any?>): Any {
-                    return cacheStore.size
+                    return storage.size
                 }
             }
         )
 
         // Bind the object to the global scope
-        ScriptableObject.putProperty(scope, "cache", cacheObj)
+        ScriptableObject.putProperty(scope, "storage", storageObj)
     }
 
     fun exposeOnMessageApis(scope: ScriptableObject, talker: String) {

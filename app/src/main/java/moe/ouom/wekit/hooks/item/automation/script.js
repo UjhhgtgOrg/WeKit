@@ -187,8 +187,8 @@ function commandRandomPic(content) {
 
     const wallhavenPageIndexKey = "wallhaven_api_search_page_index";
     const wallhavenImageIndexKey = "wallhaven_api_search_image_index";
-    var wallhavenPageIndex = cache.getOrDefault(wallhavenPageIndexKey, 1);
-    var wallhavenImageIndex = cache.getOrDefault(wallhavenImageIndexKey, 1);
+    var wallhavenPageIndex = storage.getOrDefault(wallhavenPageIndexKey, 1);
+    var wallhavenImageIndex = storage.getOrDefault(wallhavenImageIndexKey, 1);
 
     var sources = {
         // TODO: sometimes-deterministic results, add rotation like wallhaven
@@ -236,8 +236,8 @@ function commandRandomPic(content) {
                     wallhavenPageIndex += 1;
                     wallhavenImageIndex = 1;
                 }
-                cache.set(wallhavenPageIndexKey, wallhavenPageIndex);
-                cache.set(wallhavenImageIndexKey, wallhavenImageIndex);
+                storage.set(wallhavenPageIndexKey, wallhavenPageIndex);
+                storage.set(wallhavenImageIndexKey, wallhavenImageIndex);
                 return url;
             }
         }
@@ -318,12 +318,12 @@ function commandHitokoto() {
 
 function commandDebugMsg(talker) {
     var key = talker + "_debug_msg_enabled";
-    if (!cache.hasKey(key)) {
-        cache.set(key, true);
+    if (!storage.hasKey(key)) {
+        storage.set(key, true);
         return "已启用消息调试模式, 将会输出下一条消息的原始对象.";
     } else {
-        var val = cache.get(key);
-        cache.set(key, !val);
+        var val = storage.get(key);
+        storage.set(key, !val);
         if (val) {
             return "已禁用消息调试模式";
         } else {
@@ -426,8 +426,8 @@ function onMessage(talker, content, type, isSend) {
     }
 
     var debugMsgKey = talker + "_debug_msg_enabled";
-    if (cache.getOrDefault(debugMsgKey, false)) {
-        cache.set(debugMsgKey, false);
+    if (storage.getOrDefault(debugMsgKey, false)) {
+        storage.set(debugMsgKey, false);
 
         var message =
             "消息调试：\n" +

@@ -1,5 +1,5 @@
 /**
- * 微信脚本全局 API 定义
+ * 脚本全局 API 定义
  */
 
 interface HttpResponse {
@@ -38,7 +38,7 @@ declare namespace http {
     function download(url: string): DownloadResult;
 }
 
-declare namespace cache {
+declare namespace storage {
     /** 获取指定键的值。若不存在返回 undefined。 */
     function get(key: string): any;
     /** 获取值，若不存在则返回提供的默认值 def。 */
@@ -53,11 +53,11 @@ declare namespace cache {
     function pop(key: string): any;
     /** 返回包含所有键名的字符串数组。 */
     function keys(): string[];
-    /** 返回当前缓存条目总数。 */
+    /** 返回当前存储条目总数。 */
     function size(): number;
-    /** 清空所有内存缓存。 */
+    /** 清空所有键值对。 */
     function clear(): void;
-    /** 检查缓存是否为空。 */
+    /** 检查存储是否为空。 */
     function isEmpty(): boolean;
 }
 
@@ -72,7 +72,7 @@ declare function sendFile(to: string, path: string, title?: string): void;
 /** 向指定用户发送语音消息 */
 declare function sendVoice(to: string, path: string, durationMs: number): void;
 
-// --- 消息回复 API (自动回复当前 talker) ---
+// --- 消息回复 API (自动回复至发送者) ---
 
 /** 回复文本消息给当前发送者 */
 declare function replyText(text: string): void;
