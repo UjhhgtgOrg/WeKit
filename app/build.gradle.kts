@@ -62,6 +62,36 @@ val generateMethodHashes = tasks.register("generateMethodHashes") {
     }
 }
 
+val embedBuiltinJavaScript = tasks.register("embedBuiltinJavaScript") {
+    val sourceFile = file("src/main/java/moe/ouom/wekit/hooks/item/automation/script.js")
+    val outputDir = layout.buildDirectory.dir("generated/sources/embeddedJs/kotlin")
+    val outputFile = outputDir.map { it.file("moe/ouom/wekit/hooks/item/automation/BuiltinJs.kt") }
+
+    inputs.file(sourceFile)
+    outputs.file(outputFile)
+
+    doLast {
+        val jsContent = sourceFile.readText()
+
+        val ktCode = """
+            package moe.ouom.wekit.hooks.item.automation
+
+            object EmbeddedBuiltinJs {
+                const val SCRIPT: String = """ + "\"\"\"\n" + jsContent + "\n\"\"\"" + """
+            }
+        """
+
+        outputFile.get().asFile.apply {
+            parentFile.mkdirs()
+            writeText(ktCode)
+        }
+    }
+}
+
+kotlin.sourceSets.main {
+    kotlin.srcDir(layout.buildDirectory.dir("generated/sources/embeddedJs/kotlin"))
+}
+
 private fun getBuildVersionCode(): Int {
     val appVerCode: Int by lazy {
         val versionCode = SimpleDateFormat("yyMMddHH", Locale.ENGLISH).format(Date())
@@ -146,6 +176,8 @@ android {
     sourceSets {
         getByName("main") {
             kotlin.srcDir(generateMethodHashes)
+            val generatedJsDir = layout.buildDirectory.dir("generated/sources/embeddedJs/kotlin")
+            kotlin.srcDir(generatedJsDir)
         }
     }
 
@@ -300,14 +332,20 @@ android.applicationVariants.all {
 
 // =========================================================================
 
-// 配置 generateMethodHashes 任务在 Kotlin 编译之前执行
 tasks.withType<KotlinCompile>().configureEach {
-    dependsOn("generateMethodHashes")
+    dependsOn(generateMethodHashes)
 }
 
-// 配置 KSP 任务也依赖于 generateMethodHashes
 tasks.matching { it.name.startsWith("ksp") && it.name.contains("Kotlin") }.configureEach {
-    dependsOn("generateMethodHashes")
+    dependsOn(generateMethodHashes)
+}
+
+tasks.withType<KotlinCompile>().configureEach {
+    dependsOn(embedBuiltinJavaScript)
+}
+
+tasks.matching { it.name.contains("ksp", ignoreCase = true) }.configureEach {
+    dependsOn(embedBuiltinJavaScript)
 }
 
 // =========================================================================

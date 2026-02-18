@@ -1,41 +1,35 @@
-package moe.ouom.wekit.util.io;
+package moe.ouom.wekit.util.io
 
-import android.content.Context;
-import android.os.Environment;
+import android.content.Context
+import android.os.Environment
+import moe.ouom.wekit.host.impl.hostInfo
+import java.io.File
 
-import java.io.File;
-
-import moe.ouom.wekit.host.impl.HostInfo;
-
-
-public class PathTool {
-
-
-    public static String getDataSavePath(Context context, String dirName) {
+object PathTool {
+    fun getDataSavePath(context: Context, dirName: String?): String {
         // getExternalFilesDir()：SDCard/Android/data/你的应用的包名/files/dirName
-        return context.getExternalFilesDir(dirName).getAbsolutePath();
+        return context.getExternalFilesDir(dirName)!!.absolutePath
     }
 
-    public static String getStorageDirectory() {
-        return Environment.getExternalStorageDirectory().getAbsolutePath();
-    }
+    val storageDirectory: String
+        get() = Environment.getExternalStorageDirectory().absolutePath
 
-    public static String getModuleDataPath() {
-        var directory = getStorageDirectory() + "/Android/data/" + HostInfo.getHostInfo().getPackageName() + "/WeKit";
-        var file = new File(directory);
-        if (!file.exists()) {
-            file.mkdirs();
+    val moduleDataPath: String
+        get() {
+            val directory: String =
+                storageDirectory + "/Android/data/" + hostInfo.packageName + "/WeKit"
+            val file = File(directory)
+            if (!file.exists()) {
+                file.mkdirs()
+            }
+            return directory
         }
-        return directory;
-    }
 
-    public static String getModuleCachePath(String dirName) {
-        var cache = new File(getModuleDataPath() + "/cache/" + dirName);
+    fun getModuleCachePath(dirName: String?): String {
+        val cache = File("$moduleDataPath/cache/$dirName")
         if (!cache.exists()) {
-            cache.mkdirs();
+            cache.mkdirs()
         }
-        return cache.getAbsolutePath();
+        return cache.absolutePath
     }
-
-
 }

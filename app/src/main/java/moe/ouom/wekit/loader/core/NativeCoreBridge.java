@@ -2,16 +2,11 @@ package moe.ouom.wekit.loader.core;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-
 import androidx.annotation.NonNull;
-
 import com.tencent.mmkv.MMKV;
-
 import java.io.File;
-
 import moe.ouom.wekit.host.HostInfo;
 import moe.ouom.wekit.util.log.WeLogger;
-import moe.ouom.wekit.util.script.JsExecutor;
 
 
 public class NativeCoreBridge {
@@ -20,11 +15,9 @@ public class NativeCoreBridge {
         System.loadLibrary("wekit");
     }
 
-
     private NativeCoreBridge() {
         throw new AssertionError("No instances for you!");
     }
-
 
     private static boolean sPrimaryNativeLibraryInitialized = false;
 
@@ -32,8 +25,6 @@ public class NativeCoreBridge {
         Context context = HostInfo.getApplication();
         // init mmkv
         initializeMmkvForPrimaryNativeLibrary(context);
-        // init JsExecutor
-        JsExecutor.getInstance().initialize(context);
     }
 
     /**

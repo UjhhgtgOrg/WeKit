@@ -18,6 +18,8 @@ WeKit 修改版
 
 1. - Q: 我的微信突然卡得要死，狂吃内存
    - A：禁用“隐藏应用列表”（你猜我为什么写了这条；调试的时候被坑死了）
+2. - Q: XXX
+   - A: 找 [DeepWiki](https://deepwiki.com/Ujhhgtg/WeKit)
 
 ## 注意
 

@@ -16,10 +16,6 @@ import java.util.Objects;
 
 public class IoUtils {
 
-    private IoUtils() {
-        throw new AssertionError("No instances");
-    }
-
     /**
      * Reads all bytes from an input stream and returns them as a byte array.
      * <p>
@@ -58,11 +54,14 @@ public class IoUtils {
         if (!file.exists()) {
             throw new IOException("File not found: " + file.getAbsolutePath());
         }
-        var lsize = file.length();
-        if (lsize > Integer.MAX_VALUE) {
-            throw new IOException("File too large: " + file.getAbsolutePath() + ", size: " + lsize);
+        var size = file.length();
+        if (size > Integer.MAX_VALUE) {
+            throw new IOException("File too large: " + file.getAbsolutePath() + ", size: " + size);
         }
-        var size = (int) lsize;
+        return getBuf(file, (int) size);
+    }
+
+    private static byte[] getBuf(File file, int size) throws IOException {
         var buf = new byte[size];
         try (InputStream is = new FileInputStream(file)) {
             int len;

@@ -1,234 +1,221 @@
-package moe.ouom.wekit.util.hookstatus;
+package moe.ouom.wekit.util.hookstatus
 
-import android.content.ActivityNotFoundException;
-import android.content.Context;
-import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.net.Uri;
-import android.os.Bundle;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-
-import java.io.File;
-import java.util.HashMap;
-
-import io.github.libxposed.service.XposedService;
-import io.github.libxposed.service.XposedServiceHelper;
-import kotlinx.coroutines.flow.MutableStateFlow;
-import kotlinx.coroutines.flow.StateFlowKt;
-import moe.ouom.wekit.BuildConfig;
-import moe.ouom.wekit.R;
-import moe.ouom.wekit.host.HostInfo;
-import moe.ouom.wekit.loader.LoaderExtensionHelper;
-import moe.ouom.wekit.util.common.SyncUtils;
-import moe.ouom.wekit.util.log.WeLogger;
+import android.content.ActivityNotFoundException
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Bundle
+import androidx.core.net.toUri
+import io.github.libxposed.service.XposedService
+import io.github.libxposed.service.XposedServiceHelper
+import io.github.libxposed.service.XposedServiceHelper.OnServiceListener
+import kotlinx.coroutines.flow.MutableStateFlow
+import moe.ouom.wekit.BuildConfig
+import moe.ouom.wekit.R
+import moe.ouom.wekit.host.HostInfo
+import moe.ouom.wekit.loader.LoaderExtensionHelper
+import moe.ouom.wekit.util.common.SyncUtils
+import moe.ouom.wekit.util.hookstatus.AbiUtils.getApplicationActiveAbi
+import moe.ouom.wekit.util.log.WeLogger.d
+import java.io.File
 
 /**
  * This class is only intended to be used in module process, not in host process.
  */
-public class HookStatus {
-
-    private HookStatus() {
-    }
-
-    private static boolean sExpCpCalled = false;
-    private static boolean sExpCpResult = false;
-    private static final MutableStateFlow<XposedService> sXposedService = StateFlowKt.MutableStateFlow(null);
-    private static boolean sXposedServiceListenerRegistered = false;
-    private static final XposedServiceHelper.OnServiceListener sXposedServiceListener = new XposedServiceHelper.OnServiceListener() {
-
-        @Override
-        public void onServiceBind(@NonNull XposedService service) {
-            WeLogger.d("on XPOSED ServiceBind");
-            sXposedService.setValue(service);
+object HookStatus {
+    private var expCpCalled = false
+    private var expCpResult = false
+    val xposedService: MutableStateFlow<XposedService?> = MutableStateFlow(null)
+    private var xposedServiceListenerRegistered = false
+    private val xposedServiceListener = object : OnServiceListener {
+        override fun onServiceBind(service: XposedService) {
+            d("on XPOSED ServiceBind")
+            xposedService.value = service
         }
 
-        @Override
-        public void onServiceDied(@NonNull XposedService service) {
-            WeLogger.d("on XPOSED ServiceDied");
-            sXposedService.setValue(null);
-        }
-
-    };
-
-    public enum HookType {
-        /**
-         * No hook.
-         */
-        NONE,
-        /**
-         * Taichi, BugHook(not implemented), etc.
-         */
-        APP_PATCH,
-        /**
-         * Legacy Xposed, EdXposed, LSPosed, Dreamland, etc.
-         */
-        ZYGOTE,
-    }
-
-    @Nullable
-    public static String getZygoteHookProvider() {
-        return HookStatusImpl.sZygoteHookProvider;
-    }
-
-    public static boolean isLsposedDexObfsEnabled() {
-        return HookStatusImpl.sIsLsposedDexObfsEnabled;
-    }
-
-    public static boolean isZygoteHookMode() {
-        return HookStatusImpl.sZygoteHookMode;
-    }
-
-    public static boolean isLegacyXposed() {
-        try {
-            ClassLoader.getSystemClassLoader().loadClass("de.robv.android.xposed.XposedBridge");
-            return true;
-        } catch (ClassNotFoundException e) {
-            return false;
+        override fun onServiceDied(service: XposedService) {
+            d("on XPOSED ServiceDied")
+            xposedService.value = null
         }
     }
 
-    public static boolean isElderDriverXposed() {
-        return new File("/system/framework/edxp.jar").exists();
-    }
+    val zygoteHookProvider: String?
+        get() = HookStatusImpl.sZygoteHookProvider
 
-    public static boolean callTaichiContentProvider(@NonNull Context context) {
-        try {
-            var contentResolver = context.getContentResolver();
-            var uri = Uri.parse("content://me.weishu.exposed.CP/");
-            var result = new Bundle();
+    val isLsposedDexObfsEnabled: Boolean
+        get() = HookStatusImpl.sIsLsposedDexObfsEnabled
+
+    val isZygoteHookMode: Boolean
+        get() = HookStatusImpl.sZygoteHookMode
+
+    val isLegacyXposed: Boolean
+        get() {
             try {
-                result = contentResolver.call(uri, "active", null, null);
-            } catch (RuntimeException e) {
+                ClassLoader.getSystemClassLoader()
+                    .loadClass("de.robv.android.xposed.XposedBridge")
+                return true
+            } catch (e: ClassNotFoundException) {
+                return false
+            }
+        }
+
+    val isElderDriverXposed: Boolean
+        get() = File("/system/framework/edxp.jar").exists()
+
+    fun callTaichiContentProvider(context: Context): Boolean {
+        try {
+            val contentResolver = context.contentResolver
+            val uri = "content://me.weishu.exposed.CP/".toUri()
+            var result: Bundle? = Bundle()
+            try {
+                result = contentResolver.call(uri, "active", null, null)
+            } catch (_: RuntimeException) {
                 // TaiChi is killed, try invoke
                 try {
-                    var intent = new Intent("me.weishu.exp.ACTION_ACTIVE");
-                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    context.startActivity(intent);
-                } catch (ActivityNotFoundException anfe) {
-                    return false;
+                    val intent = Intent("me.weishu.exp.ACTION_ACTIVE")
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    context.startActivity(intent)
+                } catch (_: ActivityNotFoundException) {
+                    return false
                 }
             }
             if (result == null) {
-                result = contentResolver.call(uri, "active", null, null);
+                result = contentResolver.call(uri, "active", null, null)
             }
             if (result == null) {
-                return false;
+                return false
             }
-            return result.getBoolean("active", false);
-        } catch (Exception e) {
-            return false;
+            return result.getBoolean("active", false)
+        } catch (_: Exception) {
+            return false
         }
     }
 
-    public static void init(@NonNull Context context) {
-        if (context.getPackageName().equals(BuildConfig.APPLICATION_ID)) {
-            if (!sXposedServiceListenerRegistered) {
-                XposedServiceHelper.registerListener(sXposedServiceListener);
-                sXposedServiceListenerRegistered = true;
+    fun init(context: Context) {
+        if (context.packageName == BuildConfig.APPLICATION_ID) {
+            if (!xposedServiceListenerRegistered) {
+                XposedServiceHelper.registerListener(xposedServiceListener)
+                xposedServiceListenerRegistered = true
             }
-            SyncUtils.async(() -> {
-                sExpCpCalled = callTaichiContentProvider(context);
-                sExpCpResult = sExpCpCalled;
-            });
+            SyncUtils.async {
+                expCpCalled = callTaichiContentProvider(context)
+                expCpResult = expCpCalled
+            }
         } else {
             // in host process???
             try {
-                initHookStatusImplInHostProcess();
-            } catch (LinkageError ignored) {
+                initHookStatusImplInHostProcess()
+            } catch (_: LinkageError) {
             }
         }
     }
 
-    @NonNull
-    public static MutableStateFlow<XposedService> getXposedService() {
-        return sXposedService;
-    }
-
-    public static HookType getHookType() {
-        if (isZygoteHookMode()) {
-            return HookType.ZYGOTE;
+    val hookType: HookType
+        get() {
+            if (isZygoteHookMode) {
+                return HookType.ZYGOTE
+            }
+            return if (expCpResult) HookType.APP_PATCH else HookType.NONE
         }
-        return sExpCpResult ? HookType.APP_PATCH : HookType.NONE;
-    }
 
-    private static void initHookStatusImplInHostProcess() throws LinkageError {
-        var xposedClass = LoaderExtensionHelper.getXposedBridgeClass();
-        var dexObfsEnabled = false;
+    @Throws(LinkageError::class)
+    private fun initHookStatusImplInHostProcess() {
+        val xposedClass = LoaderExtensionHelper.getXposedBridgeClass()
+        var dexObfsEnabled = false
         if (xposedClass != null) {
-            dexObfsEnabled = !"de.robv.android.xposed.XposedBridge".equals(xposedClass.getName());
+            dexObfsEnabled = "de.robv.android.xposed.XposedBridge" != xposedClass.name
         }
-        String hookProvider = null;
+        var hookProvider: String? = null
         if (dexObfsEnabled) {
-            HookStatusImpl.sIsLsposedDexObfsEnabled = true;
-            hookProvider = "LSPosed";
+            HookStatusImpl.sIsLsposedDexObfsEnabled = true
+            hookProvider = "LSPosed"
         } else {
-            String bridgeTag = null;
+            var bridgeTag: String? = null
             if (xposedClass != null) {
                 try {
-                    bridgeTag = (String) xposedClass.getDeclaredField("TAG").get(null);
-                } catch (ReflectiveOperationException ignored) {
+                    bridgeTag = xposedClass.getDeclaredField("TAG").get(null) as String?
+                } catch (_: ReflectiveOperationException) {
                 }
             }
             if (bridgeTag != null) {
                 if (bridgeTag.startsWith("LSPosed")) {
-                    hookProvider = "LSPosed";
+                    hookProvider = "LSPosed"
                 } else if (bridgeTag.startsWith("EdXposed")) {
-                    hookProvider = "EdXposed";
+                    hookProvider = "EdXposed"
                 } else if (bridgeTag.startsWith("PineXposed")) {
-                    hookProvider = "Dreamland";
+                    hookProvider = "Dreamland"
                 }
             }
         }
         if (hookProvider != null) {
-            HookStatusImpl.sZygoteHookProvider = hookProvider;
+            HookStatusImpl.sZygoteHookProvider = hookProvider
         }
     }
 
-    public static String getHookProviderNameForLegacyApi() {
-        if (isZygoteHookMode()) {
-            var name = getZygoteHookProvider();
-            if (name != null) {
-                return name;
+    val hookProviderNameForLegacyApi: String
+        get() {
+            if (isZygoteHookMode) {
+                val name: String? = zygoteHookProvider
+                if (name != null) {
+                    return name
+                }
+                if (isLegacyXposed) {
+                    return "Legacy Xposed"
+                }
+                if (isElderDriverXposed) {
+                    return "EdXposed"
+                }
+                return "Unknown(Zygote)"
             }
-            if (isLegacyXposed()) {
-                return "Legacy Xposed";
+            if (expCpResult) {
+                return "Taichi"
             }
-            if (isElderDriverXposed()) {
-                return "EdXposed";
-            }
-            return "Unknown(Zygote)";
+            return "None"
         }
-        if (sExpCpResult) {
-            return "Taichi";
-        }
-        return "None";
-    }
 
-    public static boolean isTaiChiInstalled(@NonNull Context context) {
+    fun isTaiChiInstalled(context: Context): Boolean {
         try {
-            var pm = context.getPackageManager();
-            pm.getPackageInfo("me.weishu.exp", 0);
-            return true;
-        } catch (PackageManager.NameNotFoundException e) {
-            return false;
+            val pm = context.packageManager
+            pm.getPackageInfo("me.weishu.exp", 0)
+            return true
+        } catch (e: PackageManager.NameNotFoundException) {
+            return false
         }
     }
 
-    public static boolean isModuleEnabled() {
-        return getHookType() != HookType.NONE;
-    }
+    val isModuleEnabled: Boolean
+        get() = hookType != HookType.NONE
 
-    public static HashMap<String, String> getHostABI() {
-        var scope = HostInfo.getApplication().getResources().getTextArray(R.array.xposed_scope);
-        var result = new HashMap<String, String>(4);
-        for (var s : scope) {
-            var abi = AbiUtils.getApplicationActiveAbi(s.toString());
-            if (abi != null) {
-                result.put(s.toString(), abi);
+    val hostABI: HashMap<String?, String?>
+        get() {
+            val scope =
+                HostInfo.getApplication().resources
+                    .getTextArray(R.array.xposed_scope)
+            val result =
+                java.util.HashMap<String?, String?>(4)
+            for (s in scope) {
+                val abi = getApplicationActiveAbi(s.toString())
+                if (abi != null) {
+                    result[s.toString()] = abi
+                }
             }
+            return result
         }
-        return result;
+
+    enum class HookType {
+        /**
+         * No hook.
+         */
+        NONE,
+
+        /**
+         * Taichi, BugHook(not implemented), etc.
+         */
+        APP_PATCH,
+
+        /**
+         * Legacy Xposed, EdXposed, LSPosed, Dreamland, etc.
+         */
+        ZYGOTE,
     }
 }

@@ -1,278 +1,233 @@
-package moe.ouom.wekit.util.hookstatus;
+package moe.ouom.wekit.util.hookstatus
 
-import android.content.Context;
-import android.content.pm.PackageManager;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.zip.ZipFile;
-
-import moe.ouom.wekit.host.HostInfo;
-import moe.ouom.wekit.loader.startup.StartupInfo;
+import android.content.Context
+import android.content.pm.PackageManager
+import moe.ouom.wekit.host.HostInfo
+import moe.ouom.wekit.loader.startup.StartupInfo
+import java.io.File
+import java.io.IOException
+import java.util.zip.ZipEntry
+import java.util.zip.ZipFile
 
 /**
  * This is intended to be used in module process only.
  */
-public class AbiUtils {
+object AbiUtils {
+    const val ABI_ARM32: Int = 1
+    const val ABI_ARM64: Int = 1 shl 1
+    const val ABI_X86: Int = 1 shl 2
+    const val ABI_X86_64: Int = 1 shl 3
 
-    private AbiUtils() {
-        throw new AssertionError("This class is not intended to be instantiated");
-    }
+    private var cachedModuleAbiFlavor: String? = null
 
-    public static final int ABI_ARM32 = 1;
-    public static final int ABI_ARM64 = 1 << 1;
-    public static final int ABI_X86 = 1 << 2;
-    public static final int ABI_X86_64 = 1 << 3;
-
-    @Nullable
-    private static String sCachedModuleAbiFlavor;
-
-    @Nullable
-    public static String getApplicationActiveAbi(@NonNull String packageName) {
-        Context ctx = HostInfo.getApplication();
-        var pm = ctx.getPackageManager();
+    @JvmStatic
+    fun getApplicationActiveAbi(packageName: String): String? {
+        val ctx: Context = HostInfo.getApplication()
+        val pm = ctx.packageManager
         try {
             // find apk path
-            var libDir = pm.getApplicationInfo(packageName, 0).nativeLibraryDir;
-            if (libDir == null) {
-                return null;
-            }
+            val libDir = pm.getApplicationInfo(packageName, 0).nativeLibraryDir ?: return null
             // find abi
-            var abiList = new HashSet<String>(4);
-            for (var abi : new String[]{"arm", "arm64", "x86", "x86_64"}) {
-                if (new File(libDir, abi).exists()) {
-                    abiList.add(abi);
+            val abiList = HashSet<String>(4)
+            for (abi in arrayOf("arm", "arm64", "x86", "x86_64")) {
+                if (File(libDir, abi).exists()) {
+                    abiList.add(abi)
                 } else if (libDir.endsWith(abi)) {
-                    abiList.add(abi);
+                    abiList.add(abi)
                 }
             }
             if (abiList.isEmpty()) {
-                return null;
+                return null
             }
             // TODO: 2022-03-14 handle multi arch
-            return abiList.iterator().next();
-        } catch (PackageManager.NameNotFoundException e) {
-            return null;
+            return abiList.iterator().next()
+        } catch (_: PackageManager.NameNotFoundException) {
+            return null
         }
     }
 
-    @NonNull
-    public static String getModuleFlavorName() {
-        if (sCachedModuleAbiFlavor != null) {
-            return sCachedModuleAbiFlavor;
+    val moduleFlavorName: String
+        get() {
+            if (cachedModuleAbiFlavor != null) {
+                return cachedModuleAbiFlavor!!
+            }
+            val apkPath: String
+            if (HostInfo.isInHostProcess()) {
+                apkPath = StartupInfo.getModulePath()
+            } else {
+                // self process
+                apkPath = HostInfo.getApplication().packageCodePath
+            }
+            check(
+                File(apkPath).exists()
+            ) { "getModuleFlavorName, apk not found: $apkPath" }
+            val abis: HashSet<String>
+            try {
+                abis = getApkAbiList(apkPath)
+            } catch (e: Exception) {
+                throw RuntimeException(
+                    "getModuleFlavorName, getApkAbiList failed: " + e.message,
+                    e
+                )
+            }
+            val abiFlags = getAbiFlags(abis)
+            if ((abiFlags and (ABI_ARM32 or ABI_ARM64 or ABI_X86 or ABI_X86_64)) == (ABI_ARM32 or ABI_ARM64 or ABI_X86 or ABI_X86_64)) {
+                cachedModuleAbiFlavor = "universal"
+            } else if ((abiFlags and (ABI_ARM32 or ABI_ARM64)) == (ABI_ARM32 or ABI_ARM64)) {
+                cachedModuleAbiFlavor = "armAll"
+            } else if (abiFlags == ABI_ARM32) {
+                cachedModuleAbiFlavor = "arm32"
+            } else if (abiFlags == ABI_ARM64) {
+                cachedModuleAbiFlavor = "arm64"
+            } else {
+                cachedModuleAbiFlavor = "unknown"
+            }
+            return cachedModuleAbiFlavor!!
         }
-        String apkPath;
-        if (HostInfo.isInHostProcess()) {
-            apkPath = StartupInfo.getModulePath();
-        } else {
-            // self process
-            apkPath = HostInfo.getApplication().getPackageCodePath();
+
+    private fun getAbiFlags(abis: HashSet<String>): Int {
+        var abiFlags = 0
+        for (abi in abis) {
+            abiFlags = when (abi) {
+                "armeabi-v7a" -> abiFlags or ABI_ARM32
+                "arm64-v8a" -> abiFlags or ABI_ARM64
+                "x86" -> abiFlags or ABI_X86
+                "x86_64" -> abiFlags or ABI_X86_64
+                else -> throw IllegalStateException("getModuleFlavorName, unknown abi: $abi")
+            }
         }
-        if (!new File(apkPath).exists()) {
-            throw new IllegalStateException("getModuleFlavorName, apk not found: " + apkPath);
-        }
-        String[] abis;
-        try {
-            abis = getApkAbiList(apkPath);
-        } catch (Exception e) {
-            throw new RuntimeException("getModuleFlavorName, getApkAbiList failed: " + e.getMessage(), e);
-        }
-        var abiFlags = getAbiFlags(abis);
-        if ((abiFlags & (ABI_ARM32 | ABI_ARM64 | ABI_X86 | ABI_X86_64)) == (ABI_ARM32 | ABI_ARM64 | ABI_X86 | ABI_X86_64)) {
-            sCachedModuleAbiFlavor = "universal";
-        } else if ((abiFlags & (ABI_ARM32 | ABI_ARM64)) == (ABI_ARM32 | ABI_ARM64)) {
-            sCachedModuleAbiFlavor = "armAll";
-        } else if (abiFlags == ABI_ARM32) {
-            sCachedModuleAbiFlavor = "arm32";
-        } else if (abiFlags == ABI_ARM64) {
-            sCachedModuleAbiFlavor = "arm64";
-        } else {
-            sCachedModuleAbiFlavor = "unknown";
-        }
-        return sCachedModuleAbiFlavor;
+        return abiFlags
     }
 
-    private static int getAbiFlags(String[] abis) {
-        var abiFlags = 0;
-        for (var abi : abis) {
-            switch (abi) {
-                case "armeabi-v7a":
-                    abiFlags |= ABI_ARM32;
-                    break;
-                case "arm64-v8a":
-                    abiFlags |= ABI_ARM64;
-                    break;
-                case "x86":
-                    abiFlags |= ABI_X86;
-                    break;
-                case "x86_64":
-                    abiFlags |= ABI_X86_64;
-                    break;
-                default:
-                    throw new IllegalStateException("getModuleFlavorName, unknown abi: " + abi);
+    @JvmStatic
+    fun queryModuleAbiList(): Array<String> {
+        when (moduleFlavorName) {
+            "arm32" -> {
+                return arrayOf("arm")
             }
-        }
-        return abiFlags;
-    }
 
-    @NonNull
-    public static String[] queryModuleAbiList() {
-        switch (getModuleFlavorName()) {
-            case "arm32": {
-                return new String[]{"arm"};
+            "arm64" -> {
+                return arrayOf("arm64")
             }
-            case "arm64": {
-                return new String[]{"arm64"};
+
+            "armAll" -> {
+                return arrayOf("arm", "arm64")
             }
-            case "armAll": {
-                return new String[]{"arm", "arm64"};
+
+            "universal" -> {
+                return arrayOf("arm", "arm64", "x86", "x86_64")
             }
-            case "universal": {
-                return new String[]{"arm", "arm64", "x86", "x86_64"};
-            }
-            default: {
-                return new String[]{};
+
+            else -> {
+                return arrayOf()
             }
         }
     }
 
-    public static int getModuleABI() {
-        int abi;
-        switch (getModuleFlavorName()) {
-            case "arm32": {
-                abi = AbiUtils.ABI_ARM32;
-                break;
+    @JvmStatic
+    fun getModuleABI(): Int {
+        val abi: Int
+        when (moduleFlavorName) {
+            "arm32" -> {
+                abi = ABI_ARM32
             }
-            case "arm64": {
-                abi = AbiUtils.ABI_ARM64;
-                break;
+
+            "arm64" -> {
+                abi = ABI_ARM64
             }
-            case "armAll": {
-                abi = AbiUtils.ABI_ARM32 | AbiUtils.ABI_ARM64;
-                break;
+
+            "armAll" -> {
+                abi = ABI_ARM32 or ABI_ARM64
             }
-            case "universal": {
-                abi = AbiUtils.ABI_ARM32 | AbiUtils.ABI_ARM64 | AbiUtils.ABI_X86 | AbiUtils.ABI_X86_64;
-                break;
+
+            "universal" -> {
+                abi =
+                    ABI_ARM32 or ABI_ARM64 or ABI_X86 or ABI_X86_64
             }
-            default: {
-                abi = 0;
+
+            else -> {
+                abi = 0
             }
         }
-        return abi;
+        return abi
     }
 
-    @NonNull
-    public static String[] getApkAbiList(@NonNull String apkPath) throws IOException {
-        var zipFile = new ZipFile(apkPath);
-        var abiList = new HashSet<String>(4);
-        var it = zipFile.entries();
+    @Throws(IOException::class)
+    fun getApkAbiList(apkPath: String): HashSet<String> {
+        val zipFile = ZipFile(apkPath)
+        val abiList = HashSet<String>(4)
+        val it = zipFile.entries()
         while (it.hasMoreElements()) {
-            var entry = it.nextElement();
-            if (entry.getName().startsWith("lib/")) {
-                var abi = entry.getName().substring(4, entry.getName().indexOf('/', 4));
-                abiList.add(abi);
+            val entry: ZipEntry = it.nextElement()
+            if (entry.name.startsWith("lib/")) {
+                val abi = entry.name.substring(4, entry.name.indexOf('/', 4))
+                abiList.add(abi)
             }
         }
-        zipFile.close();
-        return abiList.toArray(new String[0]);
+        zipFile.close()
+        return abiList
     }
 
-    @NonNull
-    public static String archStringToLibDirName(@NonNull String arch) {
-        switch (arch) {
-            case "x86":
-            case "i386":
-            case "i486":
-            case "i586":
-            case "i686":
-                return "x86";
-            case "x86_64":
-            case "amd64":
-                return "x86_64";
-            case "arm":
-            case "armhf":
-            case "armv7l":
-            case "armeabi":
-            case "armeabi-v7a":
-                return "arm";
-            case "aarch64":
-            case "arm64":
-            case "arm64-v8a":
-            case "armv8l":
-                return "arm64";
-            default:
-                throw new IllegalArgumentException("unsupported arch: " + arch);
+    @JvmStatic
+    fun archStringToLibDirName(arch: String): String {
+        return when (arch) {
+            "x86", "i386", "i486", "i586", "i686" -> "x86"
+            "x86_64", "amd64" -> "x86_64"
+            "arm", "armhf", "armv7l", "armeabi", "armeabi-v7a" -> "arm"
+            "aarch64", "arm64", "arm64-v8a", "armv8l" -> "arm64"
+            else -> throw IllegalArgumentException("unsupported arch: $arch")
         }
     }
 
-    public static int archStringToArchInt(@NonNull String arch) {
-        switch (arch) {
-            case "arm":
-            case "arm32":
-            case "armeabi":
-            case "armeabi-v7a":
-            case "armv7l":
-                // actually, armv7l is ARMv8 CPU in 32-bit compatibility mode,
+    @JvmStatic
+    fun archStringToArchInt(arch: String): Int {
+        when (arch) {
+            "arm", "arm32", "armeabi", "armeabi-v7a", "armv7l" ->                 // actually, armv7l is ARMv8 CPU in 32-bit compatibility mode,
                 // I don't know if we should throw armv7l into ABI_ARM64
-                return ABI_ARM32;
-            case "arm64":
-            case "arm64-v8a":
-            case "aarch64":
-                return ABI_ARM64;
-            case "x86":
-            case "i386":
-            case "i486":
-            case "i586":
-            case "i686":
-                return ABI_X86;
-            case "x86_64":
-            case "amd64":
-                return ABI_X86_64;
-            default:
-                return 0;
+                return ABI_ARM32
+
+            "arm64", "arm64-v8a", "aarch64" -> return ABI_ARM64
+            "x86", "i386", "i486", "i586", "i686" -> return ABI_X86
+            "x86_64", "amd64" -> return ABI_X86_64
+            else -> return 0
         }
     }
 
-    public static String archIntToNames(int abi) {
-        var results = new ArrayList<String>(4);
-        if ((abi & ABI_ARM32) != 0) {
-            results.add("armeabi-v7a");
+    fun archIntToNames(abi: Int): String {
+        val results = ArrayList<String?>(4)
+        if ((abi and ABI_ARM32) != 0) {
+            results.add("armeabi-v7a")
         }
-        if ((abi & ABI_ARM64) != 0) {
-            results.add("arm64-v8a");
+        if ((abi and ABI_ARM64) != 0) {
+            results.add("arm64-v8a")
         }
-        if ((abi & ABI_X86) != 0) {
-            results.add("x86");
+        if ((abi and ABI_X86) != 0) {
+            results.add("x86")
         }
-        if ((abi & ABI_X86_64) != 0) {
-            results.add("x86_64");
+        if ((abi and ABI_X86_64) != 0) {
+            results.add("x86_64")
         }
         if (results.isEmpty()) {
-            return "none";
+            return "none"
         }
-        var sb = new StringBuilder();
-        for (var s : results) {
-            sb.append(s).append('|');
+        val sb = StringBuilder()
+        for (s in results) {
+            sb.append(s).append('|')
         }
-        return sb.substring(0, sb.length() - 1);
+        return sb.substring(0, sb.length - 1)
     }
 
-    public static String getSuggestedAbiVariant(int requestedAbi) {
+    @JvmStatic
+    fun getSuggestedAbiVariant(requestedAbi: Int): String {
         if (requestedAbi == ABI_ARM32) {
-            return "arm32";
+            return "arm32"
         }
         if (requestedAbi == ABI_ARM64) {
-            return "arm64";
+            return "arm64"
         }
-        if ((requestedAbi | ABI_ARM32 | ABI_ARM64) == (ABI_ARM32 | ABI_ARM64)) {
-            return "armAll";
+        if ((requestedAbi or ABI_ARM32 or ABI_ARM64) == (ABI_ARM32 or ABI_ARM64)) {
+            return "armAll"
         }
-        return "universal";
+        return "universal"
     }
 }

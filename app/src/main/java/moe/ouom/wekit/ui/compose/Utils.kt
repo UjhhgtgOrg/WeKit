@@ -1,6 +1,5 @@
 package moe.ouom.wekit.ui.compose
 
-import android.R
 import android.app.AndroidAppHelper
 import android.app.Dialog
 import android.content.Context
@@ -18,16 +17,20 @@ import androidx.core.graphics.drawable.toDrawable
 import androidx.lifecycle.setViewTreeLifecycleOwner
 import androidx.lifecycle.setViewTreeViewModelStoreOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
+import moe.ouom.wekit.ui.CommonContextWrapper
 import moe.ouom.wekit.ui.theme.AppTheme
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 fun showComposeDialog(context: Context? = null, content: @Composable (onDismiss: () -> Unit) -> Unit) {
     var ctx = context
 
-    if (ctx == null)
-        ctx = AndroidAppHelper.currentApplication()
+    ctx = if (ctx == null)
+        AndroidAppHelper.currentApplication()
+    else
+        CommonContextWrapper.createAppCompatContext(ctx)
 
-    val dialog = Dialog(ctx, R.style.Theme_DeviceDefault_Light_Dialog_NoActionBar_MinWidth)
+
+    val dialog = Dialog(ctx, android.R.style.Theme_DeviceDefault_Light_Dialog_NoActionBar_MinWidth)
     val lifecycleOwner = XposedLifecycleOwner().apply { onCreate(); onResume() }
 
     val displayMetrics = ctx.resources.displayMetrics

@@ -1,35 +1,24 @@
-package moe.ouom.wekit.util;
+package moe.ouom.wekit.util
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
+import moe.ouom.wekit.util.log.WeLogger
 
-import java.util.Arrays;
-import java.util.HashMap;
-
-import moe.ouom.wekit.util.log.WeLogger;
-
-public class Initiator {
-    private static ClassLoader sHostClassLoader;
-    private static ClassLoader sPluginParentClassLoader;
-    private static final HashMap<String, Class<?>> sClassCache = new HashMap<>(16);
+object Initiator {
+    private var sHostClassLoader: ClassLoader? = null
+    private var sPluginParentClassLoader: ClassLoader? = null
+    private val sClassCache = HashMap<String?, Class<*>?>(16)
 
 
-    private Initiator() {
-        throw new AssertionError("No instance for you!");
+    @JvmStatic
+    fun init(classLoader: ClassLoader) {
+        sHostClassLoader = classLoader
+        sPluginParentClassLoader = Initiator::class.java.classLoader
     }
 
-    public static void init(ClassLoader classLoader) {
-        sHostClassLoader = classLoader;
-        sPluginParentClassLoader = Initiator.class.getClassLoader();
-    }
+    val pluginClassLoader: ClassLoader?
+        get() = Initiator::class.java.classLoader
 
-    public static ClassLoader getPluginClassLoader() {
-        return Initiator.class.getClassLoader();
-    }
-
-    public static ClassLoader getHostClassLoader() {
-        return sHostClassLoader;
-    }
+    val hostClassLoader: ClassLoader
+        get() = sHostClassLoader!!
 
     /**
      * Load a class, if the class is not found, null will be returned.
@@ -37,62 +26,61 @@ public class Initiator {
      * @param className The class name.
      * @return The class, or null if not found.
      */
-    @Nullable
-    public static Class<?> load(String className) {
-        if (sPluginParentClassLoader == null || className == null || className.isEmpty()) {
-            return null;
+    fun load(className: String?): Class<*>? {
+        var className = className
+        if (sPluginParentClassLoader == null || className.isNullOrEmpty()) {
+            return null
         }
         if (className.endsWith(";") || className.contains("/")) {
-            className = className.replace('/', '.');
+            className = className.replace('/', '.')
             if (className.endsWith(";")) {
-                if (className.charAt(0) == 'L') {
-                    className = className.substring(1, className.length() - 1);
+                if (className[0] == 'L') {
+                    className = className.substring(1, className.length - 1)
                 } else {
-                    className = className.substring(0, className.length() - 1);
+                    className = className.substring(0, className.length - 1)
                 }
             }
         }
-        try {
-            return sHostClassLoader.loadClass(className);
-        } catch (ClassNotFoundException e) {
-            return null;
+        return try {
+            sHostClassLoader!!.loadClass(className)
+        } catch (_: ClassNotFoundException) {
+            null
         }
     }
 
-    @Nullable
-    public static Class<?> findClassWithSynthetics(@NonNull String className1, @NonNull String className2) {
-        var clazz = load(className1);
+    fun findClassWithSynthetics(className1: String, className2: String): Class<*>? {
+        val clazz = load(className1)
         if (clazz != null) {
-            return clazz;
+            return clazz
         }
-        return load(className2);
+        return load(className2)
     }
 
-    @Nullable
-    public static Class<?> findClassWithSynthetics(@NonNull String className1, @NonNull String className2,
-                                                   @NonNull String className3, int... index) {
-        var cacheKey = className1;
-        var cache = sClassCache.get(cacheKey);
+    fun findClassWithSynthetics(
+        className1: String, className2: String,
+        className3: String, vararg index: Int
+    ): Class<*>? {
+        val cache = sClassCache[className1]
         if (cache != null) {
-            return cache;
+            return cache
         }
-        var clazz = findClassWithSyntheticsImpl(className1, index);
+        var clazz = findClassWithSyntheticsImpl(className1, *index)
         if (clazz != null) {
-            sClassCache.put(cacheKey, clazz);
-            return clazz;
+            sClassCache[className1] = clazz
+            return clazz
         }
-        clazz = findClassWithSyntheticsImpl(className2, index);
+        clazz = findClassWithSyntheticsImpl(className2, *index)
         if (clazz != null) {
-            sClassCache.put(cacheKey, clazz);
-            return clazz;
+            sClassCache[className1] = clazz
+            return clazz
         }
-        clazz = findClassWithSyntheticsImpl(className3, index);
+        clazz = findClassWithSyntheticsImpl(className3, *index)
         if (clazz != null) {
-            sClassCache.put(cacheKey, clazz);
-            return clazz;
+            sClassCache[className1] = clazz
+            return clazz
         }
-        WeLogger.e("Initiator/E class " + className1 + " not found");
-        return null;
+        WeLogger.e("Initiator/E class $className1 not found")
+        return null
     }
 
     /**
@@ -102,119 +90,118 @@ public class Initiator {
      * @return The class.
      * @throws ClassNotFoundException If the class is not found.
      */
-    @NonNull
-    public static Class<?> loadClass(String className) throws ClassNotFoundException {
-        var ret = load(className);
-        if (ret == null) {
-            throw new ClassNotFoundException(className);
-        }
-        return ret;
+    @Throws(ClassNotFoundException::class)
+    fun loadClass(className: String?): Class<*> {
+        val ret: Class<*> = load(className) ?: throw ClassNotFoundException(className)
+        return ret
     }
 
-    @NonNull
-    public static Class<?> loadClassEither(@NonNull String... classNames) throws ClassNotFoundException {
-        for (var className : classNames) {
-            var ret = load(className);
+    @Throws(ClassNotFoundException::class)
+    fun loadClassEither(vararg classNames: String): Class<*> {
+        for (className in classNames) {
+            val ret = load(className)
             if (ret != null) {
-                return ret;
+                return ret
             }
         }
-        throw new ClassNotFoundException("Class not found for names: " + Arrays.toString(classNames));
+        throw ClassNotFoundException("Class not found for names: " + classNames.contentToString())
     }
 
-    @Nullable
-    private static Class<?> findClassWithSyntheticsImpl(@NonNull String className, int... index) {
-        var clazz = load(className);
+    private fun findClassWithSyntheticsImpl(className: String, vararg index: Int): Class<*>? {
+        val clazz = load(className)
         if (clazz != null) {
-            return clazz;
+            return clazz
         }
         if (index != null) {
-            for (var i : index) {
-                var cref = load(className + "$" + i);
+            for (i in index) {
+                val cref = load("$className$$i")
                 if (cref != null) {
                     try {
-                        return cref.getDeclaredField("this$0").getType();
-                    } catch (ReflectiveOperationException ignored) {
-                    }
+                        return cref.getDeclaredField("this$0").type
+                    } catch (_: ReflectiveOperationException) { }
                 }
             }
         }
-        return null;
+        return null
     }
 
 
-    @Nullable
-    private static Class<?> findClassWithSyntheticsSilently(@NonNull String className, int... index) {
-        var cache = sClassCache.get(className);
+    private fun findClassWithSyntheticsSilently(
+        className: String,
+        vararg index: Int
+    ): Class<*>? {
+        val cache = sClassCache[className]
         if (cache != null) {
-            return cache;
+            return cache
         }
-        var clazz = load(className);
+        var clazz = load(className)
         if (clazz != null) {
-            sClassCache.put(className, clazz);
-            return clazz;
+            sClassCache[className] = clazz
+            return clazz
         }
-        clazz = findClassWithSyntheticsImpl(className, index);
+        clazz = findClassWithSyntheticsImpl(className, *index)
         if (clazz != null) {
-            sClassCache.put(className, clazz);
-            return clazz;
+            sClassCache[className] = clazz
+            return clazz
         }
-        return null;
+        return null
     }
 
-    @Nullable
-    public static Class<?> findClassWithSynthetics0(@NonNull String className1, @NonNull String className2, int... index) {
-        var cacheKey = className1;
-        var cache = sClassCache.get(cacheKey);
+    fun findClassWithSynthetics0(
+        className1: String,
+        className2: String,
+        vararg index: Int
+    ): Class<*>? {
+        val cache = sClassCache[className1]
         if (cache != null) {
-            return cache;
+            return cache
         }
-        var clazz = findClassWithSyntheticsImpl(className1, index);
+        var clazz = findClassWithSyntheticsImpl(className1, *index)
         if (clazz != null) {
-            sClassCache.put(cacheKey, clazz);
-            return clazz;
+            sClassCache[className1] = clazz
+            return clazz
         }
-        clazz = findClassWithSyntheticsImpl(className2, index);
+        clazz = findClassWithSyntheticsImpl(className2, *index)
         if (clazz != null) {
-            sClassCache.put(cacheKey, clazz);
-            return clazz;
+            sClassCache[className1] = clazz
+            return clazz
         }
-        return null;
+        return null
     }
 
-    @Nullable
-    public static Class<?> findClassWithSynthetics(@NonNull String className1, @NonNull String className2, int... index) {
-        var ret = findClassWithSynthetics0(className1, className2, index);
-        logErrorIfNotFound(ret, className1);
-        return ret;
+    fun findClassWithSynthetics(
+        className1: String,
+        className2: String,
+        vararg index: Int
+    ): Class<*>? {
+        val ret = findClassWithSynthetics0(className1, className2, *index)
+        logErrorIfNotFound(ret, className1)
+        return ret
     }
 
 
-    @Nullable
-    public static Class<?> findClassWithSynthetics(@NonNull String className, int... index) {
-        var cache = sClassCache.get(className);
+    fun findClassWithSynthetics(className: String, vararg index: Int): Class<*>? {
+        val cache = sClassCache[className]
         if (cache != null) {
-            return cache;
+            return cache
         }
-        var clazz = load(className);
+        var clazz = load(className)
         if (clazz != null) {
-            sClassCache.put(className, clazz);
-            return clazz;
+            sClassCache[className] = clazz
+            return clazz
         }
-        clazz = findClassWithSyntheticsImpl(className, index);
+        clazz = findClassWithSyntheticsImpl(className, *index)
         if (clazz != null) {
-            sClassCache.put(className, clazz);
-            return clazz;
+            sClassCache[className] = clazz
+            return clazz
         }
-        WeLogger.e("Initiator/E class " + className + " not found");
-        return null;
+        WeLogger.e("Initiator/E class $className not found")
+        return null
     }
 
-    private static void logErrorIfNotFound(@Nullable Class<?> c, @NonNull String name) {
+    private fun logErrorIfNotFound(c: Class<*>?, name: String) {
         if (c == null) {
-            WeLogger.e("Initiator/E class " + name + " not found");
+            WeLogger.e("Initiator/E class $name not found")
         }
     }
-
-
 }

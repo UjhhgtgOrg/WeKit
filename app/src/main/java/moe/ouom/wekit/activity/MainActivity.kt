@@ -129,8 +129,8 @@ fun AppContent(onUrlClick: (String) -> Unit) {
 
     fun getActivationState(): ActivationState {
         val mHostAppPackages = setOf(PackageConstants.PACKAGE_NAME_WECHAT)
-        val isHookEnabledByLegacyApi = HookStatus.isModuleEnabled() || HostInfo.isInHostProcess()
-        val xposedService: XposedService? = HookStatus.getXposedService().value
+        val isHookEnabledByLegacyApi = HookStatus.isModuleEnabled || HostInfo.isInHostProcess()
+        val xposedService: XposedService? = HookStatus.xposedService.value
         val isHookEnabledByLibXposedApi = if (xposedService != null) {
             mHostAppPackages.intersect(xposedService.scope.toSet()).isNotEmpty()
         } else false
@@ -142,10 +142,10 @@ fun AppContent(onUrlClick: (String) -> Unit) {
             true
         }
 
-        if ((isHookEnabled && HostInfo.isInModuleProcess() && !HookStatus.isZygoteHookMode()
+        if ((isHookEnabled && HostInfo.isInModuleProcess() && !HookStatus.isZygoteHookMode
             && HookStatus.isTaiChiInstalled(context))
-            && HookStatus.getHookType() == HookStatus.HookType.APP_PATCH
-            && "armAll" != AbiUtils.getModuleFlavorName()
+            && HookStatus.hookType == HookStatus.HookType.APP_PATCH
+            && "armAll" != AbiUtils.moduleFlavorName
         ) {
             isAbiMatch = false
         }
@@ -155,7 +155,7 @@ fun AppContent(onUrlClick: (String) -> Unit) {
                 isActivated = isHookEnabled,
                 isAbiMatch = true,
                 title = if (isHookEnabled) "已激活" else "未激活",
-                desc = if (HostInfo.isInHostProcess()) HostInfo.getPackageName() else (if (isHookEnabledByLibXposedApi) "${xposedService?.frameworkName} ${xposedService?.frameworkVersion} (${xposedService?.frameworkVersionCode}), API ${xposedService?.apiVersion}" else HookStatus.getHookProviderNameForLegacyApi()),
+                desc = if (HostInfo.isInHostProcess()) HostInfo.getPackageName() else (if (isHookEnabledByLibXposedApi) "${xposedService?.frameworkName} ${xposedService?.frameworkVersion} (${xposedService?.frameworkVersionCode}), API ${xposedService?.apiVersion}" else HookStatus.hookProviderNameForLegacyApi),
                 color = if (isHookEnabled) Color(0xFF4CAF50) else Color(0xFFF44336)
             )
         } else {
