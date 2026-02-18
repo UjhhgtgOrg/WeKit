@@ -16,7 +16,9 @@ import org.mozilla.javascript.NativeArray
 import org.mozilla.javascript.NativeObject
 import org.mozilla.javascript.Scriptable
 import org.mozilla.javascript.ScriptableObject
+import org.mozilla.javascript.Undefined
 import java.io.File
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 
 object JsApiExposer {
@@ -33,11 +35,12 @@ object JsApiExposer {
     }
 
     fun exposeApis(scope: ScriptableObject) {
-        exposeHttpApi(scope)
-        exposeLogApi(scope)
+        exposeHttpApis(scope)
+        exposeLogApis(scope)
+        exposeCacheApis(scope)
     }
 
-    private fun exposeHttpApi(scope: ScriptableObject) {
+    private fun exposeHttpApis(scope: ScriptableObject) {
         val httpObj = NativeObject()
 
         // http.get(url, params?, headers?)
@@ -301,7 +304,7 @@ object JsApiExposer {
         return response
     }
 
-    private fun exposeLogApi(scope: ScriptableObject) {
+    private fun exposeLogApis(scope: ScriptableObject) {
         val logObj = NativeObject()
 
         // log.d(msg)
@@ -369,6 +372,125 @@ object JsApiExposer {
         )
 
         ScriptableObject.putProperty(scope, "log", logObj)
+    }
+
+    @Suppress("JavaCollectionWithNullableTypeArgument")
+    private val cacheStore = ConcurrentHashMap<String, Any?>()
+
+    private fun exposeCacheApis(scope: ScriptableObject) {
+        val cacheObj = NativeObject()
+
+        // cache.get(key) -> object
+        ScriptableObject.putProperty(cacheObj, "get",
+            object : BaseFunction() {
+                override fun call(cx: Context, scope: Scriptable, thisObj: Scriptable, args: Array<Any?>): Any? {
+                    val key = args.getOrNull(0)?.toString() ?: return null
+                    val value = cacheStore[key]
+
+                    return value ?: Context.getUndefinedValue()
+                }
+            }
+        )
+
+        // cache.getOrDefault(key, defaultValue) -> object
+        ScriptableObject.putProperty(cacheObj, "getOrDefault",
+            object : BaseFunction() {
+                override fun call(cx: Context, scope: Scriptable, thisObj: Scriptable, args: Array<Any?>): Any? {
+                    val key = args.getOrNull(0)?.toString() ?: return args.getOrNull(1)
+                    return cacheStore.getOrDefault(key, args.getOrNull(1)) ?: Context.getUndefinedValue()
+                }
+            }
+        )
+
+        // cache.set(key, object)
+        ScriptableObject.putProperty(cacheObj, "set",
+            object : BaseFunction() {
+                override fun call(cx: Context, scope: Scriptable, thisObj: Scriptable, args: Array<Any?>): Any? {
+                    val key = args.getOrNull(0)?.toString() ?: return null
+                    val value = args.getOrNull(1)
+
+                    if (value is Undefined) {
+                        WeLogger.w(TAG, "js tries to set undefined into cache, removing that key instead")
+                        cacheStore.remove(key)
+                    } else {
+                        cacheStore[key] = value
+                    }
+                    return null
+                }
+            }
+        )
+
+        // cache.clear()
+        ScriptableObject.putProperty(cacheObj, "clear",
+            object : BaseFunction() {
+                override fun call(cx: Context, scope: Scriptable, thisObj: Scriptable, args: Array<Any?>): Any? {
+                    cacheStore.clear()
+                    return null
+                }
+            }
+        )
+
+        // cache.remove(key)
+        ScriptableObject.putProperty(cacheObj, "remove",
+            object : BaseFunction() {
+                override fun call(cx: Context, scope: Scriptable, thisObj: Scriptable, args: Array<Any?>): Any? {
+                    val key = args.getOrNull(0)?.toString() ?: return null
+                    cacheStore.remove(key)
+                    return null
+                }
+            }
+        )
+
+        // cache.pop(key) -> object
+        ScriptableObject.putProperty(cacheObj, "pop",
+            object : BaseFunction() {
+                override fun call(cx: Context, scope: Scriptable, thisObj: Scriptable, args: Array<Any?>): Any? {
+                    val key = args.getOrNull(0)?.toString() ?: return Context.getUndefinedValue()
+                    return cacheStore.remove(key) ?: Context.getUndefinedValue()
+                }
+            }
+        )
+
+        // cache.hasKey(key) -> bool
+        ScriptableObject.putProperty(cacheObj, "hasKey",
+            object : BaseFunction() {
+                override fun call(cx: Context, scope: Scriptable, thisObj: Scriptable, args: Array<Any?>): Any {
+                    val key = args.getOrNull(0)?.toString() ?: return false
+                    return cacheStore.containsKey(key)
+                }
+            }
+        )
+
+        // cache.isEmpty() -> bool
+        ScriptableObject.putProperty(cacheObj, "isEmpty",
+            object : BaseFunction() {
+                override fun call(cx: Context, scope: Scriptable, thisObj: Scriptable, args: Array<Any?>): Any {
+                    return cacheStore.isEmpty()
+                }
+            }
+        )
+
+        // cache.keys() -> Array
+        ScriptableObject.putProperty(cacheObj, "keys",
+            object : BaseFunction() {
+                override fun call(cx: Context, scope: Scriptable, thisObj: Scriptable, args: Array<Any?>): Any {
+                    // Converts Kotlin Set to a JS Array
+                    return cx.newArray(scope, cacheStore.keys.toTypedArray())
+                }
+            }
+        )
+
+        // cache.size() -> int
+        ScriptableObject.putProperty(cacheObj, "size",
+            object : BaseFunction() {
+                override fun call(cx: Context, scope: Scriptable, thisObj: Scriptable, args: Array<Any?>): Any {
+                    return cacheStore.size
+                }
+            }
+        )
+
+        // Bind the object to the global scope
+        ScriptableObject.putProperty(scope, "cache", cacheObj)
     }
 
     fun exposeOnMessageApis(scope: ScriptableObject, talker: String) {

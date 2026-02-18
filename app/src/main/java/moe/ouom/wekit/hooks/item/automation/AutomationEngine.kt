@@ -93,7 +93,7 @@ object AutomationEngine {
                     "image" -> path?.let { api.sendImage(talker, it) }
                     "file"  -> path?.let { api.sendFile(talker, it, title ?: path.substringAfterLast('/')) }
                     "voice" -> path?.let { api.sendVoice(talker, it, duration) }
-                    else    -> WeLogger.w(TAG, "Unknown JS reply type: $type")
+                    else    -> WeLogger.w(TAG, "unknown js return type: $type")
                 }
             }
             else -> WeLogger.w(TAG, "onMessage() returned unexpected type: ${result::class.java}")
