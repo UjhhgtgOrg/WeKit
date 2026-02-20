@@ -6,12 +6,14 @@ WeKit 修改版
 
 - 添加 WAuxiliary 与 NewMiko 目前公开源代码中的部分功能
 - 移除全部校验，减少模块体积，避免不必要性能开销
-- 移植部分 UI 至 Jetpack Compose
+- 移植大部分 UI 至 Jetpack Compose
+- 添加 WAuxiliary 部分闭源功能
 - 一些功能
 
 ## 特色功能
 
-- 基于 JavaScript 的自动化, [文档](SCRIPT_API_DOCUMENT.md)
+- 基于 JavaScript 的脚本自动化引擎, [API 文档](SCRIPT_API_DOCUMENT.md)
+- 贴纸包同步（Telegram Stickers Sync）
 
 ## Q&A
 
@@ -29,6 +31,8 @@ WeKit 修改版
 使用本模块代码或分发修改版时**必须**继续以 GPL-3.0 协议开源
 
 ## 致谢
+
+[WeKit](https://github.com/cwuom/WeKit)
 
 [WAuxiliary (公开代码)](https://github.com/HdShare/WAuxiliary_Public)
 
