@@ -43,7 +43,7 @@ import moe.ouom.wekit.hooks.sdk.api.model.WeGroup
 import moe.ouom.wekit.ui.compose.showComposeDialog
 import moe.ouom.wekit.ui.creator.dialog.hooks.BaseHooksSettingsDialog
 import moe.ouom.wekit.utils.Initiator.loadClass
-import moe.ouom.wekit.utils.common.Toasts
+import moe.ouom.wekit.utils.common.ToastUtils
 import moe.ouom.wekit.utils.log.WeLogger
 
 @HookItem(path = "开发者选项/分裂群组", desc = "让群聊一分为二")
@@ -54,7 +54,7 @@ class WeSplitChatroomMaker : BaseClickableFunctionHookItem() {
 
         val api = WeDatabaseApi.INSTANCE
         if (api == null) {
-            Toasts.showToast(context, "数据库 API 未初始化，请先进入微信主界面")
+            ToastUtils.showToast(context, "数据库 API 未初始化，请先进入微信主界面")
             return
         }
 
@@ -62,12 +62,12 @@ class WeSplitChatroomMaker : BaseClickableFunctionHookItem() {
             api.getChatroomList()
         } catch (e: Exception) {
             WeLogger.e("WeSchemeInvocation", "获取群聊列表失败", e)
-            Toasts.showToast(context, "获取数据失败: ${e.message}")
+            ToastUtils.showToast(context, "获取数据失败: ${e.message}")
             return
         }
 
         if (groups.isEmpty()) {
-            Toasts.showToast(context, "未获取到群聊列表，请确认是否已登录或数据是否同步")
+            ToastUtils.showToast(context, "未获取到群聊列表，请确认是否已登录或数据是否同步")
             return
         }
 

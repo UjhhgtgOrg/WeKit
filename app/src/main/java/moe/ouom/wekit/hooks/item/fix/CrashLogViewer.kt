@@ -9,7 +9,7 @@ import com.afollestad.materialdialogs.list.listItems
 import moe.ouom.wekit.core.model.BaseClickableFunctionHookItem
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.ui.CommonContextWrapper
-import moe.ouom.wekit.utils.common.Toasts.showToast
+import moe.ouom.wekit.utils.common.ToastUtils.showToast
 import moe.ouom.wekit.utils.common.Utils.formatFileSize
 import moe.ouom.wekit.utils.crash.CrashLogManager
 import moe.ouom.wekit.utils.io.SafUtils

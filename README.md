@@ -27,3 +27,11 @@ WeKit 修改版
 使用本项目的源代码必须遵守 GPL-3.0 许可证，详见 LICENSE
 
 使用本模块代码或分发修改版时**必须**继续以 GPL-3.0 协议开源
+
+## 致谢
+
+[WAuxiliary (公开代码)](https://github.com/HdShare/WAuxiliary_Public)
+
+[WAuxiliary (反混淆)](https://github.com/Ujhhgtg/wauxv_deobf)
+
+[NewMiko (公开代码)](https://github.com/dartcv/NewMiko/blob/archives/)

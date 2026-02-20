@@ -11,7 +11,7 @@ import moe.ouom.wekit.hooks.core.factory.HookItemFactory.getItem
 import moe.ouom.wekit.hooks.item.chat.risk.WeSendXml
 import moe.ouom.wekit.hooks.sdk.api.WeMessageApi
 import moe.ouom.wekit.utils.Initiator.loadClass
-import moe.ouom.wekit.utils.common.Toasts
+import moe.ouom.wekit.utils.common.ToastUtils
 import moe.ouom.wekit.utils.log.WeLogger
 
 @HookItem(path = "API/聊天界面扩展")
@@ -106,14 +106,14 @@ class WeChatFooterApi : ApiHookItem() {
                     val isSuccess = WeMessageApi.INSTANCE?.sendXmlAppMsg(toUser, content)
                     if (isSuccess == false) {
                         WeLogger.e(TAG, "发送 XML 消息失败")
-                        Toasts.showToast("发送 XML 消息失败，请检查格式")
+                        ToastUtils.showToast("发送 XML 消息失败，请检查格式")
                     } else {
                         findInputEditText(chatFooter as? View, content)?.setText("")
                     }
                 }
             } else {
                 WeLogger.e(TAG, "信息不完整，无法发送！User: $toUser, Content: $content")
-                Toasts.showToast("未获取到当前聊天对象或内容为空")
+                ToastUtils.showToast("未获取到当前聊天对象或内容为空")
             }
         }
     }

@@ -17,6 +17,7 @@ import androidx.core.graphics.drawable.toDrawable
 import androidx.lifecycle.setViewTreeLifecycleOwner
 import androidx.lifecycle.setViewTreeViewModelStoreOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
+import moe.ouom.wekit.host.HostInfo
 import moe.ouom.wekit.ui.CommonContextWrapper
 import moe.ouom.wekit.ui.theme.AppTheme
 
@@ -25,7 +26,7 @@ fun showComposeDialog(context: Context? = null, content: @Composable (onDismiss:
     var ctx = context
 
     ctx = if (ctx == null)
-        AndroidAppHelper.currentApplication()
+        HostInfo.getApplication()
     else
         CommonContextWrapper.createAppCompatContext(ctx)
 

@@ -4,6 +4,7 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.pm.ApplicationInfo
+import android.os.Process
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
@@ -18,7 +19,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -236,7 +236,7 @@ fun DexFinderContent(
                         text = "总进度: $completed/${outdatedItems.size}",
                         style = MaterialTheme.typography.labelSmall
                     )
-                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth()) // indeterminate sub-bar
+                    LinearWavyProgressIndicator(modifier = Modifier.fillMaxWidth()) // indeterminate sub-bar
                 }
             }
 
@@ -265,12 +265,10 @@ fun DexFinderContent(
                     Button(onClick = ::startScanning) { Text("开始适配") }
                 }
                 if (phase is DialogPhase.Done || phase is DialogPhase.Error) {
-                    val label = if ((phase as? DialogPhase.Done)?.failed?.isEmpty() == true)
-                        "手动重启微信" else "关闭"
                     Button(onClick = {
-                        // TODO
                         onDismiss()
-                    }) { Text(label) }
+                        Process.killProcess(Process.myPid())
+                    }) { Text("重启应用") }
                 }
             }
         }

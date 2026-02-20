@@ -6,8 +6,8 @@ import android.widget.Toast;
 import moe.ouom.wekit.host.HostInfo;
 import moe.ouom.wekit.utils.log.WeLogger;
 
-public class Toasts {
-    private static final String TAG = "Toasts";
+public class ToastUtils {
+    private static final String TAG = "ToastUtils";
 
     static public void showToast(Context ctx, String msg) {
         WeLogger.i(TAG, "showToast: " + msg);

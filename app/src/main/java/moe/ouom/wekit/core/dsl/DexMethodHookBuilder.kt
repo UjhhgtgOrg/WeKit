@@ -4,6 +4,7 @@ import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XposedBridge
 import moe.ouom.wekit.config.WeConfig
 import moe.ouom.wekit.constants.Constants
+import moe.ouom.wekit.core.model.ApiHookItem
 import moe.ouom.wekit.hooks.core.factory._ExceptionFactory
 import moe.ouom.wekit.utils.log.WeLogger
 import java.lang.reflect.Method
@@ -39,6 +40,10 @@ class DexMethodHookBuilder(
      */
     private fun isEnabled(): Boolean {
         if (!checkEnabled) return true  // 如果不需要检查，默认启用
+
+        if (hookItem is ApiHookItem) {
+            return true
+        }
 
         // 尝试将 hookItem 转换为 BaseSwitchFunctionHookItem 并检查状态
         return try {
