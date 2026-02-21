@@ -10,10 +10,8 @@ import org.luckypray.dexkit.DexKitBridge
 import java.util.regex.Pattern
 
 @HookItem(path = "聊天与消息/阻止消息撤回 3", desc = "有撤回提示 (没写完)")
-class AntiRevokeMsg3 : BaseSwitchFunctionHookItem(), IDexFind {
-    companion object {
-        private const val TAG = "AntiRevokeMsg3"
-    }
+object AntiRevokeMsg3 : BaseSwitchFunctionHookItem(), IDexFind {
+    private const val TAG = "AntiRevokeMsg3"
 
     private val methodXmlParser by dexMethod()
     private val classSqliteDb by dexClass()

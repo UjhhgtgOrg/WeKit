@@ -8,12 +8,10 @@ import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.utils.log.WeLogger
 
 @HookItem(path = "优化与修复/自动批准设备登录", desc = "其他设备请求登录时自动勾选选项并点击按钮")
-class AutoApproveDeviceLogin : BaseSwitchFunctionHookItem() {
-    companion object {
-        private const val AUTO_SYNC_MESSAGES = 0x1
-        private const val SHOW_LOGIN_DEVICE = 0x2
-        private const val AUTO_LOGIN_DEVICE = 0x4
-    }
+object AutoApproveDeviceLogin : BaseSwitchFunctionHookItem() {
+    private const val AUTO_SYNC_MESSAGES = 0x1
+    private const val SHOW_LOGIN_DEVICE = 0x2
+    private const val AUTO_LOGIN_DEVICE = 0x4
 
     override fun entry(classLoader: ClassLoader) {
         val targetClass = "com.tencent.mm.plugin.webwx.ui.ExtDeviceWXLoginUI".toClass(classLoader)

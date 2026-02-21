@@ -10,7 +10,7 @@ import moe.ouom.wekit.hooks.core.annotation.HookItem
 import org.luckypray.dexkit.DexKitBridge
 
 @HookItem(path = "聊天与消息/自动查看原图", desc = "在打开图片和视频时自动点击查看原图")
-class AutoViewOriginalMedia : BaseSwitchFunctionHookItem(), IDexFind {
+object AutoViewOriginalMedia : BaseSwitchFunctionHookItem(), IDexFind {
     private val methodSetImageHdImgBtnVisibility by dexMethod()
     private val methodCheckNeedShowOriginVideoBtn by dexMethod()
 

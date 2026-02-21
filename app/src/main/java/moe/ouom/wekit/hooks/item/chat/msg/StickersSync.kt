@@ -46,12 +46,10 @@ import kotlin.io.path.walk
 import kotlin.io.path.writeText
 
 @HookItem(path = "聊天与消息/贴纸包同步", desc = "从指定路径将所有图片注册为贴纸包\n(搭配 Telegram Xposed 模块 StickersSync 使用, 或使用自带此功能的 (例如 Nagram) 的第三方客户端)")
-class StickersSync : BaseClickableFunctionHookItem(), IDexFind {
-    companion object {
-        private const val TAG = "StickersSync"
-        private const val STICKER_PACK_ID_PREFIX = "wekit.stickers.sync"
-        private val ALLOWED_STICKER_EXTENSIONS = setOf("png", "jpg", "jpeg", "gif", "webp")
-    }
+object StickersSync : BaseClickableFunctionHookItem(), IDexFind {
+    private const val TAG = "StickersSync"
+    private const val STICKER_PACK_ID_PREFIX = "wekit.stickers.sync"
+    private val ALLOWED_STICKER_EXTENSIONS = setOf("png", "jpg", "jpeg", "gif", "webp")
 
     private data class StickerPack(
         val appPackId: String,

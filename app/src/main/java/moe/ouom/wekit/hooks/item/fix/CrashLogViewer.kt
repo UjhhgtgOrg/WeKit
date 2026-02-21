@@ -19,18 +19,11 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-/**
- * 崩溃日志查看器
- * 查看、导出、分享、删除崩溃日志
- *
- * @author cwuom
- * @since 1.0.0
- */
 @HookItem(
     path = "优化与修复/崩溃日志查看器",
     desc = "查看历史崩溃日志"
 )
-class CrashLogViewer : BaseClickableFunctionHookItem() {
+object CrashLogViewer : BaseClickableFunctionHookItem() {
     private var crashLogManager: CrashLogManager? = null
 
     override fun onClick(context: Context?) {

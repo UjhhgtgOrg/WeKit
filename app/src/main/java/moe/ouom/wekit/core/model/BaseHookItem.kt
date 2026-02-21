@@ -2,6 +2,7 @@ package moe.ouom.wekit.core.model
 
 import androidx.annotation.Keep
 import com.highcapable.kavaref.extension.toClass
+import com.highcapable.kavaref.resolver.MethodResolver
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers
@@ -136,7 +137,7 @@ abstract class BaseHookItem {
     /**
      * 标准 hook 方法执行前
      */
-    protected fun hookBefore(method: Member, action: HookAction): XC_MethodHook.Unhook {
+    fun hookBefore(method: Member, action: HookAction): XC_MethodHook.Unhook {
         return XposedBridge.hookMethod(
             method,
             object :
@@ -148,11 +149,20 @@ abstract class BaseHookItem {
         )
     }
 
+    @JvmName("hookBeforeKavaRef")
+    fun hookBefore(method: MethodResolver<Class<Any>>, action: HookAction): XC_MethodHook.Unhook {
+        return hookBefore(method.self, action)
+    }
+
+    @JvmName("hookBeforeKavaRefExt")
+    fun MethodResolver<Class<Any>>.hookBefore(action: HookAction): XC_MethodHook.Unhook {
+        return hookBefore(this, action)
+    }
 
     /**
      * 标准 hook 方法执行后
      */
-    protected fun hookAfter(method: Member, action: HookAction): XC_MethodHook.Unhook {
+    fun hookAfter(method: Member, action: HookAction): XC_MethodHook.Unhook {
         return XposedBridge.hookMethod(
             method,
             object :
@@ -164,10 +174,20 @@ abstract class BaseHookItem {
         )
     }
 
+    @JvmName("hookAfterKavaRef")
+    fun hookAfter(method: MethodResolver<Class<Any>>, action: HookAction): XC_MethodHook.Unhook {
+        return hookAfter(method.self, action)
+    }
+
+    @JvmName("hookAfterKavaRefExt")
+    fun MethodResolver<Class<Any>>.hookAfter(action: HookAction): XC_MethodHook.Unhook {
+        return hookAfter(this, action)
+    }
+
     /**
      * 标准 hook 构造方法执行前
      */
-    protected fun hookBefore(
+    fun hookBefore(
         clazz: Class<*>,
         action: HookAction,
         vararg parameterTypesAndCallback: Any
@@ -191,7 +211,7 @@ abstract class BaseHookItem {
     /**
      * 标准 hook 构造方法执行后
      */
-    protected fun hookAfter(
+    fun hookAfter(
         clazz: Class<*>,
         action: HookAction,
         vararg parameterTypesAndCallback: Any
@@ -216,7 +236,7 @@ abstract class BaseHookItem {
      * 适配 hookBefore(Class, MethodName, Action)
      * 自动 Hook 该类下所有同名的方法
      */
-    protected fun hookBefore(
+    fun hookBefore(
         clazz: Class<*>,
         methodName: String,
         action: HookAction
@@ -234,7 +254,7 @@ abstract class BaseHookItem {
     }
 
     @JvmName("hookBeforeExt")
-    protected fun Class<*>.hookBefore(
+    fun Class<*>.hookBefore(
         methodName: String,
         action: HookAction
     ): Set<XC_MethodHook.Unhook> {
@@ -245,7 +265,7 @@ abstract class BaseHookItem {
      * 适配 hookAfter(Class, MethodName, Action)
      * 自动 Hook 该类下所有同名的方法
      */
-    protected fun hookAfter(
+    fun hookAfter(
         clazz: Class<*>,
         methodName: String,
         action: HookAction
@@ -263,7 +283,7 @@ abstract class BaseHookItem {
     }
 
     @JvmName("hookAfterExt")
-    protected fun Class<*>.hookAfter(
+    fun Class<*>.hookAfter(
         methodName: String,
         action: HookAction
     ): Set<XC_MethodHook.Unhook> {
@@ -273,7 +293,7 @@ abstract class BaseHookItem {
     /**
      * 带优先级的版本 (Before)
      */
-    protected fun hookBefore(
+    fun hookBefore(
         clazz: Class<*>,
         methodName: String,
         priority: Int,
@@ -293,7 +313,7 @@ abstract class BaseHookItem {
     /**
      * 带优先级的版本 (After)
      */
-    protected fun hookAfter(
+    fun hookAfter(
         clazz: Class<*>,
         methodName: String,
         priority: Int,
@@ -313,7 +333,7 @@ abstract class BaseHookItem {
     /**
      * 带执行优先级的 hook (before)
      */
-    protected fun hookBefore(
+    fun hookBefore(
         method: Member,
         priority: Int,
         action: HookAction
@@ -331,7 +351,7 @@ abstract class BaseHookItem {
     /**
      * 带执行优先级的 hook (after)
      */
-    protected fun hookAfter(
+    fun hookAfter(
         method: Member,
         priority: Int,
         action: HookAction
@@ -349,7 +369,7 @@ abstract class BaseHookItem {
     /**
      * 带执行优先级的 hook 构造方法执行前
      */
-    protected fun hookBefore(
+    fun hookBefore(
         clazz: Class<*>,
         priority: Int,
         action: HookAction,
@@ -373,7 +393,7 @@ abstract class BaseHookItem {
     /**
      * 带执行优先级的 hook 构造方法执行后
      */
-    protected fun hookAfter(
+    fun hookAfter(
         clazz: Class<*>,
         priority: Int,
         action: HookAction,
@@ -410,7 +430,7 @@ abstract class BaseHookItem {
     /**
      * Hook 动作接口
      */
-    protected fun interface HookAction {
+    fun interface HookAction {
         @Throws(Throwable::class)
         fun call(param: XC_MethodHook.MethodHookParam)
     }

@@ -47,7 +47,7 @@ import moe.ouom.wekit.utils.common.ToastUtils
 import moe.ouom.wekit.utils.log.WeLogger
 
 @HookItem(path = "开发者选项/分裂群组", desc = "让群聊一分为二")
-class WeSplitChatroomMaker : BaseClickableFunctionHookItem() {
+object WeSplitChatroomMaker : BaseClickableFunctionHookItem() {
 
     override fun onClick(context: Context?) {
         context ?: return

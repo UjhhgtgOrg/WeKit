@@ -6,7 +6,7 @@ import moe.ouom.wekit.core.model.BaseSwitchFunctionHookItem
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 
 @HookItem(path = "优化与修复/强制启用 WebView 菜单", desc = "强制显示 WebView 页面右上角菜单按钮")
-class ForceEnableWebViewMenu : BaseSwitchFunctionHookItem() {
+object ForceEnableWebViewMenu : BaseSwitchFunctionHookItem() {
     override fun entry(classLoader: ClassLoader) {
         val webViewUiCls = XposedHelpers
             .findClass("com.tencent.mm.plugin.webview.ui.tools.WebViewUI", classLoader)

@@ -22,10 +22,8 @@ import moe.ouom.wekit.utils.common.ToastUtils
 import moe.ouom.wekit.utils.log.WeLogger
 
 @HookItem(path = "开发者选项/发包调试", desc = "发送自定义数据包到微信服务器")
-class WePacketDebugger : BaseClickableFunctionHookItem() {
-    companion object {
-        private const val TAG = "WePacketDebugger"
-    }
+object WePacketDebugger : BaseClickableFunctionHookItem() {
+    private const val TAG = "WePacketDebugger"
 
     override fun onClick(context: Context?) {
         showComposeDialog(context) { onDismiss ->

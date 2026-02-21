@@ -7,7 +7,7 @@ import moe.ouom.wekit.hooks.core.annotation.HookItem
 import org.luckypray.dexkit.DexKitBridge
 
 @HookItem(path = "优化与修复/移除二维码扫描限制", desc = "移除长按图片与相册选择的二维码扫描限制")
-class RemoveQrcodeScanLimit : BaseSwitchFunctionHookItem(), IDexFind {
+object RemoveQrcodeScanLimit : BaseSwitchFunctionHookItem(), IDexFind {
     enum class ScanScene(val source: Int, val a8KeyScene: Int) {
         CAMERA(0, 4), // 相机扫描
         ALBUM(1, 34), // 相册选择

@@ -22,6 +22,7 @@ class MainSettingsDialog(context: Context) : BaseRikkaDialogCompose(context, "We
             "聊天与消息" to "ic_twotone_message_24",
             "联系人" to "ic_outline_article_person_24",
             "朋友圈" to "ic_moments",
+            "小程序" to "ic_appbrand_star_mark",
             "优化与修复" to "ic_baseline_auto_fix_high_24",
             "开发者选项" to "ic_baseline_developer_mode_24",
             "娱乐功能" to "ic_baseline_free_breakfast_24",

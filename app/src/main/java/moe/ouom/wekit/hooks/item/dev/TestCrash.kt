@@ -14,18 +14,11 @@ import moe.ouom.wekit.utils.common.ToastUtils.showToast
 import moe.ouom.wekit.utils.crash.NativeCrashHandler
 import moe.ouom.wekit.utils.log.WeLogger
 
-/**
- * 测试崩溃功能
- * 用于测试崩溃拦截功能是否正常工作
- *
- * @author cwuom
- * @since 1.0.0
- */
 @HookItem(
     path = "开发者选项/测试崩溃",
     desc = "没事别点"
 )
-class TestCrash : BaseClickableFunctionHookItem() {
+object TestCrash : BaseClickableFunctionHookItem() {
 
     private var appContext: Context? = null
     private var nativeCrashHandler: NativeCrashHandler? = null

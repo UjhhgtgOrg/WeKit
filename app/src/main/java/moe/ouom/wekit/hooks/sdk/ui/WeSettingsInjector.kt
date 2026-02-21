@@ -5,6 +5,8 @@ import android.app.Activity
 import android.content.Context
 import android.view.Menu
 import android.view.MenuItem
+import com.highcapable.kavaref.KavaRef.Companion.asResolver
+import com.highcapable.kavaref.extension.toClassOrNull
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XposedHelpers
 import moe.ouom.wekit.constants.Constants
@@ -28,6 +30,7 @@ class WeSettingsInjector : ApiHookItem(), IDexFind {
     private val dexMethodAddPref by dexMethod()
 
     companion object {
+        private const val TAG = "WeSettingInjector"
         private const val KEY_WEKIT_ENTRY = "wekit_settings_entry"
         private const val TITLE_WEKIT_ENTRY = "WeKit 设置"
         private const val MENU_ID_WEKIT = 11451419
@@ -148,7 +151,10 @@ class WeSettingsInjector : ApiHookItem(), IDexFind {
         tryHookLegacySettings(classLoader)
 
         // 尝试 Hook 新版 UI (8.0.67+)
-        tryHookNewSettings(classLoader)
+        // tryHookNewSettingsMethod1(classLoader)
+
+        // 尝试 Hook 新版 UI (8.0.67+), WAuxiliary 方法
+        tryHookNewSettingsMethod2(classLoader)
     }
 
     /**
@@ -233,14 +239,10 @@ class WeSettingsInjector : ApiHookItem(), IDexFind {
      * 适配新版 MainSettingsUI (基于 Menu 注入)
      * 因为新版 UI 继承结构复杂且混淆严重，通过 onCreateOptionsMenu 注入最稳定
      */
-    private fun tryHookNewSettings(classLoader: ClassLoader) {
+    private fun tryHookNewSettingsMethod1(classLoader: ClassLoader) {
         try {
             // 检查新版 UI 是否存在，不存在则直接退出，不进行 Hook
-            try {
-                XposedHelpers.findClass(Constants.CLAZZ_MAIN_SETTINGS_UI, classLoader)
-            } catch (_: Throwable) {
-                return
-            }
+            Constants.CLAZZ_MAIN_SETTINGS_UI.toClassOrNull(classLoader) ?: return
 
             // 获取基类 MMActivity
             val clsMMActivity =
@@ -297,14 +299,42 @@ class WeSettingsInjector : ApiHookItem(), IDexFind {
         }
     }
 
+    private fun tryHookNewSettingsMethod2(classLoader: ClassLoader) {
+        val newSettingsCls = "com.tencent.mm.plugin.setting.ui.setting_new.base.BaseSettingPrefUI".toClassOrNull(classLoader) ?: return
+
+        newSettingsCls.hookAfter("onCreate") { param ->
+            if (param.thisObject.javaClass
+                == "com.tencent.mm.plugin.setting.ui.setting_new.MainSettingsUI".toClassOrNull(classLoader)) {
+                val activity = param.thisObject as Activity
+                activity.asResolver()
+                    .firstMethod {
+                        name = "addTextOptionMenu"
+                        parameters(Int::class, String::class, MenuItem.OnMenuItemClickListener::class)
+                        superclass()
+                    }
+                    .invoke(0, "WeKit", OnSettingsInjectedMenuItemClickListener(activity))
+            }
+        }
+    }
+
     private fun openSettingsDialog(activity: Activity) {
         try {
-            val dialog = MainSettingsDialog(activity)
-            dialog.show()
+            MainSettingsDialog(activity).show()
         } catch (e: Throwable) {
-            WeLogger.e("Failed to open settings dialog", e)
+            WeLogger.e(TAG, "failed to open settings dialog", e)
         }
     }
 
     override fun unload(classLoader: ClassLoader) {}
+
+    private class OnSettingsInjectedMenuItemClickListener(val activity: Activity) : MenuItem.OnMenuItemClickListener {
+        override fun onMenuItemClick(p0: MenuItem): Boolean {
+            try {
+                MainSettingsDialog(activity).show()
+            } catch (e: Throwable) {
+                WeLogger.e(TAG, "failed to open settings dialog", e)
+            }
+            return true
+        }
+    }
 }

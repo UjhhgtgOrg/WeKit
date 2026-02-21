@@ -36,34 +36,32 @@ import moe.ouom.wekit.utils.log.WeLogger
 import java.util.concurrent.CopyOnWriteArrayList
 
 @HookItem(path = "自动化/自动化引擎", desc = "点击管理自动化规则")
-class AutomationHook : BaseClickableFunctionHookItem(),
-    WeDatabaseListener.DatabaseInsertListener,
+object AutomationHook : BaseClickableFunctionHookItem(),
+    WeDatabaseListener.IDatabaseInsertListener,
     IWePkgInterceptor
 {
-    companion object {
-        private const val TAG = "AutomationRuleManager"
+    private const val TAG = "AutomationRuleManager"
 
-        // type=1 plain text
-        // type=3 picture
-        // type=43 video
-        // type=48 static location
-        // type=49 external app share
-        // type=50 video/audio-only call
-        // type=419430449 cash transfer
-        // type=436207665 red packet
-        // type=1040187441 qq music
-        // type=1090519089 file
-        val rules = CopyOnWriteArrayList(
-            listOf(
-                AutomationRule(
-                    id = 0,
-                    name = "builtin_js",
-                    script = EmbeddedBuiltinJs.SCRIPT,
-                    enabled = true
-                )
+    // type=1 plain text
+    // type=3 picture
+    // type=43 video
+    // type=48 static location
+    // type=49 external app share
+    // type=50 video/audio-only call
+    // type=419430449 cash transfer
+    // type=436207665 red packet
+    // type=1040187441 qq music
+    // type=1090519089 file
+    val rules = CopyOnWriteArrayList(
+        listOf(
+            AutomationRule(
+                id = 0,
+                name = "builtin_js",
+                script = EmbeddedBuiltinJs.SCRIPT,
+                enabled = true
             )
         )
-    }
+    )
 
     // --- ui ---
     override fun onClick(context: Context?) {

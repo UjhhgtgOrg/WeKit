@@ -2,12 +2,12 @@ package moe.ouom.wekit.hooks.sdk.api
 
 import android.annotation.SuppressLint
 import android.content.ContentValues
-import de.robv.android.xposed.XposedHelpers
+import com.highcapable.kavaref.KavaRef.Companion.asResolver
+import com.highcapable.kavaref.extension.toClass
 import moe.ouom.wekit.config.WeConfig
 import moe.ouom.wekit.constants.Constants
 import moe.ouom.wekit.core.model.ApiHookItem
 import moe.ouom.wekit.hooks.core.annotation.HookItem
-import moe.ouom.wekit.utils.Initiator.loadClass
 import moe.ouom.wekit.utils.log.WeLogger
 import java.util.concurrent.CopyOnWriteArrayList
 
@@ -16,17 +16,17 @@ import java.util.concurrent.CopyOnWriteArrayList
 class WeDatabaseListener : ApiHookItem() {
 
     // 定义监听器接口
-    interface DatabaseInsertListener {
+    interface IDatabaseInsertListener {
         fun onInsert(table: String, values: ContentValues)
     }
 
     companion object {
         private const val TAG: String = "WeDatabaseApi"
 
-        private val listeners = CopyOnWriteArrayList<DatabaseInsertListener>()
+        private val listeners = CopyOnWriteArrayList<IDatabaseInsertListener>()
 
         // 供其他模块注册监听
-        fun addListener(listener: DatabaseInsertListener) {
+        fun addListener(listener: IDatabaseInsertListener) {
             if (!listeners.contains(listener)) {
                 listeners.add(listener)
                 WeLogger.i(TAG, "listener added, current listener count: ${listeners.size}")
@@ -35,30 +35,26 @@ class WeDatabaseListener : ApiHookItem() {
             }
         }
 
-        fun removeListener(listener: DatabaseInsertListener) {
+        fun removeListener(listener: IDatabaseInsertListener) {
             val removed = listeners.remove(listener)
             WeLogger.i(TAG, "listener remove ${if (removed) "succeeded" else "failed"}, current listener count: ${listeners.size}")
         }
     }
 
     override fun entry(classLoader: ClassLoader) {
-        hookDatabaseInsert()
+        hookDatabaseInsert(classLoader)
     }
 
-    private fun hookDatabaseInsert() {
+    private fun hookDatabaseInsert(classLoader: ClassLoader) {
         try {
-            val clsSQLite = loadClass(Constants.CLAZZ_SQLITE_DATABASE)
+            val sqliteCls = "com.tencent.wcdb.database.SQLiteDatabase".toClass(classLoader)
 
-            val mInsertWithOnConflict = XposedHelpers.findMethodExact(
-                clsSQLite,
-                "insertWithOnConflict",
-                String::class.java,
-                String::class.java,
-                ContentValues::class.java,
-                Int::class.javaPrimitiveType
-            )
-
-            hookAfter(mInsertWithOnConflict) { param ->
+            sqliteCls.asResolver()
+                .firstMethod {
+                    name = "insertWithOnConflict"
+                    parameters(String::class, String::class, ContentValues::class, Int::class)
+                }
+                .hookAfter { param ->
                 try {
                     val table = param.args[0] as String
                     val values = param.args[2] as ContentValues

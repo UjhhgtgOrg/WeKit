@@ -8,7 +8,7 @@ import moe.ouom.wekit.hooks.core.annotation.HookItem
 import org.luckypray.dexkit.DexKitBridge
 
 @HookItem(path = "聊天与消息/阻止消息撤回 1", desc = "无撤回提示")
-class AntiRevokeMsg1 : BaseSwitchFunctionHookItem(), IDexFind {
+object AntiRevokeMsg1 : BaseSwitchFunctionHookItem(), IDexFind {
     private val methodRevokeMsg by dexMethod()
 
     override fun dexFind(dexKit: DexKitBridge): Map<String, String> {

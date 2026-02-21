@@ -45,21 +45,17 @@ import org.luckypray.dexkit.query.enums.MatchType
 import kotlin.random.Random
 
 @HookItem(path = "聊天与消息/猜拳骰子控制", desc = "自定义猜拳和骰子的结果")
-class EmojiGameControl : BaseSwitchFunctionHookItem(), IDexFind {
-    companion object {
-        private const val MD5_MORRA = "9bd1281af3a31710a45b84d736363691"
-        private const val MD5_DICE = "08f223fa83f1ca34e143d1e580252c7c"
-        private const val TAG = "EmojiGameControl"
-    }
+object EmojiGameControl : BaseSwitchFunctionHookItem(), IDexFind {
+    private const val MD5_MORRA = "9bd1281af3a31710a45b84d736363691"
+    private const val MD5_DICE = "08f223fa83f1ca34e143d1e580252c7c"
+    private const val TAG = "EmojiGameControl"
 
-    // DSL: Define methods to be found via DexKit
     private val methodRandom by dexMethod()
     private val methodPanelClick by dexMethod()
 
     private var valMorra = 0
     private var valDice = 0
 
-    // Enums for logic
     enum class MorraType(val index: Int, val chineseName: String) {
         SCISSORS(0, "剪刀"), STONE(1, "石头"), PAPER(2, "布")
     }

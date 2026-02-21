@@ -6,9 +6,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import moe.ouom.wekit.config.RuntimeConfig
 import moe.ouom.wekit.config.WeConfig
-import moe.ouom.wekit.constants.Constants.Companion.PrekClickableXXX
-import moe.ouom.wekit.constants.Constants.Companion.PrekDisableVersionAdaptation
-import moe.ouom.wekit.constants.Constants.Companion.PrekXXX
+import moe.ouom.wekit.constants.Constants.PrekClickableXXX
+import moe.ouom.wekit.constants.Constants.PrekDisableVersionAdaptation
+import moe.ouom.wekit.constants.Constants.PrekXXX
 import moe.ouom.wekit.core.model.ApiHookItem
 import moe.ouom.wekit.core.model.BaseClickableFunctionHookItem
 import moe.ouom.wekit.core.model.BaseHookItem

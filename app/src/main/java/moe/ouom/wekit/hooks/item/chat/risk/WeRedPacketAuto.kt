@@ -10,8 +10,8 @@ import androidx.compose.material3.TextButton
 import androidx.core.net.toUri
 import de.robv.android.xposed.XposedHelpers
 import moe.ouom.wekit.config.WeConfig
-import moe.ouom.wekit.constants.Constants.Companion.TYPE_LUCKY_MONEY
-import moe.ouom.wekit.constants.Constants.Companion.TYPE_LUCKY_MONEY_EXCLUSIVE
+import moe.ouom.wekit.constants.Constants.TYPE_LUCKY_MONEY
+import moe.ouom.wekit.constants.Constants.TYPE_LUCKY_MONEY_EXCLUSIVE
 import moe.ouom.wekit.core.dsl.dexClass
 import moe.ouom.wekit.core.dsl.dexMethod
 import moe.ouom.wekit.core.model.BaseClickableFunctionHookItem
@@ -29,11 +29,9 @@ import kotlin.random.Random
 
 @SuppressLint("DiscouragedApi")
 @HookItem(path = "聊天与消息/自动抢红包", desc = "监听消息并自动拆开红包")
-class WeRedPacketAuto : BaseClickableFunctionHookItem(),
-    WeDatabaseListener.DatabaseInsertListener, IDexFind {
-    companion object {
-        private const val TAG: String = "WeRedPacketAuto"
-    }
+object WeRedPacketAuto : BaseClickableFunctionHookItem(),
+    WeDatabaseListener.IDatabaseInsertListener, IDexFind {
+    private const val TAG: String = "WeRedPacketAuto"
 
     private val dexClsReceiveLuckyMoney by dexClass()
     private val dexClsOpenLuckyMoney by dexClass()

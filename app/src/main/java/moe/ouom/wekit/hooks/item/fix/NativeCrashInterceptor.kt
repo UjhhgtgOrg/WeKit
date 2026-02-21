@@ -16,18 +16,11 @@ import moe.ouom.wekit.utils.io.SafUtils
 import moe.ouom.wekit.utils.log.WeLogger
 import java.io.File
 
-/**
- * Native 层崩溃拦截功能
- * 拦截 Native 层崩溃（SIGSEGV, SIGABRT 等信号），收集崩溃信息并在下次启动时展示
- *
- * @author cwuom
- * @since 1.0.0
- */
 @HookItem(
     path = "优化与修复/崩溃拦截 (Native)",
     desc = "拦截 Native 层崩溃并记录详细信息，支持查看和导出日志"
 )
-class NativeCrashInterceptor : BaseSwitchFunctionHookItem() {
+object NativeCrashInterceptor : BaseSwitchFunctionHookItem() {
 
     private var nativeCrashHandler: NativeCrashHandler? = null
     private var crashLogManager: CrashLogManager? = null

@@ -88,10 +88,15 @@ class HookItemScanner(
                     val hookItem = symbol.getAnnotationsByType(HookItem::class).first()
                     val itemName = hookItem.path
                     val desc = hookItem.desc
-
-                    // 为每个类生成对象实例并设置路径
                     val valName = symbol.toClassName().simpleName
-                    addStatement("val %N = %T()", valName, typeName)
+
+                    val isObject = symbol.classKind == com.google.devtools.ksp.symbol.ClassKind.OBJECT
+                    if (!isObject) {
+                        addStatement("val %N = %T()", valName, typeName)
+                    }
+                    else {
+                        addStatement("val %N = %T", valName, typeName)
+                    }
                     addStatement("%N.setPath(%S)", valName, itemName)
                     addStatement("%N.setDesc(%S)", valName, desc)
                     addStatement("list.add(%N)", valName)

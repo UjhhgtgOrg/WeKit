@@ -17,18 +17,11 @@ import moe.ouom.wekit.utils.io.SafUtils
 import moe.ouom.wekit.utils.log.WeLogger
 import java.io.File
 
-/**
- * 崩溃拦截功能
- * 拦截 Java 层崩溃,收集崩溃信息并在下次启动时展示
- *
- * @author cwuom
- * @since 1.0.0
- */
 @HookItem(
     path = "优化与修复/崩溃拦截",
     desc = "拦截 Java 层崩溃并记录详细信息，支持查看和导出日志"
 )
-class CrashInterceptor : BaseSwitchFunctionHookItem() {
+object CrashInterceptor : BaseSwitchFunctionHookItem() {
 
     private var javaCrashHandler: JavaCrashHandler? = null
     private var crashLogManager: CrashLogManager? = null
