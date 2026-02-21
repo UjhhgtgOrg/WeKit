@@ -12,10 +12,14 @@ import moe.ouom.wekit.utils.common.SyncUtils
 import moe.ouom.wekit.utils.log.WeLogger
 import org.luckypray.dexkit.DexKitBridge
 import java.lang.reflect.Proxy
+import java.util.concurrent.ConcurrentHashMap
+import kotlin.math.min
 
 @HookItem(path = "protocol/wepkg_dispatcher", desc = "WePkg 请求/响应数据包拦截与篡改")
 class WePkgDispatcher : ApiHookItem(), IDexFind {
     private val dexClsOnGYNetEnd by dexClass()
+    // 缓存最近10条记录，避免因脚本引起的无限递归
+    private val recentRequests = ConcurrentHashMap<String, Long>()
 
     override fun entry(classLoader: ClassLoader) {
         SyncUtils.postDelayed(3000) {
@@ -40,6 +44,27 @@ class WePkgDispatcher : ApiHookItem(), IDexFind {
                     val reqWrapper = XposedHelpers.callMethod(v0Var, "getReqObj")
                     val reqPbObj = XposedHelpers.getObjectField(reqWrapper, "a") // m.a
                     val reqBytes = XposedHelpers.callMethod(reqPbObj, "toByteArray") as ByteArray
+
+                    // 构造唯一标识符
+                    val key = "$cgiId|$uri|${reqWrapper?.javaClass?.name}|${reqPbObj?.javaClass?.name}|${reqBytes.contentToString()}"
+                    // 检查是否在缓存中且时间间隔小于500毫秒
+                    val currentTime = System.currentTimeMillis()
+                    val lastTime = recentRequests[key]
+                    if (lastTime != null && currentTime - lastTime < 500) {
+                        // 直接返回，不执行任何请求处理
+                        WeLogger.i("PkgDispatcher", "Request skipped (duplicate): $uri")
+                        return@hookBefore
+                    }
+                    // 更新缓存
+                    recentRequests[key] = currentTime
+                    // 限制缓存大小为10条
+                    if (recentRequests.size > 10) {
+                        // 移除最旧的条目
+                        val oldestEntry = recentRequests.entries.firstOrNull()
+                        oldestEntry?.let {
+                            recentRequests.remove(it.key)
+                        }
+                    }
 
                     WePkgManager.handleRequestTamper(uri, cgiId, reqBytes)?.let { tampered ->
                         XposedHelpers.callMethod(reqPbObj, "parseFrom", tampered)

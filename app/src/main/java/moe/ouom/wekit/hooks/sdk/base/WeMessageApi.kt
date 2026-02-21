@@ -681,6 +681,7 @@ object WeMessageApi : ApiHookItem(), IDexFind {
         }
     }
 
+
     /** 发送文本消息 */
     fun sendText(toUser: String, text: String): Boolean {
         return try {
@@ -723,7 +724,6 @@ object WeMessageApi : ApiHookItem(), IDexFind {
     fun sendVoice(toUser: String, path: String, durationMs: Int): Boolean {
         return try {
             val selfWxid = getSelfAlias()
-            if (selfWxid.isEmpty()) throw IllegalStateException("无法获取 Wxid")
 
             // 获取 Service 实例
             val serviceInterface = voiceServiceInterfaceClass

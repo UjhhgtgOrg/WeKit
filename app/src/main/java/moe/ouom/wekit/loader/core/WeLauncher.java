@@ -4,6 +4,7 @@ import static moe.ouom.wekit.constants.Constants.CLAZZ_WECHAT_LAUNCHER_UI;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.os.Bundle;
 
@@ -111,11 +112,7 @@ public class WeLauncher {
                     var activity = (Activity) param.thisObject;
                     RuntimeConfig.setLauncherUIActivity(activity);
                     var sharedPreferences = activity.getSharedPreferences("com.tencent.mm_preferences", 0);
-
-                    RuntimeConfig.setLogin_weixin_username(sharedPreferences.getString("login_weixin_username", ""));
-                    RuntimeConfig.setLast_login_nick_name(sharedPreferences.getString("last_login_nick_name", ""));
-                    RuntimeConfig.setLogin_user_name(sharedPreferences.getString("login_user_name", ""));
-                    RuntimeConfig.setLast_login_uin(sharedPreferences.getString("last_login_uin", "0"));
+                    RuntimeConfig.setmmPrefs(sharedPreferences);
                 }
             });
         } catch (Throwable e) {

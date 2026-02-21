@@ -45,6 +45,119 @@ class WeDatabaseApi : ApiHookItem(), IDexFind {
 
         @SuppressLint("StaticFieldLeak")
         var INSTANCE: WeDatabaseApi? = null
+
+        // =============================================================================
+        // SQL 语句集中管理
+        // =============================================================================
+        private object SQL {
+            // 基础字段 - 联系人查询常用字段
+            const val CONTACT_FIELDS = """
+                r.username, r.alias, r.conRemark, r.nickname, 
+                r.pyInitial, r.quanPin, r.encryptUsername, i.reserved2 AS avatarUrl
+            """
+
+            // 基础字段 - 群聊查询常用字段
+            const val CHATROOM_FIELDS = "r.username, r.nickname, r.pyInitial, r.quanPin, i.reserved2 AS avatarUrl"
+
+            // 基础字段 - 公众号查询常用字段
+            const val OFFICIAL_FIELDS = "r.username, r.alias, r.nickname, i.reserved2 AS avatarUrl"
+
+            // 基础 JOIN 语句
+            const val LEFT_JOIN_IMG_FLAG = "LEFT JOIN img_flag i ON r.username = i.username"
+
+            // =========================================
+            // 联系人查询
+            // =========================================
+
+            /** 所有人类账号（排除群聊和公众号和系统账号） */
+            val ALL_CONNECTS = """
+                SELECT $CONTACT_FIELDS, r.type
+                FROM rcontact r 
+                $LEFT_JOIN_IMG_FLAG 
+                WHERE 
+                    r.username != 'filehelper'
+                    AND r.verifyFlag = 0 
+                    AND (r.type & 1) != 0
+                    AND (r.type & 8) = 0
+                    AND (r.type & 32) = 0
+            """.trimIndent()
+
+            /** 好友列表（排除群聊和公众号和系统账号和自己和假好友） */
+            val CONTACT_LIST = """
+                SELECT $CONTACT_FIELDS, r.type
+                FROM rcontact r 
+                $LEFT_JOIN_IMG_FLAG 
+                WHERE 
+                    (
+                        r.encryptUsername != '' -- 是真好友                         
+                        OR 
+                        r.username = (SELECT value FROM userinfo WHERE id = 2) -- 是我自己
+                    )
+                    AND r.verifyFlag = 0 
+                    AND (r.type & 1) != 0
+                    AND (r.type & 8) = 0
+                    AND (r.type & 32) = 0
+            """.trimIndent()
+
+            // =========================================
+            // 群聊查询
+            // =========================================
+
+            /** 所有群聊 */
+            val CHATROOM_LIST = """
+                SELECT $CHATROOM_FIELDS
+                FROM rcontact r 
+                $LEFT_JOIN_IMG_FLAG 
+                WHERE r.username LIKE '%@chatroom'
+            """.trimIndent()
+
+            /** 获取群成员列表 */
+            fun groupMembers(idsStr: String) = """
+                SELECT $CONTACT_FIELDS
+                FROM rcontact r 
+                $LEFT_JOIN_IMG_FLAG 
+                WHERE r.username IN ($idsStr)
+            """.trimIndent()
+
+            // =========================================
+            // 公众号查询
+            // =========================================
+
+            /** 所有公众号 */
+            val OFFICIAL_LIST = """
+                SELECT $OFFICIAL_FIELDS
+                FROM rcontact r 
+                $LEFT_JOIN_IMG_FLAG 
+                WHERE r.username LIKE 'gh_%'
+            """.trimIndent()
+
+            // =========================================
+            // 消息查询
+            // =========================================
+
+            /** 分页获取消息 */
+            fun messages(wxid: String, limit: Int, offset: Int) = """
+                SELECT msgId, talker, content, type, createTime, isSend 
+                FROM message 
+                WHERE talker='$wxid' 
+                ORDER BY createTime DESC 
+                LIMIT $limit OFFSET $offset
+            """.trimIndent()
+
+            // =========================================
+            // 头像查询
+            // =========================================
+
+            /** 获取头像URL */
+            fun avatar(wxid: String) = """
+                SELECT i.reserved2 AS avatarUrl 
+                FROM img_flag i 
+                WHERE i.username = '$wxid'
+            """.trimIndent()
+
+            /** 获取群聊成员列表字符串 */
+            val CHATROOM_MEMBERS = "SELECT memberlist FROM chatroom WHERE chatroomname = '%s'"
+        }
     }
 
     @SuppressLint("NonUniqueDexKitData")
@@ -52,10 +165,7 @@ class WeDatabaseApi : ApiHookItem(), IDexFind {
         val descriptors = mutableMapOf<String, String>()
 
         try {
-            WeLogger.i(
-                TAG,
-                ">>>> 校验数据库 API 缓存 (Process: ${SyncUtils.getProcessName()}) <<<<"
-            )
+            WeLogger.i(TAG, ">>>> 校验数据库 API 缓存 (Process: ${SyncUtils.getProcessName()}) <<<<")
 
             // 定位 MMKernel
             dexClassKernel.find(dexKit, descriptors) {
@@ -154,8 +264,7 @@ class WeDatabaseApi : ApiHookItem(), IDexFind {
                 if (checkMethodFeature(obj) || checkStringFeature(obj)) {
                     return obj
                 }
-            } catch (_: Throwable) {
-            }
+            } catch (_: Throwable) {}
         }
         return null
     }
@@ -169,9 +278,7 @@ class WeDatabaseApi : ApiHookItem(), IDexFind {
                 it.isAccessible = true
                 it.type == String::class.java && it.get(obj) == "MicroMsg.SqliteDB"
             }
-        } catch (_: Exception) {
-            false
-        }
+        } catch (_: Exception) { false }
     }
 
     /**
@@ -182,23 +289,19 @@ class WeDatabaseApi : ApiHookItem(), IDexFind {
             obj.javaClass.declaredMethods.any {
                 it.parameterCount == 0 && it.returnType.name == WCDB_CLASS_NAME
             }
-        } catch (_: Exception) {
-            false
-        }
+        } catch (_: Exception) { false }
     }
 
     private fun getWcdbFromWrapper(wrapperObj: Any): Any? {
         val methods = wrapperObj.javaClass.declaredMethods
         for (method in methods) {
             if (method.parameterCount == 0 &&
-                method.returnType.name == WCDB_CLASS_NAME
-            ) {
+                method.returnType.name == WCDB_CLASS_NAME) {
                 try {
                     method.isAccessible = true
                     val db = method.invoke(wrapperObj)
                     if (db != null) return db
-                } catch (_: Exception) {
-                }
+                } catch (_: Exception) {}
             }
         }
         return null
@@ -207,12 +310,10 @@ class WeDatabaseApi : ApiHookItem(), IDexFind {
     private fun findRawQueryMethod(clazz: Class<*>): Method? {
         try {
             return clazz.getMethod("rawQuery", String::class.java, Array<Any>::class.java)
-        } catch (_: Exception) {
-        }
+        } catch (_: Exception) {}
         try {
             return clazz.getMethod("rawQuery", String::class.java, Array<String>::class.java)
-        } catch (_: Exception) {
-        }
+        } catch (_: Exception) {}
         return null
     }
 
@@ -247,7 +348,7 @@ class WeDatabaseApi : ApiHookItem(), IDexFind {
                 } while (cursor.moveToNext())
             }
         } catch (e: Exception) {
-            WeLogger.e(TAG, "SQL 执行异常: ${e.message}")
+            WeLogger.e(TAG, "SQL执行异常: ${e.message}")
         } finally {
             cursor?.close()
         }
@@ -259,66 +360,21 @@ class WeDatabaseApi : ApiHookItem(), IDexFind {
      * 返回所有人类账号（包含好友、陌生人、自己），但排除群和公众号
      */
     fun getAllConnects(): List<WeContact> {
-        val sql = """
-            SELECT 
-                r.username, r.alias, r.conRemark, r.nickname, r.pyInitial, r.quanPin, 
-                r.encryptUsername, i.reserved2 AS avatarUrl
-            FROM rcontact r 
-            LEFT JOIN img_flag i ON r.username = i.username 
-            WHERE 
-                r.username NOT LIKE '%@chatroom' 
-                AND r.username NOT LIKE 'gh_%' 
-                AND r.username != 'filehelper'
-                AND r.verifyFlag = 0 
-                -- 移除了 type & 1 校验，允许返回非好友
-        """.trimIndent()
-        return mapToContact(executeQuery(sql))
+        return mapToContact(executeQuery(SQL.ALL_CONNECTS))
     }
 
     /**
      * 获取【好友】
      */
     fun getContactList(): List<WeContact> {
-        val sql = """
-            SELECT 
-                r.username, r.alias, r.conRemark, r.nickname, r.pyInitial, r.quanPin, 
-                r.encryptUsername, i.reserved2 AS avatarUrl
-            FROM rcontact r 
-            LEFT JOIN img_flag i ON r.username = i.username 
-            WHERE 
-                r.username NOT LIKE '%@chatroom' 
-                AND r.username NOT LIKE 'gh_%' 
-                AND r.verifyFlag = 0 
-                AND (r.type & 1) != 0
-                AND (
-                    r.encryptUsername != ''                         -- 是真好友
-                    OR 
-                    r.username = (SELECT value FROM userinfo WHERE id = 2) -- 是我自己
-                )
-                AND r.username NOT IN (
-                    'filehelper', 'qqmail', 'fmessage', 'tmessage', 'qmessage', 
-                    'floatbottle', 'lbsapp', 'shakeapp', 'medianote', 'qqfriend', 
-                    'newsapp', 'blogapp', 'facebookapp', 'masssendapp', 'feedsapp', 
-                    'voipapp', 'cardpackage', 'voicevoipapp', 'voiceinputapp', 
-                    'officialaccounts', 'linkedinplugin', 'notifymessage', 
-                    'appbrandcustomerservicemsg', 'appbrand_notify_message', 
-                    'downloaderapp', 'opencustomerservicemsg', 'weixin', 
-                    'weibo', 'pc_share', 'wxitil'
-                )
-        """.trimIndent()
-        return mapToContact(executeQuery(sql))
+        return mapToContact(executeQuery(SQL.CONTACT_LIST))
     }
 
     /**
      * 获取【群聊】
      */
     fun getChatroomList(): List<WeGroup> {
-        val sql = """
-            SELECT r.username, r.nickname, r.pyInitial, r.quanPin, i.reserved2 AS avatarUrl
-            FROM rcontact r LEFT JOIN img_flag i ON r.username = i.username 
-            WHERE r.username LIKE '%@chatroom'
-        """.trimIndent()
-        return executeQuery(sql).map { row ->
+        return executeQuery(SQL.CHATROOM_LIST).map { row ->
             WeGroup(
                 username = row.str("username"),
                 nickname = row.str("nickname"),
@@ -336,7 +392,7 @@ class WeDatabaseApi : ApiHookItem(), IDexFind {
     fun getGroupMembers(chatroomId: String): List<WeContact> {
         if (!chatroomId.endsWith("@chatroom")) return emptyList()
 
-        val roomSql = "SELECT memberlist FROM chatroom WHERE chatroomname = '$chatroomId'"
+        val roomSql = SQL.CHATROOM_MEMBERS.format(chatroomId)
         val roomResult = executeQuery(roomSql)
 
         if (roomResult.isEmpty()) {
@@ -352,32 +408,14 @@ class WeDatabaseApi : ApiHookItem(), IDexFind {
 
         val idsStr = members.joinToString(",") { "'$it'" }
 
-        val sql = """
-            SELECT 
-                r.username, r.alias, r.conRemark, r.nickname, r.pyInitial, r.quanPin, 
-                r.encryptUsername, i.reserved2 AS avatarUrl
-            FROM rcontact r 
-            LEFT JOIN img_flag i ON r.username = i.username 
-            WHERE r.username IN ($idsStr)
-        """.trimIndent()
-
-        return mapToContact(executeQuery(sql))
+        return mapToContact(executeQuery(SQL.groupMembers(idsStr)))
     }
 
     /**
      * 获取【公众号】
      */
     fun getOfficialAccountList(): List<WeOfficial> {
-        val sql = """
-            SELECT 
-                r.username, r.alias, r.nickname,
-                i.reserved2 AS avatarUrl
-            FROM rcontact r 
-            LEFT JOIN img_flag i ON r.username = i.username 
-            WHERE r.username LIKE 'gh_%'
-        """.trimIndent()
-
-        return executeQuery(sql).map { row ->
+        return executeQuery(SQL.OFFICIAL_LIST).map { row ->
             WeOfficial(
                 username = row.str("username"),
                 nickname = row.str("nickname"),
@@ -394,10 +432,7 @@ class WeDatabaseApi : ApiHookItem(), IDexFind {
     fun getMessages(wxid: String, page: Int = 1, pageSize: Int = 20): List<WeMessage> {
         if (wxid.isEmpty()) return emptyList()
         val offset = (page - 1) * pageSize
-        val sql =
-            "SELECT msgId, talker, content, type, createTime, isSend FROM message WHERE talker='$wxid' ORDER BY createTime DESC LIMIT $pageSize OFFSET $offset"
-
-        return executeQuery(sql).map { row ->
+        return executeQuery(SQL.messages(wxid, pageSize, offset)).map { row ->
             WeMessage(
                 msgId = row.long("msgId"),
                 talker = row.str("talker"),
@@ -414,8 +449,7 @@ class WeDatabaseApi : ApiHookItem(), IDexFind {
      */
     fun getAvatarUrl(wxid: String): String {
         if (wxid.isEmpty()) return ""
-        val sql = "SELECT i.reserved2 AS avatarUrl FROM img_flag i WHERE i.username = '$wxid'"
-        val result = executeQuery(sql)
+        val result = executeQuery(SQL.avatar(wxid))
         return if (result.isNotEmpty()) {
             result[0]["avatarUrl"] as? String ?: ""
         } else {

@@ -264,7 +264,7 @@ moe.ouom.wekit/
 │   │   ├── moment/            # 朋友圈
 │   │   ├── fix/               # 优化与修复
 │   │   ├── dev/               # 开发者选项
-│   │   ├── fun/               # 娱乐功能
+│   │   ├── func/               # 娱乐功能
 │   │   ├── script/            # 脚本管理
 │   │   └── example/           # 示例代码
 │   └── sdk/                   # SDK 封装
@@ -418,10 +418,14 @@ import moe.ouom.wekit.constants.MMVersion
 import moe.ouom.wekit.host.HostInfo
 
 override fun entry(classLoader: ClassLoader) {
+    val isGooglePlayVersion = HostInfo.isGooglePlayVersion
     val currentVersion = HostInfo.getVersionCode()
 
     // 根据版本选择不同的实现
     when {
+        isGooglePlayVersion && currentVersion >= MMVersion.MM_8_0_48_Play ->
+            // Google Play 8.0.48+
+            hookForNewVersion(classLoader)
         currentVersion >= MMVersion.MM_8_0_90 -> {
             // 8.0.90 及以上版本的实现
             hookForNewVersion(classLoader)
@@ -2237,6 +2241,70 @@ override fun unload(classLoader: ClassLoader) {
 }
 ```
 
+### 数据库监听器 (WeDatabaseListener)
+
+`WeDatabaseListener` 提供监听和篡改微信数据库操作的能力。
+
+#### 适配器定义
+
+```kotlin
+// 重写需要的方法
+open class DatabaseListenerAdapter {
+    // 插入后执行
+    open fun onInsert(table: String, values: ContentValues) {}
+    
+    // 更新前执行，返回true阻止更新
+    open fun onUpdate(table: String, values: ContentValues): Boolean = false
+    
+    // 查询前执行，返回修改后的SQL，null表示不修改
+    open fun onQuery(sql: String): String? = sql
+}
+```
+
+#### 快速开始
+
+```kotlin
+// 1. 继承适配器
+class MyListener : DatabaseListenerAdapter() {
+    override fun onInsert(table: String, values: ContentValues) {
+        if (table == "message") {
+            values.put("time", System.currentTimeMillis())
+        }
+    }
+    
+    override fun onUpdate(table: String, values: ContentValues): Boolean {
+        return table == "user_info" && values.containsKey("balance")
+    }
+    
+    override fun onQuery(sql: String): String? {
+        return if (sql.contains("password")) null else sql
+    }
+}
+
+// 2. 注册/注销
+override fun entry(classLoader: ClassLoader) {
+    WeDatabaseListener.addListener(this)
+}
+
+override fun unload(classLoader: ClassLoader) {
+    WeDatabaseListener.removeListener(this)
+    super.unload(classLoader)
+}
+```
+
+#### 方法说明
+
+| 方法 | 时机 | 返回值 | 作用 |
+|------|------|--------|------|
+| `onInsert` | 插入后 | - | 监听/修改插入数据 |
+| `onUpdate` | 更新前 | `true`=阻止 | 监听/阻止更新 |
+| `onQuery` | 查询前 | 新SQL/null | 篡改查询语句 |
+
+#### 特性
+
+- ✅ **链式处理**：多个监听器按注册顺序执行
+- ✅ **直接修改**：`values` 对象可直接修改生效
+
 #### 核心工具类：WeProtoData
 
 `WeProtoData` 是处理 Protobuf 数据的核心工具类，提供以下关键方法：
@@ -2967,6 +3035,7 @@ close #1
 - [ ] **我确认此更改不会破坏任何原有功能** / I confirm this change does not break any existing features
 - [ ] **我已进行多版本适配（如适用）** / I have used MMVersion for version compatibility (if applicable)
 - [ ] **我已在多个微信版本上测试此更改（如适用）** / I have tested this change on multiple WeChat versions (if applicable)  
+- [ ] **已在 Release 构建中完成测试**（含签名校验与 DEX 加密保护，未经测试请勿勾选；详见 `CONTRIBUTING.md` → 构建和发布 → 构建配置 → Release 构建） / Verified in Release build (with signature verification & DEX encryption protection; check only after testing per `CONTRIBUTING.md` → Build & Release → Build Configuration → Release Build)
 
 ##### 其他信息 / Additional Information
 
@@ -3023,6 +3092,28 @@ close #1
 ```
 
 输出位置：`app/build/outputs/apk/debug/app-debug.apk`
+
+#### Release 构建
+当构建 **Release 变体 APK** 时，软件启动阶段将执行双重签名校验。为进行本地测试，需**临时**修改以下两处配置：
+<64位SHA256签名> 通过 SignatureVerifier.getSignatureHash() 生成
+
+**Native 层（`secrets.h`）**:
+
+```bash
+python generate_secrets_h.py <64位SHA256签名>
+# 将输出内容临时覆盖 app/src/main/cpp/include/secrets.h
+```
+
+**Java 层（`SignatureVerifier.java`）**:
+
+```java
+private static final String[] VALID_SIGNATURE_HASHES = {
+    "<64位SHA256签名>"  // 仅限本地测试
+};
+```
+
+> ⚠️ **关键要求**：  
+> 以上修改**仅用于本地 Release 构建测试**，测试完成后 **`secrets.h` 和 `SignatureVerifier.java` 必须立即还原**至仓库原始版本，**严禁提交至仓库**，包含测试签名的 PR 将被拒绝合并
 
 ### 自定义构建任务
 

@@ -38,7 +38,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 
 @HookItem(path = "自动化/自动化引擎", desc = "点击管理自动化规则")
 object AutomationHook : BaseClickableFunctionHookItem(),
-    WeDatabaseListener.IDatabaseInsertListener,
+    WeDatabaseListener.IInsertListener,
     IWePkgInterceptor
 {
     private const val TAG = "AutomationRuleManager"

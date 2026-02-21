@@ -11,24 +11,13 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
-import android.os.Bundle;
-import android.os.Handler;
-import android.os.IBinder;
-import android.os.Looper;
-import android.os.Message;
-import android.os.PersistableBundle;
-import android.os.TestLooperManager;
+import android.os.*;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
+import java.lang.reflect.*;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -81,7 +70,10 @@ public class ActivityProxyHooks {
             mInstrumentation.setAccessible(true);
             var instrumentation = (Instrumentation) mInstrumentation.get(sCurrentActivityThread);
             if (!(instrumentation instanceof ProxyInstrumentation)) {
-                mInstrumentation.set(sCurrentActivityThread, new ProxyInstrumentation(instrumentation));
+                // 创建代理对象
+                ProxyInstrumentation proxy = new ProxyInstrumentation(instrumentation);
+                // 替换掉系统的实例
+                mInstrumentation.set(sCurrentActivityThread, proxy);
             }
 
             // Hook Handler (mH)
@@ -118,6 +110,7 @@ public class ActivityProxyHooks {
             gDefaultField = activityManagerClass.getDeclaredField("gDefault");
         } catch (Exception err1) {
             activityManagerClass = Class.forName("android.app.ActivityManager");
+            //noinspection JavaReflectionMemberAccess
             gDefaultField = activityManagerClass.getDeclaredField("IActivityManagerSingleton");
         }
         gDefaultField.setAccessible(true);
@@ -132,8 +125,7 @@ public class ActivityProxyHooks {
             var getMethod = singletonClass.getDeclaredMethod("get");
             getMethod.setAccessible(true);
             getMethod.invoke(gDefault);
-        } catch (Exception ignored) {
-        }
+        } catch (Exception ignored) {}
 
         var mInstance = mInstanceField.get(gDefault);
         if (mInstance == null) {
@@ -171,6 +163,7 @@ public class ActivityProxyHooks {
         }
     }
 
+    @SuppressLint("PrivateApi")
     private static void hookPackageManager(Context ctx, Object sCurrentActivityThread, Class<?> clazz_ActivityThread) {
         try {
             var sPackageManagerField = clazz_ActivityThread.getDeclaredField("sPackageManager");
@@ -208,11 +201,11 @@ public class ActivityProxyHooks {
 
         @Override
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-            var name = method.getName();
+            String name = method.getName();
 
             // 拦截 startActivity 以及 startActivities (Intent[])
             if (name.startsWith("startActivity") || name.startsWith("startActivities")) {
-                for (var i = 0; i < args.length; i++) {
+                for (int i = 0; i < args.length; i++) {
                     if (args[i] instanceof Intent raw) {
                         if (shouldProxy(raw)) {
                             args[i] = createTokenWrapper(raw);
@@ -428,8 +421,7 @@ public class ActivityProxyHooks {
          */
         @SneakyThrows
         @Override
-        public Activity newActivity(ClassLoader cl, String className, Intent intent)
-                throws InstantiationException, IllegalAccessException, ClassNotFoundException {
+        public Activity newActivity(ClassLoader cl, String className, Intent intent) {
 
             // 兜底：如果 intent 仍然是 stub 的 wrapper，尝试还原
             var recovered = tryRecoverIntent(intent);
@@ -444,7 +436,7 @@ public class ActivityProxyHooks {
             } catch (ClassNotFoundException e) {
                 if (ActProxyMgr.isModuleProxyActivity(className)) {
                     var moduleCL = Objects.requireNonNull(getClass().getClassLoader());
-                    return (Activity) moduleCL.loadClass(className).newInstance();
+                    return (Activity) moduleCL.loadClass(className).getDeclaredConstructor().newInstance();
                 }
                 throw e;
             }
@@ -470,11 +462,11 @@ public class ActivityProxyHooks {
                 var hybridCL = ParcelableFixer.getHybridClassLoader();
                 if (hybridCL != null) {
                     try {
+                        @SuppressWarnings("JavaReflectionMemberAccess")
                         var f = Activity.class.getDeclaredField("mClassLoader");
                         f.setAccessible(true);
                         f.set(activity, hybridCL);
-                    } catch (Throwable ignored) {
-                    }
+                    } catch (Throwable ignored) {}
 
                     var intent = activity.getIntent();
                     if (intent != null) {
@@ -762,7 +754,7 @@ public class ActivityProxyHooks {
         }
 
         @Override
-        public void callActivityOnSaveInstanceState(@NonNull Activity activity, @NonNull Bundle outState, PersistableBundle outPersistentState) {
+        public void callActivityOnSaveInstanceState(@NonNull Activity activity, @NonNull Bundle outState, @NonNull PersistableBundle outPersistentState) {
             mBase.callActivityOnSaveInstanceState(activity, outState, outPersistentState);
         }
 
@@ -776,11 +768,15 @@ public class ActivityProxyHooks {
             mBase.callActivityOnUserLeaving(activity);
         }
 
+        @SuppressWarnings("deprecation")
+        @Deprecated
         @Override
         public void startAllocCounting() {
             mBase.startAllocCounting();
         }
 
+        @SuppressWarnings("deprecation")
+        @Deprecated
         @Override
         public void stopAllocCounting() {
             mBase.stopAllocCounting();

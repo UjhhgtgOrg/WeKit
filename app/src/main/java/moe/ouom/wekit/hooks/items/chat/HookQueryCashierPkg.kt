@@ -14,13 +14,15 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 @HookItem(path = "聊天与消息/修改转账时的余额", desc = "点击配置")
-object HookQueryCashierPkg : BaseClickableFunctionHookItem(), IWePkgInterceptor {
-    private const val KEY_CFT_BALANCE = "cashier_cft_balance"
-    private const val KEY_LQT_BALANCE = "cashier_lqt_balance"
+class HookQueryCashierPkg : BaseClickableFunctionHookItem(), IWePkgInterceptor {
+    companion object {
+        private const val KEY_CFT_BALANCE = "cashier_cft_balance"
+        private const val KEY_LQT_BALANCE = "cashier_lqt_balance"
 
-    // 默认值
-    private const val DEFAULT_CFT = "¥999,999.00"
-    private const val DEFAULT_LQT = "¥8,888,888.88"
+        // 默认值
+        private const val DEFAULT_CFT = "¥999,999.00"
+        private const val DEFAULT_LQT = "¥8,888,888.88"
+    }
 
     override fun entry(classLoader: ClassLoader) {
         WePkgManager.addInterceptor(this)

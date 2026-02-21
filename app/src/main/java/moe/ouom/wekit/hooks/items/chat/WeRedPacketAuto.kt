@@ -28,7 +28,7 @@ import kotlin.random.Random
 @SuppressLint("DiscouragedApi")
 @HookItem(path = "聊天与消息/自动抢红包", desc = "监听消息并自动拆开红包")
 object WeRedPacketAuto : BaseClickableFunctionHookItem(),
-    WeDatabaseListener.IDatabaseInsertListener, IDexFind {
+    WeDatabaseListener.IInsertListener, IDexFind {
     private const val TAG: String = "WeRedPacketAuto"
 
     private val dexClsReceiveLuckyMoney by dexClass()
@@ -117,7 +117,7 @@ object WeRedPacketAuto : BaseClickableFunctionHookItem(),
             val customDelay =
                 config.getStringPrek("red_packet_delay_custom", "0")?.toLongOrNull() ?: 0L
 
-            WeLogger.i(TAG, "read config - isRandomDelay=$isRandomDelay, customDelay=$customDelay")
+            WeLogger.i(TAG, "config - isRandomDelay=$isRandomDelay, customDelay=$customDelay")
 
             // 如果开启随机延迟，在自定义延迟基础上增加随机偏移
             val delayTime = if (isRandomDelay) {
