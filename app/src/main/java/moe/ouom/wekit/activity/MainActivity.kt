@@ -54,18 +54,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import io.github.libxposed.service.XposedService
+import com.highcapable.yukihookapi.YukiHookAPI
 import kotlinx.coroutines.delay
 import moe.ouom.wekit.BuildConfig
 import moe.ouom.wekit.R
-import moe.ouom.wekit.constants.PackageConstants
-import moe.ouom.wekit.host.HostInfo
 import moe.ouom.wekit.ui.utils.AppTheme
-import moe.ouom.wekit.utils.common.CheckAbiVariantModel
 import moe.ouom.wekit.utils.common.Utils
 import moe.ouom.wekit.utils.getEnable
-import moe.ouom.wekit.utils.hookstatus.AbiUtils
-import moe.ouom.wekit.utils.hookstatus.HookStatus
 import moe.ouom.wekit.utils.setEnable
 
 class MainActivity : ComponentActivity() {
@@ -74,12 +69,6 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-
-        // 初始化 HookStatus
-        try {
-            HookStatus.init(this)
-        } catch (_: Exception) {
-        }
 
         setContent {
             AppTheme {
@@ -114,52 +103,21 @@ fun AppContent(onUrlClick: (String) -> Unit) {
     // 激活状态数据类
     data class ActivationState(
         val isActivated: Boolean,
-        val isAbiMatch: Boolean,
         val title: String,
         val desc: String,
         val color: Color
     )
 
     fun getActivationState(): ActivationState {
-        val mHostAppPackages = setOf(PackageConstants.PACKAGE_NAME_WECHAT)
-        val isHookEnabledByLegacyApi = HookStatus.isModuleEnabled || HostInfo.isInHostProcess()
-        val xposedService: XposedService? = HookStatus.xposedService.value
-        val isHookEnabledByLibXposedApi = if (xposedService != null) {
-            mHostAppPackages.intersect(xposedService.scope.toSet()).isNotEmpty()
-        } else false
-        val isHookEnabled = isHookEnabledByLegacyApi || isHookEnabledByLibXposedApi
+        val executor = YukiHookAPI.Status.Executor
+        val isActivated = YukiHookAPI.Status.isModuleActive
 
-        var isAbiMatch = try {
-            CheckAbiVariantModel.collectAbiInfo(context).isAbiMatch
-        } catch (e: Exception) {
-            true
-        }
-
-        if ((isHookEnabled && HostInfo.isInModuleProcess() && !HookStatus.isZygoteHookMode
-            && HookStatus.isTaiChiInstalled(context))
-            && HookStatus.hookType == HookStatus.HookType.APP_PATCH
-            && "armAll" != AbiUtils.moduleFlavorName
-        ) {
-            isAbiMatch = false
-        }
-
-        return if (isAbiMatch) {
-            ActivationState(
-                isActivated = isHookEnabled,
-                isAbiMatch = true,
-                title = if (isHookEnabled) "已激活" else "未激活",
-                desc = if (HostInfo.isInHostProcess()) HostInfo.getPackageName() else (if (isHookEnabledByLibXposedApi) "${xposedService?.frameworkName} ${xposedService?.frameworkVersion} (${xposedService?.frameworkVersionCode}), API ${xposedService?.apiVersion}" else HookStatus.hookProviderNameForLegacyApi),
-                color = if (isHookEnabled) Color(0xFF4CAF50) else Color(0xFFF44336)
-            )
-        } else {
-            ActivationState(
-                isActivated = isHookEnabled,
-                isAbiMatch = false,
-                title = if (isHookEnabled) "未完全激活" else "未激活",
-                desc = "原生库不完全匹配",
-                color = Color(0xFFF44336)
-            )
-        }
+        return ActivationState(
+            isActivated = isActivated,
+            title = if (isActivated) "已激活" else "未激活",
+            desc = "${executor.name} ${executor.versionName} (${executor.versionCode}), API ${executor.apiLevel}",
+            color = if (isActivated) Color(0xFF4CAF50) else Color(0xFFF44336)
+        )
     }
 
     var activationState by remember { mutableStateOf(getActivationState()) }
@@ -248,7 +206,7 @@ fun AppContent(onUrlClick: (String) -> Unit) {
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
-                            imageVector = if (activationState.isActivated && activationState.isAbiMatch) Icons.Default.CheckCircle else Icons.Default.Warning,
+                            imageVector = if (activationState.isActivated) Icons.Default.CheckCircle else Icons.Default.Warning,
                             contentDescription = null,
                             tint = Color.White,
                             modifier = Modifier.size(32.dp)

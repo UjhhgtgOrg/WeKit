@@ -65,7 +65,6 @@ class DexMethodHookBuilder(
             50
         )
 
-
         XposedBridge.hookMethod(method, object : XC_MethodHook(p) {
             override fun beforeHookedMethod(param: MethodHookParam) {
                 try {

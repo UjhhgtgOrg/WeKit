@@ -29,6 +29,7 @@ import moe.ouom.wekit.core.model.BaseClickableFunctionHookItem
 import moe.ouom.wekit.dexkit.intf.IDexFind
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.host.HostInfo
+import moe.ouom.wekit.loader.startup.HybridClassLoader
 import moe.ouom.wekit.ui.utils.showComposeDialog
 import moe.ouom.wekit.utils.common.ToastUtils
 import moe.ouom.wekit.utils.io.PathUtils
@@ -48,6 +49,7 @@ import kotlin.io.path.writeText
 
 @HookItem(path = "聊天与消息/贴纸包同步", desc = "从指定路径将所有图片注册为贴纸包\n(搭配 Telegram Xposed 模块 StickersSync 使用, 或使用自带此功能的 (例如 Nagram) 的第三方客户端)")
 object StickersSync : BaseClickableFunctionHookItem(), IDexFind {
+
     private const val TAG = "StickersSync"
     private const val STICKER_PACK_ID_PREFIX = "wekit.stickers.sync"
     private val ALLOWED_STICKER_EXTENSIONS = setOf("png", "jpg", "jpeg", "gif", "webp")
@@ -160,7 +162,8 @@ object StickersSync : BaseClickableFunctionHookItem(), IDexFind {
                 val emojiThumb = getEmojiInfoByMd5(md5)
                 methodSaveEmojiThumb.method.invoke(emojiThumb, null, true)
                 val groupItemInfo = classGroupItemInfo.clazz
-                    .getDeclaredConstructor("com.tencent.mm.api.IEmojiInfo".toClass(),
+                    .getDeclaredConstructor("com.tencent.mm.api.IEmojiInfo".toClass(
+                        HybridClassLoader.getHostClassLoader()),
                         Int::class.java, String::class.java, Int::class.java)
                     .newInstance(emojiThumb, 2, "", 0)
                 stickerList.add(groupItemInfo)
@@ -305,47 +308,43 @@ object StickersSync : BaseClickableFunctionHookItem(), IDexFind {
             .invoke()!!
     }
 
-    override fun entry(classLoader: ClassLoader) {
+    override fun entry(classLoader: ClassLoader) = yukiEncase {
         val emojiGroupInfoCls = "com.tencent.mm.storage.emotion.EmojiGroupInfo".toClass(classLoader)
 
         @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN", "UNCHECKED_CAST")
-        methodGetEmojiGroupInfo.toDexMethod {
-            hook {
-                afterIfEnabled { param ->
-                    WeLogger.i(TAG, "getEmojiGroupInfo called, result: ${param.result.javaClass.name}")
+        methodGetEmojiGroupInfo.method.hookAfter { param ->
+            WeLogger.i(TAG, "getEmojiGroupInfo called, result: ${param.result.javaClass.name}")
 
-                    if (param.result !is java.util.List<*>) {
-                        WeLogger.d(TAG, "param result is not list, skipped")
-                        return@afterIfEnabled
-                    }
-
-                    // Inject each sticker pack
-                    stickerPacks.forEachIndexed { index, pack ->
-                        val stickersPackData = ContentValues()
-                        stickersPackData.put(
-                            "packGrayIconUrl",
-                            "https://avatars.githubusercontent.com/u/49312623"
-                        )
-                        stickersPackData.put(
-                            "packIconUrl",
-                            "https://avatars.githubusercontent.com/u/49312623"
-                        )
-                        stickersPackData.put("packName", pack.packName)
-                        stickersPackData.put("packStatus", 1)
-                        stickersPackData.put("productID", pack.appPackId)
-                        stickersPackData.put("status", 7)
-                        stickersPackData.put("sync", 2)
-
-                        val emojiGroupInfo = emojiGroupInfoCls.createInstance()
-                        emojiGroupInfoCls.getMethod("convertFrom",
-                            ContentValues::class.java, Boolean::class.java)
-                            .invoke(emojiGroupInfo, stickersPackData, true)
-
-                        (param.result as java.util.List<Any?>).add(index, emojiGroupInfo)
-                    }
-                    WeLogger.i(TAG, "injected ${stickerPacks.size} sticker packs")
-                }
+            if (param.result !is java.util.List<*>) {
+                WeLogger.d(TAG, "param result is not list, skipped")
+                return@hookAfter
             }
+
+            // Inject each sticker pack
+            stickerPacks.forEachIndexed { index, pack ->
+                val stickersPackData = ContentValues()
+                stickersPackData.put(
+                    "packGrayIconUrl",
+                    "https://avatars.githubusercontent.com/u/49312623"
+                )
+                stickersPackData.put(
+                    "packIconUrl",
+                    "https://avatars.githubusercontent.com/u/49312623"
+                )
+                stickersPackData.put("packName", pack.packName)
+                stickersPackData.put("packStatus", 1)
+                stickersPackData.put("productID", pack.appPackId)
+                stickersPackData.put("status", 7)
+                stickersPackData.put("sync", 2)
+
+                val emojiGroupInfo = emojiGroupInfoCls.createInstance()
+                emojiGroupInfoCls.getMethod("convertFrom",
+                    ContentValues::class.java, Boolean::class.java)
+                    .invoke(emojiGroupInfo, stickersPackData, true)
+
+                (param.result as java.util.List<Any?>).add(index, emojiGroupInfo)
+            }
+            WeLogger.i(TAG, "injected ${stickerPacks.size} sticker packs")
         }
 
         methodAddAllGroupItems.toDexMethod {

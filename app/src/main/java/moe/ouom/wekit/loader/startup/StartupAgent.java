@@ -7,7 +7,6 @@ import android.util.Log;
 
 import androidx.annotation.Keep;
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 
 import org.lsposed.hiddenapibypass.HiddenApiBypass;
 
@@ -15,8 +14,6 @@ import java.io.File;
 import java.lang.reflect.Field;
 
 import moe.ouom.wekit.BuildConfig;
-import moe.ouom.wekit.loader.hookapi.IHookBridge;
-import moe.ouom.wekit.loader.hookapi.ILoaderService;
 import moe.ouom.wekit.utils.log.WeLogger;
 
 
@@ -28,11 +25,9 @@ public class StartupAgent {
 
     @Keep
     public static void startup(
-            @NonNull String modulePath,
-            @NonNull String hostDataDir,
-            @NonNull ILoaderService loaderService,
-            @NonNull ClassLoader hostClassLoader,
-            @Nullable IHookBridge hookBridge
+        @NonNull String modulePath,
+        @NonNull String hostDataDir,
+        @NonNull ClassLoader hostClassLoader
     ) {
         if (sInitialized) {
             WeLogger.w(TAG, "already initialized");
@@ -46,8 +41,6 @@ public class StartupAgent {
 
         System.setProperty(StartupAgent.class.getName(), "true");
         StartupInfo.setModulePath(modulePath);
-        StartupInfo.setLoaderService(loaderService);
-        StartupInfo.setHookBridge(hookBridge);
         StartupInfo.setInHostProcess(true);
 
         // bypass hidden api
@@ -57,17 +50,6 @@ public class StartupAgent {
         var ctx = getBaseApplication(hostClassLoader);
 
         StartupHook.getInstance().initializeAfterAppCreate(ctx);
-    }
-
-    private static void initializeHookBridgeForEarlyStartup(@NonNull String hostDataDir) {
-        if (StartupInfo.getHookBridge() != null) {
-            return;
-        }
-        WeLogger.w(BuildConfig.TAG, "initializeHookBridgeForEarlyStartup w/o context");
-        var hostDataDirFile = new File(hostDataDir);
-        if (!hostDataDirFile.exists()) {
-            throw new IllegalStateException("Host data dir not found: " + hostDataDir);
-        }
     }
 
     private static void checkWriteXorExecuteForModulePath(@NonNull String modulePath) {

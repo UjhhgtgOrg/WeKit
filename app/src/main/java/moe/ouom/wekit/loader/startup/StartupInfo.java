@@ -3,12 +3,8 @@ package moe.ouom.wekit.loader.startup;
 import android.app.Application;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 
 import java.util.Objects;
-
-import moe.ouom.wekit.loader.hookapi.IHookBridge;
-import moe.ouom.wekit.loader.hookapi.ILoaderService;
 
 
 public class StartupInfo {
@@ -21,8 +17,6 @@ public class StartupInfo {
 
     private static Boolean isInitMethod;
     public static Application hostApp;
-    private static ILoaderService loaderService;
-    private static IHookBridge hookBridge;
 
     private static Boolean inHostProcess = null;
 
@@ -64,16 +58,6 @@ public class StartupInfo {
         StartupInfo.isInitMethod = b;
     }
 
-    @NonNull
-    public static ILoaderService getLoaderService() {
-        return loaderService;
-    }
-
-    public static void setLoaderService(@NonNull ILoaderService loaderService) {
-        Objects.requireNonNull(loaderService);
-        StartupInfo.loaderService = loaderService;
-    }
-
     public static boolean isInHostProcess() {
         if (inHostProcess == null) {
             throw new IllegalStateException("Host process status is not initialized");
@@ -87,15 +71,4 @@ public class StartupInfo {
         }
         StartupInfo.inHostProcess = inHostProcess;
     }
-
-    @Nullable
-    public static IHookBridge getHookBridge() {
-        return hookBridge;
-    }
-
-    public static void setHookBridge(@Nullable IHookBridge hookBridge) {
-        StartupInfo.hookBridge = hookBridge;
-    }
-
-
 }

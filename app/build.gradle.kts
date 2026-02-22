@@ -373,7 +373,7 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.android.material)
     implementation(libs.androidx.activity)
-    implementation(libs.androidx.constraintLayout) { exclude("androidx.appcompat", "appcompat") }
+    implementation(libs.androidx.constraintLayout)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.foundation)
@@ -395,9 +395,9 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.mmkv)
 
+    implementation(libs.yukihookapi.api)
+    ksp(libs.yukihookapi.ksp.xposed)
     compileOnly(libs.xposed.api)
-    compileOnly(projects.libs.common.libxposed.api)
-    implementation(projects.libs.common.libxposed.service)
     implementation(libs.dexlib2)
     implementation(libs.dexkit)
     implementation(libs.hiddenApiBypass)
@@ -409,8 +409,6 @@ dependencies {
 
     implementation(libs.rikka.rikkax.material.preference)
     implementation(libs.rikka.rikkax.appcompat)
-
-
     implementation(libs.material.dialogs.core)
     implementation(libs.material.dialogs.input)
     implementation(libs.androidx.preference)

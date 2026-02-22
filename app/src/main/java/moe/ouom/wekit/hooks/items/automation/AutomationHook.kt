@@ -30,8 +30,8 @@ import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.hooks.item.automation.EmbeddedBuiltinJs
 import moe.ouom.wekit.hooks.sdk.base.WeDatabaseListener
 import moe.ouom.wekit.hooks.sdk.protocol.intf.IWePkgInterceptor
-import moe.ouom.wekit.ui.utils.showComposeDialog
 import moe.ouom.wekit.ui.content.BaseHooksSettingsDialogContent
+import moe.ouom.wekit.ui.utils.showComposeDialog
 import moe.ouom.wekit.utils.WeProtoData
 import moe.ouom.wekit.utils.log.WeLogger
 import java.util.concurrent.CopyOnWriteArrayList
@@ -169,7 +169,7 @@ private fun AutomationSettingsDialogContent(rules: MutableList<AutomationRule>) 
 
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {

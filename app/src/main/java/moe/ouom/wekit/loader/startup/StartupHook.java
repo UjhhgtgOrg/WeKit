@@ -1,5 +1,6 @@
 package moe.ouom.wekit.loader.startup;
 
+import android.app.Application;
 import android.content.Context;
 import android.util.Log;
 
@@ -8,6 +9,11 @@ import androidx.annotation.NonNull;
 import java.io.File;
 
 import moe.ouom.wekit.BuildConfig;
+import moe.ouom.wekit.host.impl.HostInfo;
+import moe.ouom.wekit.loader.core.NativeCoreBridge;
+import moe.ouom.wekit.loader.core.WeLauncher;
+import moe.ouom.wekit.utils.common.SyncUtils;
+import moe.ouom.wekit.utils.log.WeLogger;
 
 /**
  * Startup hook for QQ They should act differently according to the process they belong to.
@@ -23,9 +29,6 @@ public class StartupHook {
     private static StartupHook sInstance;
     private static boolean sSecondStageInit = false;
 
-    private StartupHook() {
-    }
-
     /**
      * Entry point for static or dynamic initialization. NOTICE: Do NOT change the method name or signature.
      *
@@ -36,10 +39,19 @@ public class StartupHook {
             throw new IllegalStateException("Second stage init already executed");
         }
         HybridClassLoader.setHostClassLoader(ctx.getClassLoader());
-        StartupRoutine.execPostStartupInit(ctx);
+        execPostStartupInit(ctx);
         sSecondStageInit = true;
         deleteDirIfNecessaryNoThrow(ctx);
+    }
 
+    public static void execPostStartupInit(@NonNull Context ctx) {
+        // init all kotlin utils here
+        HostInfo.init((Application) ctx);
+        // perform full initialization for native core -- including primary and secondary native libraries
+        NativeCoreBridge.initNativeCore();
+        WeLogger.d("execPostStartupInit -> processName: " + SyncUtils.getProcessName());
+        var launcher = new WeLauncher();
+        launcher.init(ctx.getClassLoader(), ctx.getApplicationInfo(), ctx.getApplicationInfo().sourceDir, ctx);
     }
 
     static void deleteDirIfNecessaryNoThrow(Context ctx) {
@@ -82,12 +94,6 @@ public class StartupHook {
         }
         var msg = Log.getStackTraceString(th);
         Log.e(BuildConfig.TAG, msg);
-        try {
-            StartupInfo.getLoaderService().log(th);
-        } catch (NoClassDefFoundError | NullPointerException e) {
-            Log.e("Xposed", msg);
-            Log.e("EdXposed-Bridge", msg);
-        }
     }
 
     public void initializeAfterAppCreate(@NonNull Context ctx) {
