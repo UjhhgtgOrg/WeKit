@@ -668,7 +668,7 @@ object WeMessageApi : ApiHookItem(), IDexFind {
             assignValueToFirstFieldByType(paramsObj, Int::class.javaPrimitiveType!!, 4)
 
             val taskObj =
-                XposedHelpers.newInstance(taskClass, imgPath, 0, getSelfAlias(), toUser, paramsObj)
+                XposedHelpers.newInstance(taskClass, imgPath, 0, getSelfCustomWxId(), toUser, paramsObj)
             assignValueToLastFieldByType(taskObj, String::class.java, "media_generate_send_img")
 
             sendImageMethod?.invoke(serviceObj, taskObj)
@@ -723,7 +723,7 @@ object WeMessageApi : ApiHookItem(), IDexFind {
     /** 发送私有路径下的语音文件 */
     fun sendVoice(toUser: String, path: String, durationMs: Int): Boolean {
         return try {
-            val selfWxid = getSelfAlias()
+            val selfWxid = getSelfCustomWxId()
 
             // 获取 Service 实例
             val serviceInterface = voiceServiceInterfaceClass
@@ -787,7 +787,6 @@ object WeMessageApi : ApiHookItem(), IDexFind {
 
         WeLogger.d(TAG, "解析信息: AppId=$appId, Title=$title")
         return WeAppMsgApi.sendXmlAppMsg(toUser, title, appId, null, null, xmlContent)
-            ?: false
     }
 
     /**
@@ -825,7 +824,7 @@ object WeMessageApi : ApiHookItem(), IDexFind {
         }
     }
 
-    fun getSelfAlias(): String {
+    fun getSelfCustomWxId(): String {
         return getSelfAliasMethod?.invoke(null) as? String ?: ""
     }
 

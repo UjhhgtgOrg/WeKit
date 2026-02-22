@@ -748,7 +748,7 @@ object JsApiExposer {
                 thisObj: Scriptable?,
                 args: Array<out Any?>?
             ): Any {
-                return WeApi.selfAlias
+                return WeApi.selfCustomWxId
             }
         })
 

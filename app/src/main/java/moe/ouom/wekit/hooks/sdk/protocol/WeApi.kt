@@ -9,8 +9,9 @@ import java.text.SimpleDateFormat
 import java.util.Date
 
 object WeApi {
+
     /**
-     * 获取当前登录的微信ID
+     * 获取当前登录的微信 ID
      */
     val selfWxId: String
         get() {
@@ -44,9 +45,9 @@ object WeApi {
     /**
      * 获取自己的微信号
      */
-    val selfAlias: String
+    val selfCustomWxId: String
         get() {
-            return WeMessageApi.getSelfAlias()
+            return WeMessageApi.getSelfCustomWxId()
         }
 
     /**

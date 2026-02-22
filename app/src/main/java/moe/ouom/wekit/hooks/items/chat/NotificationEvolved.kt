@@ -9,16 +9,22 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.graphics.BitmapFactory
 import android.graphics.drawable.Icon
 import androidx.core.content.ContextCompat
 import com.highcapable.kavaref.KavaRef.Companion.asResolver
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import moe.ouom.wekit.constants.PackageConstants
 import moe.ouom.wekit.core.model.BaseSwitchFunctionHookItem
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.hooks.sdk.base.WeDatabaseApi
 import moe.ouom.wekit.hooks.sdk.base.WeMessageApi
+import moe.ouom.wekit.hooks.sdk.protocol.WeApi
 import moe.ouom.wekit.host.HostInfo
 import moe.ouom.wekit.utils.log.WeLogger
+import java.net.HttpURLConnection
 
 @HookItem(path = "聊天与消息/通知进化", desc = "让应用的新消息通知更易用\n1. '快速回复' 按钮\n2. '标记为已读' 按钮\n3. 使用原生对话样式 (MessagingStyle)")
 object NotificationEvolved : BaseSwitchFunctionHookItem() {
@@ -30,6 +36,8 @@ object NotificationEvolved : BaseSwitchFunctionHookItem() {
     // cache friends to avoid repeating sql queries
     // TODO: build a sql statement to directly query target contact
     private val friends by lazy { WeDatabaseApi.getFriends() }
+    // TODO: see if we can retrieve avatar icon from local storage instead of remote
+    private var meAvatarIcon: Icon? = null
 
     val notificationReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -72,6 +80,25 @@ object NotificationEvolved : BaseSwitchFunctionHookItem() {
         Notification.Builder::class.asResolver()
             .firstMethod { name = "build" }
             .hookBefore { param ->
+                // fetch the avatar at some point where we're sure that mmPrefs is initialized
+                if (meAvatarIcon == null) {
+                    CoroutineScope(Dispatchers.IO).launch {
+                        meAvatarIcon = runCatching {
+                            val urlString = WeDatabaseApi.getAvatarUrl(WeApi.selfWxId)
+                            val connection = java.net.URL(urlString).openConnection() as HttpURLConnection
+                            connection.doInput = true
+
+                            connection.inputStream.use { input ->
+                                val bitmap = BitmapFactory.decodeStream(input)
+                                WeLogger.i(TAG, "fetched me avatar")
+                                Icon.createWithBitmap(bitmap)
+                            }
+                        }.onFailure { e ->
+                            WeLogger.e(TAG, "failed to fetch me avatar", e)
+                        }.getOrNull()
+                    }
+                }
+
                 val builder = param.thisObject as Notification.Builder
                 val notification = builder.asResolver().firstField { type = Notification::class }.get() as Notification
                 val channelId = notification.channelId
@@ -109,15 +136,14 @@ object NotificationEvolved : BaseSwitchFunctionHookItem() {
                     WeLogger.i(TAG, "Enhancing notification for $title ($targetWxid)")
 
                     // 2. Build the MessagingStyle
-                    val mePerson = Person.Builder().setName("朕").build()
-                    val senderPerson = Person.Builder()
-                        .setName(title)
-                        // TODO: fetch the avatar bitmap here and set it via .setIcon()
-                        .build()
+                    // TODO: add cropping
+                    val mePerson = Person.Builder().setName("朕").setIcon(meAvatarIcon).build()
+                    val senderPerson = Person.Builder().setName(title).build()
 
                     val messagingStyle = Notification.MessagingStyle(mePerson)
                     messagingStyle.addMessage(cleanText, System.currentTimeMillis(), senderPerson)
 
+                    // FIXME: the >=2nd unread message from a group chat omits the sender's name
                     if (isGroupChat(targetWxid)) {
                         messagingStyle.isGroupConversation = true
                         messagingStyle.conversationTitle = title

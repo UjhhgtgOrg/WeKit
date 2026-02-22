@@ -19,7 +19,7 @@ object WeApiUtils {
 
     fun getSelfAlias(): String {
         return try {
-            WeApi.selfAlias
+            WeApi.selfCustomWxId
         } catch (e: Exception) {
             WeLogger.e(TAG, "获取当前微信号失败: ${e.message}")
             ""
