@@ -7,8 +7,9 @@ import moe.ouom.wekit.utils.log.WeLogger
 import org.json.JSONArray
 import org.json.JSONObject
 
+// TODO: move to JsApiExposer
 object WeDatabaseUtils {
-    private const val TAG = "WeDataBaseUtils"
+    private const val TAG = "WeDatabaseUtils"
 
     fun query(sql: String): Any {
         return try {
@@ -65,7 +66,7 @@ object WeDatabaseUtils {
         }
     }
 
-    fun getChatrooms(): Any {
+    fun getGroups(): Any {
         return try {
             WeDatabaseApi.getGroups().map { group ->
                 val jsonObject = JSONObject()
@@ -75,7 +76,7 @@ object WeDatabaseUtils {
                 jsonObject.put("quanPin", group.quanPin)
                 jsonObject.put("avatarUrl", group.avatarUrl)
                 jsonObject
-            }?.let { JSONArray(it) } ?: JSONArray()
+            }.let { JSONArray(it) }
         } catch (e: Exception) {
             WeLogger.e("WeDatabaseApi", "获取群聊异常: ${e.message}")
             JSONArray()
@@ -92,7 +93,7 @@ object WeDatabaseUtils {
                 jsonObject.put("signature", account.signature)
                 jsonObject.put("avatarUrl", account.avatarUrl)
                 jsonObject
-            }?.let { JSONArray(it) } ?: JSONArray()
+            }.let { JSONArray(it) }
         } catch (e: Exception) {
             WeLogger.e("WeDatabaseApi", "获取公众号异常: ${e.message}")
             JSONArray()
@@ -111,7 +112,7 @@ object WeDatabaseUtils {
                 jsonObject.put("createTime", message.createTime)
                 jsonObject.put("isSend", message.isSend)
                 jsonObject
-            }?.let { JSONArray(it) } ?: JSONArray()
+            }.let { JSONArray(it) }
         } catch (e: Exception) {
             WeLogger.e("WeDatabaseApi", "获取消息异常: ${e.message}")
             JSONArray()
@@ -141,7 +142,7 @@ object WeDatabaseUtils {
                 jsonObject.put("avatarUrl", member.avatarUrl)
                 jsonObject.put("encryptUserName", member.encryptedUsername)
                 jsonObject
-            }?.let { JSONArray(it) } ?: JSONArray()
+            }.let { JSONArray(it) }
         } catch (e: Exception) {
             WeLogger.e("WeDatabaseApi", "获取群成员异常: ${e.message}")
             JSONArray()

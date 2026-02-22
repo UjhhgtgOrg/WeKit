@@ -5,6 +5,7 @@ package moe.ouom.wekit.hooks.item.script
 import moe.ouom.wekit.hooks.sdk.protocol.WeApi
 import moe.ouom.wekit.utils.log.WeLogger
 
+// TODO: move to JsApiExposer
 object WeApiUtils {
     private const val TAG = "WeApiUtils"
 
@@ -17,7 +18,7 @@ object WeApiUtils {
         }
     }
 
-    fun getSelfAlias(): String {
+    fun getSelfCustomWxId(): String {
         return try {
             WeApi.selfCustomWxId
         } catch (e: Exception) {
