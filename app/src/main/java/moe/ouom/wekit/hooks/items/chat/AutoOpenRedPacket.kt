@@ -251,7 +251,7 @@ object AutoOpenRedPacket : BaseClickableFunctionHookItem(),
         }
     }
 
-    override fun onClick(context: Context?) {
+    override fun onClick(context: Context) {
         context?.let { ConfigDialog(it).show() }
     }
 

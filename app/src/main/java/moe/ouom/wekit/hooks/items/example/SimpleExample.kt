@@ -1,6 +1,9 @@
 package moe.ouom.wekit.hooks.items.example
 
 import android.util.Log
+import com.highcapable.kavaref.KavaRef.Companion.asResolver
+import com.highcapable.kavaref.extension.createInstance
+import com.highcapable.kavaref.extension.toClass
 import de.robv.android.xposed.XposedHelpers
 import moe.ouom.wekit.core.dsl.dexClass
 import moe.ouom.wekit.core.dsl.dexMethod
@@ -17,14 +20,14 @@ import org.luckypray.dexkit.DexKitBridge
 
 // 下面这一行在写功能的时候必须保留，否则 ksp 将无法标记此类，这里为了防止被扫描所以注释掉了
 //@HookItem(path = "example/示例写法", desc = "展示新架构的简化写法")
-class SimplifiedExample :
+class SimpleExample :
     BaseSwitchFunctionHookItem() /* 这里也可以继承 BaseClickableFunctionHookItem */, IDexFind {
 
     // DSL: Dex 方法委托（自动生成 key）
-    private val MethodTarget by dexMethod()
+    private val methodTargetMethod by dexMethod()
 
     // DSL: Dex 类委托（自动生成 key）
-    private val ExampleClass by dexClass()
+    private val classTargetClass by dexClass()
 
     // ========== Dex 查找与缓存 ==========
 
@@ -43,7 +46,7 @@ class SimplifiedExample :
         val descriptors = mutableMapOf<String, String>()
 
         // 查找目标方法
-        MethodTarget.find(dexKit, descriptors = descriptors) {
+        methodTargetMethod.find(dexKit, descriptors = descriptors) {
             matcher {
                 name = "targetMethod"
                 paramCount = 2
@@ -52,7 +55,7 @@ class SimplifiedExample :
         }
 
         // 查找目标类
-        ExampleClass.find(dexKit, descriptors = descriptors) {
+        classTargetClass.find(dexKit, descriptors = descriptors) {
             matcher {
                 usingStrings("ExampleClassName")
             }
@@ -67,8 +70,8 @@ class SimplifiedExample :
     // Hook 入口
     override fun entry(classLoader: ClassLoader) {
         // 日志输出请务必使用 `WeLogger`，他会自动添加 TAG，并且适配多种输出需求，如：
-        WeLogger.i("SimplifiedExample: 日志输出请务必使用 `WeLogger`，他会自动添加 TAG，并且适配多种输出需求，如：")
-        WeLogger.i("SimplifiedExample: 错误", Throwable())
+        WeLogger.i("SimplifiedExample", "日志输出请务必使用 `WeLogger`，他会自动添加 TAG，并且适配多种输出需求，如：")
+        WeLogger.i("SimplifiedExample",  "错误", Throwable())
         WeLogger.e("SimplifiedExample", "xxxxx")
         WeLogger.w("SimplifiedExample", "xxxxx")
         WeLogger.v("SimplifiedExample", "xxxxx")
@@ -80,7 +83,7 @@ class SimplifiedExample :
 
 
         // 方式 1: 使用全局优先级（推荐）
-        MethodTarget.toDexMethod {
+        methodTargetMethod.toDexMethod {
             hook {
                 beforeIfEnabled { param ->
                     // ...
@@ -90,7 +93,7 @@ class SimplifiedExample :
         }
 
         // 方式 2: 使用自定义优先级
-        MethodTarget.toDexMethod(priority = 100) {
+        methodTargetMethod.toDexMethod(priority = 100) {
             hook {
                 afterIfEnabled { param ->
                     // ...
@@ -100,23 +103,25 @@ class SimplifiedExample :
 
         // 方式 3: 使用 dexClass 委托直接访问 Class（推荐）
         // 直接使用 .clazz 访问器，自动反射获取 Class
-        XposedHelpers.newInstance(
-            ExampleClass.clazz,
-            "param1", "param2"
-        )
+        classTargetClass.clazz.createInstance("param1", "param2")
 
         // 方式 4: 这里拿 Hook A 作为例子 （使用全局 HOOK 优先级）
-        val clsReceiveLuckyMoney: Class<*> =
-            XposedHelpers.findClass("com.example.LuckyMoneyReceive", classLoader)
-        val mOnGYNetEnd = XposedHelpers.findMethodExact(
-            clsReceiveLuckyMoney,
-            "A",
-            Int::class.javaPrimitiveType,
-            String::class.java,
-            JSONObject::class.java
-        )
+        val clsReceiveLuckyMoney = "com.example.LuckyMoneyReceive".toClass(classLoader)
+//        val mOnGYNetEnd = XposedHelpers.findMethodExact(
+//            clsReceiveLuckyMoney,
+//            "A",
+//            Int::class.javaPrimitiveType,
+//            String::class.java,
+//            JSONObject::class.java
+//        )
+        val mOnGYNetEnd = clsReceiveLuckyMoney.asResolver()
+            .firstMethod {
+                name = "A"
+                parameters(Int::class, String::class, JSONObject::class)
+                // ^ 此处无须使用 .java 或 .javaPrimitiveType, KavaRef 会自动处理并转换
+            }
 
-        val h1 = hookAfter(mOnGYNetEnd) { param ->
+        val h1 = mOnGYNetEnd.hookAfter { param ->
             // ...
         }
 
@@ -166,7 +171,7 @@ class SimplifiedExample :
     }
 
     // 若继承 BaseClickableFunctionHookItem，可以重写此方法来定义点击事件
-//    override fun onClick(context: Context?) {
+//    override fun onClick(context: Context) {
 //        WeLogger.i("onClick")
 //        super.onClick(context)
 //    }

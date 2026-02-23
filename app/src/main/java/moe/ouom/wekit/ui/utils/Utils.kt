@@ -31,9 +31,6 @@ fun showComposeDialog(context: Context? = null, content: @Composable (onDismiss:
     val dialog = Dialog(ctx, android.R.style.Theme_DeviceDefault_Light_Dialog_NoActionBar_MinWidth)
     val lifecycleOwner = XposedLifecycleOwner().apply { onCreate(); onResume() }
 
-//    val displayMetrics = ctx.resources.displayMetrics
-//    val screenHeight = displayMetrics.heightPixels
-
     dialog.apply {
         window?.setBackgroundDrawable(Color.TRANSPARENT.toDrawable())
         window?.requestFeature(Window.FEATURE_NO_TITLE)
@@ -45,7 +42,6 @@ fun showComposeDialog(context: Context? = null, content: @Composable (onDismiss:
                 setViewTreeLifecycleOwner(lifecycleOwner)
                 setViewTreeViewModelStoreOwner(lifecycleOwner)
                 setViewTreeSavedStateRegistryOwner(lifecycleOwner)
-//                layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, screenHeight)
 
                 setContent {
                     AppTheme {
@@ -63,6 +59,5 @@ fun showComposeDialog(context: Context? = null, content: @Composable (onDismiss:
         window?.setBackgroundDrawable(Color.TRANSPARENT.toDrawable())
         setOnDismissListener { lifecycleOwner.onDestroy() }
         show()
-//        window?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, screenHeight)
     }
 }

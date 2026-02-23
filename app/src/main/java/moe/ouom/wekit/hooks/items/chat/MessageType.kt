@@ -1,6 +1,6 @@
 package moe.ouom.wekit.hooks.items.chat
 
-enum class MsgType(val code: Int) {
+enum class MessageType(val code: Int) {
     MOMENTS(0),
     TEXT(1),
     IMAGE(3),
@@ -42,9 +42,9 @@ enum class MsgType(val code: Int) {
     TEXT_WITH_QUOTE(822083633);
 
     companion object {
-        fun fromCode(code: Int): MsgType? = entries.find { it.code == code }
+        fun fromCode(code: Int): MessageType? = entries.find { it.code == code }
 
-        fun isType(code: Int, vararg types: MsgType): Boolean =
+        fun isType(code: Int, vararg types: MessageType): Boolean =
             types.any { it.code == code }
 
         fun isText(code: Int) = code == TEXT.code || code == TEXT_WITH_QUOTE.code

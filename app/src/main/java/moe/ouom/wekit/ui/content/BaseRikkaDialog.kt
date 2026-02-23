@@ -216,7 +216,7 @@ abstract class BaseRikkaDialog(
         iconName: String? = null,
         useFullKey: Boolean = false,
         summaryFormatter: ((String) -> String)? = null,
-    ): PreferenceViewShim {
+    ) {
         val configKey = resolveKey(key, useFullKey)
         val rk = nextKey("et_$configKey")
         rows += PrefRow.EditText(
@@ -227,7 +227,6 @@ abstract class BaseRikkaDialog(
             singleLine = singleLine, iconName = iconName,
             summaryFormatter = summaryFormatter,
         )
-        return PreferenceViewShim(rk)
     }
 
     protected fun addSelectPreference(
@@ -238,11 +237,10 @@ abstract class BaseRikkaDialog(
         defaultValue: Int,
         iconName: String? = null,
         useFullKey: Boolean = false,
-    ): PreferenceViewShim {
+    ) {
         val configKey = resolveKey(key, useFullKey)
         val rk = nextKey("sel_$configKey")
         rows += PrefRow.Select(rk, configKey, title, summary, options, defaultValue, iconName)
-        return PreferenceViewShim(rk)
     }
 
     protected fun addPreference(
@@ -250,10 +248,9 @@ abstract class BaseRikkaDialog(
         summary: String? = null,
         iconName: String? = null,
         onClick: ((View, TextView?) -> Unit)? = null,
-    ): TextView? {           // return type preserved for API compat
+    ) {           // return type preserved for API compat
         val rk = nextKey("pref_$title")
         rows += PrefRow.Plain(rk, title, summary, iconName, onClick)
-        return null                         // Compose doesn't expose a live TextView
     }
 
     protected fun setDependency(
@@ -606,6 +603,7 @@ private fun SimpleRow(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (iconName != null) {
+            // TODO: some icons' tint color is wrong (doesn't follow dark mode)
             val drawable = remember(iconName) { ModuleRes.getDrawable(iconName) }
             if (drawable != null) {
                 Image(

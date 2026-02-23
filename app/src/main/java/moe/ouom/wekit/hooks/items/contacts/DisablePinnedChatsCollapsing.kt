@@ -1,4 +1,4 @@
-package moe.ouom.wekit.hooks.item.contacts
+package moe.ouom.wekit.hooks.items.contacts
 
 import moe.ouom.wekit.core.dsl.dexMethod
 import moe.ouom.wekit.core.model.BaseSwitchFunctionHookItem

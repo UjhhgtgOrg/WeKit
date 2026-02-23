@@ -1,7 +1,10 @@
-package moe.ouom.wekit.hooks.items.enhance
+package moe.ouom.wekit.hooks.items.debug
 
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import com.afollestad.materialdialogs.MaterialDialog
@@ -9,8 +12,8 @@ import com.afollestad.materialdialogs.list.listItems
 import moe.ouom.wekit.core.model.BaseClickableFunctionHookItem
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.ui.utils.CommonContextWrapper
-import moe.ouom.wekit.utils.common.ToastUtils.showToast
-import moe.ouom.wekit.utils.common.Utils.formatFileSize
+import moe.ouom.wekit.utils.common.ToastUtils
+import moe.ouom.wekit.utils.common.Utils
 import moe.ouom.wekit.utils.crash.CrashLogManager
 import moe.ouom.wekit.utils.io.SafUtils
 import moe.ouom.wekit.utils.log.WeLogger
@@ -20,13 +23,13 @@ import java.util.Date
 import java.util.Locale
 
 @HookItem(
-    path = "优化与修复/崩溃日志查看器",
+    path = "调试/崩溃日志查看器",
     desc = "查看历史崩溃日志"
 )
 object CrashLogViewer : BaseClickableFunctionHookItem() {
     private var crashLogManager: CrashLogManager? = null
 
-    override fun onClick(context: Context?) {
+    override fun onClick(context: Context) {
         if (context == null) {
             WeLogger.e("CrashLogViewer", "Context is null")
             return
@@ -39,7 +42,7 @@ object CrashLogViewer : BaseClickableFunctionHookItem() {
                 crashLogManager = CrashLogManager(context)
             } catch (e: Throwable) {
                 WeLogger.e("[CrashLogViewer] Failed to initialize CrashLogManager", e)
-                showToast(context, "初始化失败: ${e.message}")
+                ToastUtils.showToast(context, "初始化失败: ${e.message}")
                 return
             }
         }
@@ -56,20 +59,20 @@ object CrashLogViewer : BaseClickableFunctionHookItem() {
             val logFiles = manager.allCrashLogs
 
             if (logFiles.isEmpty()) {
-                showToast(context, "暂无崩溃日志")
+                ToastUtils.showToast(context, "暂无崩溃日志")
                 return
             }
 
             // 构建日志列表
             val logItems = logFiles.map { file ->
                 val time = formatTime(file.lastModified())
-                val size = formatFileSize(file.length())
+                val size = Utils.formatFileSize(file.length())
                 "$time ($size)"
             }
 
             Handler(Looper.getMainLooper()).post {
                 try {
-                    val wrappedContext = CommonContextWrapper.createAppCompatContext(context)
+                    val wrappedContext = CommonContextWrapper.Companion.createAppCompatContext(context)
 
                     val listDialog = MaterialDialog(wrappedContext)
                         .title(text = "崩溃日志列表 (共${logFiles.size}条)")
@@ -91,12 +94,12 @@ object CrashLogViewer : BaseClickableFunctionHookItem() {
                     listDialog.show()
                 } catch (e: Throwable) {
                     WeLogger.e("[CrashLogViewer] Failed to show crash log list", e)
-                    showToast(context, "显示列表失败: ${e.message}")
+                    ToastUtils.showToast(context, "显示列表失败: ${e.message}")
                 }
             }
         } catch (e: Throwable) {
             WeLogger.e("[CrashLogViewer] Failed to show crash log list", e)
-            showToast(context, "加载日志列表失败: ${e.message}")
+            ToastUtils.showToast(context, "加载日志列表失败: ${e.message}")
         }
     }
 
@@ -116,7 +119,7 @@ object CrashLogViewer : BaseClickableFunctionHookItem() {
 
             Handler(Looper.getMainLooper()).post {
                 try {
-                    val wrappedContext = CommonContextWrapper.createAppCompatContext(context)
+                    val wrappedContext = CommonContextWrapper.Companion.createAppCompatContext(context)
 
                     val optionsDialog = MaterialDialog(wrappedContext)
                         .title(text = logFile.name)
@@ -129,7 +132,7 @@ object CrashLogViewer : BaseClickableFunctionHookItem() {
                                         // 复制简易信息
                                         val summary = buildCrashSummary(logFile)
                                         copyTextToClipboard(context, summary, "崩溃简易信息")
-                                        showToast(context, "简易信息已复制")
+                                        ToastUtils.showToast(context, "简易信息已复制")
                                     }
 
                                     2 -> copyLogToClipboard(context, logFile)
@@ -148,7 +151,7 @@ object CrashLogViewer : BaseClickableFunctionHookItem() {
                     optionsDialog.show()
                 } catch (e: Throwable) {
                     WeLogger.e("[CrashLogViewer] Failed to show crash log options", e)
-                    showToast(context, "显示选项失败: ${e.message}")
+                    ToastUtils.showToast(context, "显示选项失败: ${e.message}")
                 }
             }
         } catch (e: Throwable) {
@@ -162,12 +165,12 @@ object CrashLogViewer : BaseClickableFunctionHookItem() {
     private fun showCrashLogDetail(context: Context, logFile: File) {
         try {
             val manager = crashLogManager ?: run {
-                showToast(context, "管理器未初始化")
+                ToastUtils.showToast(context, "管理器未初始化")
                 return
             }
 
             val crashInfo = manager.readCrashLog(logFile) ?: run {
-                showToast(context, "读取日志失败")
+                ToastUtils.showToast(context, "读取日志失败")
                 return
             }
 
@@ -178,7 +181,7 @@ object CrashLogViewer : BaseClickableFunctionHookItem() {
 
             Handler(Looper.getMainLooper()).post {
                 try {
-                    val wrappedContext = CommonContextWrapper.createAppCompatContext(context)
+                    val wrappedContext = CommonContextWrapper.Companion.createAppCompatContext(context)
 
                     // 创建可选择文本的对话框
                     val dialog = MaterialDialog(wrappedContext)
@@ -199,12 +202,12 @@ object CrashLogViewer : BaseClickableFunctionHookItem() {
                     WeLogger.i("CrashLogViewer", "Crash detail dialog shown successfully")
                 } catch (e: Throwable) {
                     WeLogger.e("[CrashLogViewer] Failed to show crash log detail", e)
-                    showToast(context, "显示详情失败: ${e.message}")
+                    ToastUtils.showToast(context, "显示详情失败: ${e.message}")
                 }
             }
         } catch (e: Throwable) {
             WeLogger.e("[CrashLogViewer] Failed to show crash log detail", e)
-            showToast(context, "显示详情失败: ${e.message}")
+            ToastUtils.showToast(context, "显示详情失败: ${e.message}")
         }
     }
 
@@ -215,20 +218,20 @@ object CrashLogViewer : BaseClickableFunctionHookItem() {
         try {
             val manager = crashLogManager ?: return
             val crashInfo = manager.readCrashLog(logFile) ?: run {
-                showToast(context, "读取日志失败")
+                ToastUtils.showToast(context, "读取日志失败")
                 return
             }
 
             val clipboard =
-                context.getSystemService(Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
-            val clip = android.content.ClipData.newPlainText("Crash Log", crashInfo)
+                context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+            val clip = ClipData.newPlainText("Crash Log", crashInfo)
             clipboard?.setPrimaryClip(clip)
 
             WeLogger.i("CrashLogViewer", "Crash log copied to clipboard: ${logFile.name}")
-            showToast(context, "日志已复制到剪贴板")
+            ToastUtils.showToast(context, "日志已复制到剪贴板")
         } catch (e: Throwable) {
             WeLogger.e("[CrashLogViewer] Failed to copy log to clipboard", e)
-            showToast(context, "复制失败: ${e.message}")
+            ToastUtils.showToast(context, "复制失败: ${e.message}")
         }
     }
 
@@ -239,7 +242,7 @@ object CrashLogViewer : BaseClickableFunctionHookItem() {
         try {
             val manager = crashLogManager ?: return
             val crashInfo = manager.readCrashLog(logFile) ?: run {
-                showToast(context, "读取日志失败")
+                ToastUtils.showToast(context, "读取日志失败")
                 return
             }
 
@@ -256,7 +259,7 @@ object CrashLogViewer : BaseClickableFunctionHookItem() {
             WeLogger.i("CrashLogViewer", "Sharing crash log: ${logFile.name}")
         } catch (e: Throwable) {
             WeLogger.e("[CrashLogViewer] Failed to share log", e)
-            showToast(context, "分享失败: ${e.message}")
+            ToastUtils.showToast(context, "分享失败: ${e.message}")
         }
     }
 
@@ -267,7 +270,7 @@ object CrashLogViewer : BaseClickableFunctionHookItem() {
         try {
             Handler(Looper.getMainLooper()).post {
                 try {
-                    val wrappedContext = CommonContextWrapper.createAppCompatContext(context)
+                    val wrappedContext = CommonContextWrapper.Companion.createAppCompatContext(context)
 
                     SafUtils.requestSaveFile(wrappedContext)
                         .setDefaultFileName("wekit_${logFile.name}")
@@ -276,32 +279,32 @@ object CrashLogViewer : BaseClickableFunctionHookItem() {
                             writeLogToUri(context, logFile, uri)
                         }
                         .onCancel {
-                            showToast(context, "取消导出")
+                            ToastUtils.showToast(context, "取消导出")
                         }
                         .commit()
 
                 } catch (e: Throwable) {
                     WeLogger.e("[CrashLogViewer] Failed to start SAF export", e)
-                    showToast(context, "启动导出失败: ${e.message}")
+                    ToastUtils.showToast(context, "启动导出失败: ${e.message}")
                 }
             }
         } catch (e: Throwable) {
             WeLogger.e("[CrashLogViewer] Failed to export log", e)
-            showToast(context, "导出错误: ${e.message}")
+            ToastUtils.showToast(context, "导出错误: ${e.message}")
         }
     }
 
     /**
      * 将日志文件内容写入到用户选择的 Uri 中
      */
-    private fun writeLogToUri(context: Context, sourceFile: File, targetUri: android.net.Uri) {
+    private fun writeLogToUri(context: Context, sourceFile: File, targetUri: Uri) {
         // 建议在子线程执行 IO 操作，防止阻塞主线程
         Thread {
             try {
                 val manager = crashLogManager ?: return@Thread
                 val crashInfo = manager.readCrashLog(sourceFile) ?: run {
                     Handler(Looper.getMainLooper()).post {
-                        showToast(context, "读取源日志失败")
+                        ToastUtils.showToast(context, "读取源日志失败")
                     }
                     return@Thread
                 }
@@ -315,12 +318,12 @@ object CrashLogViewer : BaseClickableFunctionHookItem() {
                 WeLogger.i("CrashLogViewer", "Exported log to URI: $targetUri")
 
                 Handler(Looper.getMainLooper()).post {
-                    showToast(context, "导出成功")
+                    ToastUtils.showToast(context, "导出成功")
                 }
             } catch (e: Throwable) {
                 WeLogger.e("[CrashLogViewer] Failed to write to URI", e)
                 Handler(Looper.getMainLooper()).post {
-                    showToast(context, "写入文件失败: ${e.message}")
+                    ToastUtils.showToast(context, "写入文件失败: ${e.message}")
                 }
             }
         }.start()
@@ -332,7 +335,7 @@ object CrashLogViewer : BaseClickableFunctionHookItem() {
     private fun confirmDeleteLog(context: Context, logFile: File) {
         Handler(Looper.getMainLooper()).post {
             try {
-                val wrappedContext = CommonContextWrapper.createAppCompatContext(context)
+                val wrappedContext = CommonContextWrapper.Companion.createAppCompatContext(context)
 
                 MaterialDialog(wrappedContext)
                     .title(text = "确认删除")
@@ -360,13 +363,13 @@ object CrashLogViewer : BaseClickableFunctionHookItem() {
             val manager = crashLogManager ?: return
             if (manager.deleteCrashLog(logFile)) {
                 WeLogger.i("CrashLogViewer", "Crash log deleted: ${logFile.name}")
-                showToast(context, "日志已删除")
+                ToastUtils.showToast(context, "日志已删除")
             } else {
-                showToast(context, "删除失败")
+                ToastUtils.showToast(context, "删除失败")
             }
         } catch (e: Throwable) {
             WeLogger.e("[CrashLogViewer] Failed to delete log", e)
-            showToast(context, "删除失败: ${e.message}")
+            ToastUtils.showToast(context, "删除失败: ${e.message}")
         }
     }
 
@@ -376,7 +379,7 @@ object CrashLogViewer : BaseClickableFunctionHookItem() {
     private fun confirmDeleteAllLogs(context: Context) {
         Handler(Looper.getMainLooper()).post {
             try {
-                val wrappedContext = CommonContextWrapper.createAppCompatContext(context)
+                val wrappedContext = CommonContextWrapper.Companion.createAppCompatContext(context)
 
                 MaterialDialog(wrappedContext)
                     .title(text = "确认删除")
@@ -400,10 +403,10 @@ object CrashLogViewer : BaseClickableFunctionHookItem() {
             val manager = crashLogManager ?: return
             val count = manager.deleteAllCrashLogs()
             WeLogger.i("CrashLogViewer", "Deleted $count crash logs")
-            showToast(context, "已删除 $count 条日志")
+            ToastUtils.showToast(context, "已删除 $count 条日志")
         } catch (e: Throwable) {
             WeLogger.e("[CrashLogViewer] Failed to delete all logs", e)
-            showToast(context, "删除失败: ${e.message}")
+            ToastUtils.showToast(context, "删除失败: ${e.message}")
         }
     }
 
@@ -418,7 +421,7 @@ object CrashLogViewer : BaseClickableFunctionHookItem() {
             val summary = StringBuilder()
             summary.append("文件名: ${logFile.name}\n")
             summary.append("时间: ${formatTime(logFile.lastModified())}\n")
-            summary.append("大小: ${formatFileSize(logFile.length())}\n\n")
+            summary.append("大小: ${Utils.formatFileSize(logFile.length())}\n\n")
 
             // 提取关键信息
             val lines = crashInfo.lines()
@@ -459,13 +462,13 @@ object CrashLogViewer : BaseClickableFunctionHookItem() {
     private fun copyTextToClipboard(context: Context, text: String, label: String = "Text") {
         try {
             val clipboard =
-                context.getSystemService(Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
-            val clip = android.content.ClipData.newPlainText(label, text)
+                context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+            val clip = ClipData.newPlainText(label, text)
             clipboard?.setPrimaryClip(clip)
             WeLogger.i("CrashLogViewer", "Text copied to clipboard: $label")
         } catch (e: Throwable) {
             WeLogger.e("[CrashLogViewer] Failed to copy text to clipboard", e)
-            showToast(context, "复制失败: ${e.message}")
+            ToastUtils.showToast(context, "复制失败: ${e.message}")
         }
     }
 

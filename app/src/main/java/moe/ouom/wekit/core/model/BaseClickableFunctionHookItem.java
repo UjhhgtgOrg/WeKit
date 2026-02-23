@@ -121,6 +121,6 @@ public abstract class BaseClickableFunctionHookItem extends BaseHookItem {
      *
      * @param context 上下文
      */
-    public abstract void onClick(Context context);
+    public abstract void onClick(@NonNull Context context);
 
 }

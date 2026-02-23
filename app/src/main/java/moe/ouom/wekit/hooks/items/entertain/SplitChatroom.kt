@@ -49,7 +49,7 @@ import moe.ouom.wekit.utils.log.WeLogger
 @HookItem(path = "娱乐/分裂群组", desc = "让群聊一分为二")
 object SplitChatroom : BaseClickableFunctionHookItem() {
 
-    override fun onClick(context: Context?) {
+    override fun onClick(context: Context) {
         context ?: return
 
         val groups = try {

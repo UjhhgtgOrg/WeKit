@@ -1,0 +1,103 @@
+package moe.ouom.wekit.hooks.items.chat
+
+import android.content.Context
+import android.view.MenuItem
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import moe.ouom.wekit.config.WeConfig
+import moe.ouom.wekit.constants.Constants
+import moe.ouom.wekit.core.dsl.dexMethod
+import moe.ouom.wekit.core.model.BaseClickableFunctionHookItem
+import moe.ouom.wekit.dexkit.intf.IDexFind
+import moe.ouom.wekit.hooks.core.annotation.HookItem
+import moe.ouom.wekit.ui.utils.showComposeDialog
+import org.luckypray.dexkit.DexKitBridge
+
+@HookItem(path = "聊天与消息/移除消息菜单项", desc = "从消息的长按菜单中移除指定名称的菜单项")
+object RemoveChatMessageContextMenuItems : BaseClickableFunctionHookItem(), IDexFind {
+
+    // although there are multiple addMenuItem() methods, i only found the usage of those two in the context menu of chat messages
+    private val methodAddMenuItem1 by dexMethod()
+    private val methodAddMenuItem2 by dexMethod()
+    private val config by lazy { WeConfig.getDefaultConfig() }
+    private const val KEY_REMOVED_ITEM_NAMES = "removed_menu_item_names"
+    private const val DEFAULT_REMOVED_ITEM_NAMES = "收藏,提醒,翻译,搜一搜,编辑,打开"
+
+    override fun entry(classLoader: ClassLoader) {
+        methodAddMenuItem1.toDexMethod {
+            hook {
+                beforeIfEnabled { param ->
+                    val name = param.args[3] as CharSequence
+                    val removedNames = config.getStringPrek(KEY_REMOVED_ITEM_NAMES, DEFAULT_REMOVED_ITEM_NAMES).split(',')
+
+                    if (removedNames.contains(name)) {
+                        param.result = null
+                    }
+                }
+            }
+        }
+
+        methodAddMenuItem2.toDexMethod {
+            hook {
+                beforeIfEnabled { param ->
+                    val name = param.args[3] as CharSequence
+                    val removedNames = config.getStringPrek(KEY_REMOVED_ITEM_NAMES, DEFAULT_REMOVED_ITEM_NAMES).split(',')
+
+                    if (removedNames.contains(name)) {
+                        param.result = null
+                    }
+                }
+            }
+        }
+    }
+
+    override fun dexFind(dexKit: DexKitBridge): Map<String, String> {
+        val descriptors = mutableMapOf<String, String>()
+
+        methodAddMenuItem1.find(dexKit, descriptors) {
+            matcher {
+                declaredClass {
+                    addFieldForType(List::class.javaObjectType)
+                    addFieldForType(CharSequence::class.java)
+                    addFieldForType(Context::class.java)
+                }
+
+                name = "add"
+                paramTypes(Int::class.java, Int::class.java, Int::class.java, CharSequence::class.java)
+                returnType(MenuItem::class.java)
+            }
+        }
+
+        methodAddMenuItem2.find(dexKit, descriptors) {
+            matcher {
+                declaredClass(methodAddMenuItem1.method.declaringClass)
+                paramTypes(Int::class.java, Int::class.java, Int::class.java, CharSequence::class.java, Int::class.java)
+                returnType(MenuItem::class.java)
+            }
+        }
+
+        return descriptors
+    }
+
+    override fun onClick(context: Context) {
+        showComposeDialog(context) { onDismiss ->
+            var removedNames by remember { mutableStateOf(config.getStringPrek(KEY_REMOVED_ITEM_NAMES, DEFAULT_REMOVED_ITEM_NAMES)) }
+            AlertDialog(onDismissRequest = onDismiss,
+                title = { Text("移除消息菜单项") },
+                text = { TextField(value = removedNames,
+                    onValueChange = { removedNames = it },
+                    label = { Text("要移除的菜单项名称 (以逗号分割):") }) },
+                dismissButton = { TextButton(onClick = onDismiss) { Text("取消") } },
+                confirmButton = { TextButton(onClick = {
+                    config.putString(Constants.PrekXXX + KEY_REMOVED_ITEM_NAMES, removedNames)
+                    onDismiss()
+                }) { Text("确定") } })
+        }
+    }
+}

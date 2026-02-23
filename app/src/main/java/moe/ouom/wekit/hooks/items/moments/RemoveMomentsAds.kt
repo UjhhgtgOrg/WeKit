@@ -1,4 +1,4 @@
-package moe.ouom.wekit.hooks.item.moments
+package moe.ouom.wekit.hooks.items.moments
 
 import com.highcapable.kavaref.KavaRef.Companion.asResolver
 import com.highcapable.kavaref.extension.toClass

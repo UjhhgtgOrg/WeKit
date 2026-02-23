@@ -20,6 +20,11 @@ import com.highcapable.kavaref.KavaRef.Companion.asResolver
 import com.highcapable.kavaref.condition.type.Modifiers
 import com.highcapable.kavaref.extension.createInstance
 import com.highcapable.kavaref.extension.toClass
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import moe.ouom.wekit.core.dsl.dexClass
@@ -34,7 +39,6 @@ import moe.ouom.wekit.utils.common.ToastUtils
 import moe.ouom.wekit.utils.io.PathUtils
 import moe.ouom.wekit.utils.log.WeLogger
 import org.luckypray.dexkit.DexKitBridge
-import java.nio.file.FileAlreadyExistsException
 import java.nio.file.Path
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.createDirectories
@@ -45,7 +49,7 @@ import kotlin.io.path.readText
 import kotlin.io.path.walk
 import kotlin.io.path.writeText
 
-@HookItem(path = "聊天与消息/贴纸包同步", desc = "从指定路径将所有图片注册为贴纸包\n(搭配 Telegram Xposed 模块 StickersSync 使用, 或使用自带此功能的 (例如 Nagram) 的第三方客户端)")
+@HookItem(path = "聊天与消息/贴纸包同步", desc = "从指定路径将所有图片注册为贴纸包\n搭配 Telegram Xposed 模块 StickersSync 使用, 或使用自带此功能的 (例如 Nagram) 的第三方客户端\n注意: 每张贴纸第一次加载由于需要计算 MD5 速度较慢, 后续加载得益于缓存与并发速度将大大加快 (~2000 个贴纸仅需 4 秒)")
 object StickersSync : BaseClickableFunctionHookItem(), IDexFind {
 
     private const val TAG = "StickersSync"
@@ -56,7 +60,7 @@ object StickersSync : BaseClickableFunctionHookItem(), IDexFind {
         val appPackId: String,
         val packId: String,
         val packName: String,
-        val stickers: MutableList<Any>
+        val stickers: List<Any>
     )
 
     @Serializable
@@ -87,106 +91,100 @@ object StickersSync : BaseClickableFunctionHookItem(), IDexFind {
         }
     }
 
-    private val stickerPacks: List<StickerPack> by lazy {
-        // so that showToast() works
-        val packs = mutableListOf<StickerPack>()
-        val dir = stickersDir
-        if (dir == null) {
-            WeLogger.e(TAG, "could not get stickers directory, skipped")
-            return@lazy packs
+    private suspend fun safeShowToast(message: String) {
+        withContext(Dispatchers.Main) {
+            ToastUtils.showToast(message)
         }
-
-        try {
-            dir.createDirectories()
-        }
-        catch (_: FileAlreadyExistsException) {
-            WeLogger.i(TAG, "stickers directory is a symbolic link and already exists, ignoring exception")
-        }
-        catch (ex: Exception) {
-            WeLogger.e(TAG, "failed to create stickers directory, skipped", ex)
-            return@lazy packs
-        }
-
-        ToastUtils.showToast("正在加载贴纸包, 请稍候...")
-
-        // Get all subdirectories as pack IDs
-        val packDirs = dir.toFile().listFiles()?.filter { it.isDirectory } ?: emptyList()
-
-        if (packDirs.isEmpty()) {
-            WeLogger.w(TAG, "no pack directories found in ${dir.absolutePathString()}")
-            ToastUtils.showToast("未找到任何贴纸包")
-            return@lazy packs
-        }
-
-        var totalProcessed = 0
-        packDirs.forEach { packDir ->
-            val packId = packDir.name
-            val packPath = packDir.toPath()
-            val stickerList = mutableListOf<Any>()
-
-            WeLogger.d(TAG, "processing pack: $packId")
-            // ToastUtils.showToast("正在加载 '$packId'...")
-
-            // Load existing hash cache
-            val hashCache = loadHashCache(packPath)
-            val newHashes = mutableMapOf<String, String>()
-
-            val images = packPath.walk()
-                .filter { path ->
-                    path.isRegularFile() && path.extension.lowercase() in ALLOWED_STICKER_EXTENSIONS
-                }
-                .toList()
-
-            images.forEach { path ->
-                val actualPath = if (path.extension.lowercase() == "webp") {
-                    convertWebpToPng(path) ?: return@forEach
-                } else {
-                    path
-                }
-
-                val absPath = actualPath.absolutePathString()
-                val fileName = actualPath.fileName.toString()
-
-                // Use cached hash if available, otherwise compute
-                val md5 = hashCache.hashes[fileName] ?: run {
-                    val computed = getEmojiMd5FromPath(HostInfo.getApplication(), absPath)
-                    // WeLogger.d(TAG, "computed new hash for $fileName: $computed")
-                    computed
-                }
-                newHashes[fileName] = md5
-
-                val emojiThumb = getEmojiInfoByMd5(md5)
-                methodSaveEmojiThumb.method.invoke(emojiThumb, null, true)
-                val groupItemInfo = classGroupItemInfo.clazz
-                    .getDeclaredConstructor("com.tencent.mm.api.IEmojiInfo".toClass(),
-                        Int::class.java, String::class.java, Int::class.java)
-                    .newInstance(emojiThumb, 2, "", 0)
-                stickerList.add(groupItemInfo)
-            }
-
-            // Save updated hash cache
-            if (newHashes.isNotEmpty()) {
-                saveHashCache(packPath, HashCache(newHashes))
-            }
-
-            if (stickerList.isNotEmpty()) {
-                packs.add(StickerPack(
-                    appPackId = "$STICKER_PACK_ID_PREFIX.$packId",
-                    packId = packId,
-                    packName = packId,
-                    stickers = stickerList
-                ))
-                totalProcessed += images.size
-                WeLogger.i(TAG, "loaded pack '$packId' with ${images.size} stickers")
-                // ToastUtils.showToast("成功加载 '${packId.take(10)}...', 含 ${images.size} 个表情, 共 $totalProcessed 个表情")
-            }
-        }
-
-        ToastUtils.showToast("成功加载 ${packs.size} 个贴纸包, 共 $totalProcessed 个贴纸")
-        WeLogger.i(TAG, "processed ${packs.size} packs with total $totalProcessed stickers")
-        return@lazy packs
     }
 
+    private val stickerPacks: List<StickerPack> by lazy {
+        runBlocking {
+            val dir = stickersDir
+            if (dir == null) {
+                WeLogger.e(TAG, "could not get stickers directory, skipped")
+                return@runBlocking emptyList<StickerPack>()
+            }
+
+            safeShowToast("正在加载贴纸包...")
+
+            withContext(Dispatchers.IO) {
+                try {
+                    dir.createDirectories()
+                } catch (ex: Exception) {
+                    WeLogger.e(TAG, "failed to create stickers directory", ex)
+                    return@withContext emptyList<StickerPack>()
+                }
+
+                val packDirs = dir.toFile().listFiles()?.filter { it.isDirectory } ?: emptyList()
+                if (packDirs.isEmpty()) {
+                    safeShowToast("未找到任何贴纸包")
+                    return@withContext emptyList<StickerPack>()
+                }
+
+                // 1. 并发处理每一个贴纸包 (Pack)
+                val packs = packDirs.map { packDir ->
+                    async {
+                        val packId = packDir.name
+                        val packPath = packDir.toPath()
+                        val stickers = mutableListOf<Any>()
+
+                        val hashCache = loadHashCache(packPath)
+                        val newHashes = mutableMapOf<String, String>()
+
+                        val images = packPath.walk()
+                            .filter { it.isRegularFile() && it.extension.lowercase() in ALLOWED_STICKER_EXTENSIONS }
+                            .toList()
+
+                        images.forEach { path ->
+                            try {
+                                val actualPath = if (path.extension.lowercase() == "webp") {
+                                    convertWebpToPng(path) ?: return@forEach
+                                } else {
+                                    path
+                                }
+
+                                val absPath = actualPath.absolutePathString()
+                                val fileName = actualPath.fileName.toString()
+
+                                val md5 = hashCache.hashes[fileName] ?: getEmojiMd5FromPath(HostInfo.getApplication(), absPath)
+                                newHashes[fileName] = md5
+
+                                // 反射调用构造微信对象
+                                val emojiThumb = getEmojiInfoByMd5(md5)
+                                methodSaveEmojiThumb.method.invoke(emojiThumb, null, true)
+                                val groupItemInfo = classGroupItemInfo.clazz
+                                    .getDeclaredConstructor("com.tencent.mm.api.IEmojiInfo".toClass(),
+                                        Int::class.java, String::class.java, Int::class.java)
+                                    .newInstance(emojiThumb, 2, "", 0)
+                                stickers.add(groupItemInfo)
+                            } catch (e: Exception) {
+                                WeLogger.e(TAG, "Failed to load sticker: $path", e)
+                            }
+                        }
+
+                        if (newHashes.isNotEmpty()) {
+                            saveHashCache(packPath, HashCache(newHashes))
+                        }
+
+                        if (stickers.isNotEmpty()) {
+                            WeLogger.i(TAG, "loaded pack '$packId' with ${stickers.size} stickers")
+                            StickerPack(
+                                appPackId = "$STICKER_PACK_ID_PREFIX.$packId",
+                                packId = packId,
+                                packName = packId,
+                                stickers = stickers
+                            )
+                        } else null
+                    }
+                }.awaitAll().filterNotNull()
+
+                val totalStickers = packs.sumOf { it.stickers.size }
+                safeShowToast("成功加载 ${packs.size} 个包, 共 $totalStickers 个贴纸")
+
+                packs
+            }
+        }
+    }
     private fun convertWebpToPng(webpPath: Path): Path? {
         return try {
             val pngPath = webpPath.resolveSibling("${webpPath.nameWithoutExtension}.png")
@@ -217,7 +215,7 @@ object StickersSync : BaseClickableFunctionHookItem(), IDexFind {
 
     private val methodGetEmojiGroupInfo by dexMethod()
     private val methodAddAllGroupItems by dexMethod()
-    // this module doesn't provide a builtin dexConstructor, so i have to use dexClass, and then use .createInstance()
+    // this module doesn't provide a builtin dexConstructor, so I have to use dexClass, and then use .createInstance()
     private val classGroupItemInfo by dexClass()
     private val classEmojiMgrImpl by dexClass()
     private val classEmojiStorageMgr by dexClass()
@@ -486,7 +484,7 @@ object StickersSync : BaseClickableFunctionHookItem(), IDexFind {
     }
 
     @OptIn(ExperimentalMaterial3Api::class)
-    override fun onClick(context: Context?) {
+    override fun onClick(context: Context) {
         showComposeDialog(context) { onDismiss ->
             AlertDialog(onDismissRequest = onDismiss,
                 title = { Text("贴纸表情同步") },

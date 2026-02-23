@@ -1,16 +1,20 @@
-package moe.ouom.wekit.hooks.items.enhance
+package moe.ouom.wekit.hooks.items.debug
 
 import android.app.Activity
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
+import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import android.os.Process
+import android.widget.Toast
 import com.afollestad.materialdialogs.MaterialDialog
 import moe.ouom.wekit.config.RuntimeConfig
 import moe.ouom.wekit.core.model.BaseSwitchFunctionHookItem
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.ui.utils.CommonContextWrapper
-import moe.ouom.wekit.utils.Initiator.loadClass
+import moe.ouom.wekit.utils.Initiator
 import moe.ouom.wekit.utils.crash.CrashLogManager
 import moe.ouom.wekit.utils.crash.JavaCrashHandler
 import moe.ouom.wekit.utils.io.SafUtils
@@ -18,7 +22,7 @@ import moe.ouom.wekit.utils.log.WeLogger
 import java.io.File
 
 @HookItem(
-    path = "优化与修复/崩溃拦截",
+    path = "调试/崩溃拦截",
     desc = "拦截 Java 层崩溃并记录详细信息，支持查看和导出日志"
 )
 object CrashInterceptor : BaseSwitchFunctionHookItem() {
@@ -32,7 +36,7 @@ object CrashInterceptor : BaseSwitchFunctionHookItem() {
     override fun entry(classLoader: ClassLoader) {
         try {
             // 获取 Application Context
-            val activityThreadClass = loadClass("android.app.ActivityThread")
+            val activityThreadClass = Initiator.loadClass("android.app.ActivityThread")
             val currentApplicationMethod = activityThreadClass.getMethod("currentApplication")
             appContext = currentApplicationMethod.invoke(null) as? Context
 
@@ -180,7 +184,7 @@ object CrashInterceptor : BaseSwitchFunctionHookItem() {
             Handler(Looper.getMainLooper()).post {
                 try {
                     dismissPendingDialog()
-                    val wrappedContext = CommonContextWrapper.createAppCompatContext(activity)
+                    val wrappedContext = CommonContextWrapper.Companion.createAppCompatContext(activity)
 
                     pendingDialog = MaterialDialog(wrappedContext)
                         .title(text = "检测到上次 Java 崩溃")
@@ -227,7 +231,7 @@ object CrashInterceptor : BaseSwitchFunctionHookItem() {
             Handler(Looper.getMainLooper()).post {
                 try {
                     dismissPendingDialog()
-                    val wrappedContext = CommonContextWrapper.createAppCompatContext(activity)
+                    val wrappedContext = CommonContextWrapper.Companion.createAppCompatContext(activity)
 
                     // 限制显示长度，防止卡死
                     val maxDisplayLength = 15 * 1024
@@ -280,7 +284,7 @@ object CrashInterceptor : BaseSwitchFunctionHookItem() {
      */
     private fun exportLog(activity: Activity, logFile: File) {
         try {
-            val wrappedContext = CommonContextWrapper.createAppCompatContext(activity)
+            val wrappedContext = CommonContextWrapper.Companion.createAppCompatContext(activity)
             val fileName = "crash_${logFile.name}"
 
             SafUtils.requestSaveFile(wrappedContext)
@@ -303,7 +307,7 @@ object CrashInterceptor : BaseSwitchFunctionHookItem() {
     /**
      * 将日志写入 Uri
      */
-    private fun writeLogToUri(context: Context, sourceFile: File, targetUri: android.net.Uri) {
+    private fun writeLogToUri(context: Context, sourceFile: File, targetUri: Uri) {
         Thread {
             try {
                 val manager = crashLogManager ?: return@Thread
@@ -366,8 +370,8 @@ object CrashInterceptor : BaseSwitchFunctionHookItem() {
     private fun copyToClipboard(context: Context, text: String) {
         try {
             val clipboard =
-                context.getSystemService(Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
-            val clip = android.content.ClipData.newPlainText("Crash Log", text)
+                context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+            val clip = ClipData.newPlainText("Crash Log", text)
             clipboard?.setPrimaryClip(clip)
             showToast("已复制到剪贴板")
         } catch (e: Throwable) {
@@ -379,7 +383,7 @@ object CrashInterceptor : BaseSwitchFunctionHookItem() {
         try {
             val context = appContext ?: return
             Handler(Looper.getMainLooper()).post {
-                android.widget.Toast.makeText(context, message, android.widget.Toast.LENGTH_SHORT)
+                Toast.makeText(context, message, Toast.LENGTH_SHORT)
                     .show()
             }
         } catch (e: Throwable) {

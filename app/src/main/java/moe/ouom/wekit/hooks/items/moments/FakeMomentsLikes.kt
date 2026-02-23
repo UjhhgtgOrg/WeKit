@@ -1,5 +1,6 @@
-package moe.ouom.wekit.hooks.item.moments
+package moe.ouom.wekit.hooks.items.moments
 
+import android.R
 import android.content.ContentValues
 import android.view.ContextMenu
 import com.afollestad.materialdialogs.MaterialDialog
@@ -41,7 +42,7 @@ object FakeMomentsLikes : BaseSwitchFunctionHookItem(), WeDatabaseListener.IUpda
 
     private val onCreateListener = WeMomentsContextMenuApi.IOnCreateListener { menu ->
         menu.add(ContextMenu.NONE, MENU_ID_FAKE_LIKES, 0, "设置伪点赞")
-            ?.setIcon(android.R.drawable.star_on)
+            ?.setIcon(R.drawable.star_on)
     }
 
     private val onSelectListener = WeMomentsContextMenuApi.IOnSelectListener { context, itemId ->

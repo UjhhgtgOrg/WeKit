@@ -42,7 +42,7 @@ object ModifyMessageDisplayHook : BaseSwitchFunctionHookItem(), WeChatMessageCon
             }
             .get() as Int
 
-        if (!MsgType.isText(type)) {
+        if (!MessageType.isText(type)) {
             return emptyList()
         }
 

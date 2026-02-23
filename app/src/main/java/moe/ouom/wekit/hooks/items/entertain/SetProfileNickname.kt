@@ -18,7 +18,7 @@ import moe.ouom.wekit.utils.log.WeLogger
 @HookItem(path = "娱乐/设置微信昵称", desc = "通过发包来更灵活的设置微信昵称")
 object SetProfileNickname : BaseClickableFunctionHookItem() {
 
-    override fun onClick(context: Context?) {
+    override fun onClick(context: Context) {
         showComposeDialog(context) { onDismiss ->
             var nickname by remember { mutableStateOf("") }
 

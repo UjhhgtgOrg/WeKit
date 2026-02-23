@@ -25,7 +25,7 @@ import moe.ouom.wekit.utils.log.WeLogger
 object SendPacket : BaseClickableFunctionHookItem() {
     private const val TAG = "WePacketDebugger"
 
-    override fun onClick(context: Context?) {
+    override fun onClick(context: Context) {
         showComposeDialog(context) { onDismiss ->
             var uri by remember { mutableStateOf("/cgi-bin/micromsg-bin/oplog") }
             var cmdIdStr by remember { mutableStateOf("681") }

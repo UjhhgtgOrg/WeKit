@@ -109,8 +109,9 @@ class MainSettingsDialog(context: Context) : BaseRikkaDialog(context, "WeKit") {
         } catch (_: Exception) {
             "N/A"
         }
-        addPreference(title = "构建时间", summary = buildTimeStr)
+        addPreference("构建时间", buildTimeStr)
         addPreference("构建 UUID", BuildConfig.BUILD_UUID)
+        addPreference("提示", "牙膏要一点一点挤, 显卡要一刀一刀切, PPT 要一张一张放, 代码要一行一行写, 单个功能预计自出现在 commit 之日起, 三年内开发完毕")
 
         addPreference(
             title = "GitHub",

@@ -25,6 +25,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
+/*
+  对于简单的配置编辑, 建议自行使用 AlertDialog 实现而非使用此样式
+ */
 @Composable
 fun BaseHooksSettingsDialogContent(title: String, onDismiss: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
 //    Dialog(

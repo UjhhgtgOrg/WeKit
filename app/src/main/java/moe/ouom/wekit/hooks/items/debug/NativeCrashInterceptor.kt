@@ -1,15 +1,21 @@
-package moe.ouom.wekit.hooks.items.enhance
+package moe.ouom.wekit.hooks.items.debug
 
+import android.app.Activity
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import android.os.Process
+import android.widget.Toast
 import com.afollestad.materialdialogs.MaterialDialog
 import moe.ouom.wekit.config.RuntimeConfig
 import moe.ouom.wekit.core.model.BaseSwitchFunctionHookItem
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.ui.utils.CommonContextWrapper
-import moe.ouom.wekit.utils.Initiator.loadClass
+import moe.ouom.wekit.utils.Initiator
 import moe.ouom.wekit.utils.crash.CrashLogManager
 import moe.ouom.wekit.utils.crash.NativeCrashHandler
 import moe.ouom.wekit.utils.io.SafUtils
@@ -17,7 +23,7 @@ import moe.ouom.wekit.utils.log.WeLogger
 import java.io.File
 
 @HookItem(
-    path = "优化与修复/崩溃拦截 (Native)",
+    path = "调试/崩溃拦截 (Native)",
     desc = "拦截 Native 层崩溃并记录详细信息，支持查看和导出日志"
 )
 object NativeCrashInterceptor : BaseSwitchFunctionHookItem() {
@@ -31,7 +37,7 @@ object NativeCrashInterceptor : BaseSwitchFunctionHookItem() {
     override fun entry(classLoader: ClassLoader) {
         try {
             // 获取Application Context
-            val activityThreadClass = loadClass("android.app.ActivityThread")
+            val activityThreadClass = Initiator.loadClass("android.app.ActivityThread")
             val currentApplicationMethod = activityThreadClass.getMethod("currentApplication")
             appContext = currentApplicationMethod.invoke(null) as? Context
 
@@ -269,7 +275,7 @@ object NativeCrashInterceptor : BaseSwitchFunctionHookItem() {
                     dismissPendingDialog()
 
                     // 使用 CommonContextWrapper 包装 Activity Context
-                    val wrappedContext = CommonContextWrapper.createAppCompatContext(activity)
+                    val wrappedContext = CommonContextWrapper.Companion.createAppCompatContext(activity)
 
                     WeLogger.i(
                         "NativeCrashInterceptor",
@@ -329,7 +335,7 @@ object NativeCrashInterceptor : BaseSwitchFunctionHookItem() {
                     dismissPendingDialog()
 
                     // 使用 CommonContextWrapper 包装 Activity Context
-                    val wrappedContext = CommonContextWrapper.createAppCompatContext(activity)
+                    val wrappedContext = CommonContextWrapper.Companion.createAppCompatContext(activity)
 
                     pendingDialog = MaterialDialog(wrappedContext)
                         .title(text = "Native 崩溃详情")
@@ -427,8 +433,8 @@ object NativeCrashInterceptor : BaseSwitchFunctionHookItem() {
     private fun copyToClipboard(context: Context, text: String) {
         try {
             val clipboard =
-                context.getSystemService(Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
-            val clip = android.content.ClipData.newPlainText("Native Crash Log", text)
+                context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+            val clip = ClipData.newPlainText("Native Crash Log", text)
             clipboard?.setPrimaryClip(clip)
             WeLogger.i("NativeCrashInterceptor", "Native crash log copied to clipboard")
             showToast("Native 崩溃日志已复制到剪贴板")
@@ -443,17 +449,17 @@ object NativeCrashInterceptor : BaseSwitchFunctionHookItem() {
      */
     private fun shareLog(context: Context, logFile: File) {
         try {
-            val intent = android.content.Intent(android.content.Intent.ACTION_SEND)
+            val intent = Intent(Intent.ACTION_SEND)
             intent.type = "text/plain"
-            intent.putExtra(android.content.Intent.EXTRA_SUBJECT, "WeKit Native Crash Log")
+            intent.putExtra(Intent.EXTRA_SUBJECT, "WeKit Native Crash Log")
             intent.putExtra(
-                android.content.Intent.EXTRA_TEXT,
+                Intent.EXTRA_TEXT,
                 crashLogManager?.readCrashLog(logFile) ?: ""
             )
-            intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
 
-            val chooser = android.content.Intent.createChooser(intent, "分享 Native 崩溃日志")
-            chooser.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+            val chooser = Intent.createChooser(intent, "分享 Native 崩溃日志")
+            chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             context.startActivity(chooser)
 
             WeLogger.i("NativeCrashInterceptor", "Sharing native crash log")
@@ -466,9 +472,9 @@ object NativeCrashInterceptor : BaseSwitchFunctionHookItem() {
     /**
      * 使用 SAF 导出日志
      */
-    private fun exportLog(activity: android.app.Activity, logFile: File) {
+    private fun exportLog(activity: Activity, logFile: File) {
         try {
-            val wrappedContext = CommonContextWrapper.createAppCompatContext(activity)
+            val wrappedContext = CommonContextWrapper.Companion.createAppCompatContext(activity)
             val fileName = "native_crash_${logFile.name}"
 
             SafUtils.requestSaveFile(wrappedContext)
@@ -491,7 +497,7 @@ object NativeCrashInterceptor : BaseSwitchFunctionHookItem() {
     /**
      * 将日志写入 Uri
      */
-    private fun writeLogToUri(context: Context, sourceFile: File, targetUri: android.net.Uri) {
+    private fun writeLogToUri(context: Context, sourceFile: File, targetUri: Uri) {
         Thread {
             try {
                 val manager = crashLogManager ?: return@Thread
@@ -525,7 +531,7 @@ object NativeCrashInterceptor : BaseSwitchFunctionHookItem() {
         try {
             val context = appContext ?: return
             Handler(Looper.getMainLooper()).post {
-                android.widget.Toast.makeText(context, message, android.widget.Toast.LENGTH_SHORT)
+                Toast.makeText(context, message, Toast.LENGTH_SHORT)
                     .show()
             }
         } catch (e: Throwable) {

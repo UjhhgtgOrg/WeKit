@@ -149,8 +149,8 @@ object HookQueryCashierPkg : BaseClickableFunctionHookItem(), IWePkgInterceptor 
         super.unload(classLoader)
     }
 
-    override fun onClick(context: Context?) {
-        context?.let {
+    override fun onClick(context: Context) {
+        context.let {
             ConfigDialog(it).show()
         }
     }

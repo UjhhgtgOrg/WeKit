@@ -1141,7 +1141,7 @@ class AutoGrabRedPacket : BaseClickableFunctionHookItem(), IDexFind {
     /**
      * 重写 onClick 方法，点击时打开配置对话框
      */
-    override fun onClick(context: Context?) {
+    override fun onClick(context: Context) {
         context?.let { AutoGrabRedPacketConfigDialog(it).show() }
     }
 
@@ -2480,7 +2480,7 @@ class HookQueryCashierPkg : BaseClickableFunctionHookItem(), IWePkgInterceptor {
         super.unload(classLoader)
     }
 
-    override fun onClick(context: Context?) {
+    override fun onClick(context: Context) {
         context?.let { ConfigDialog(it).show() }
     }
 }

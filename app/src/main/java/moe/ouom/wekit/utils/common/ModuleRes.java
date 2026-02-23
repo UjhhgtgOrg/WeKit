@@ -64,6 +64,7 @@ public class ModuleRes {
     /**
      * 通用：根据名称获取资源 ID
      */
+    @SuppressLint("DiscouragedApi")
     public static int getId(String resName, String resType) {
         if (sResources == null) return 0;
         var id = sResources.getIdentifier(resName, resType, sPackageName);
@@ -80,14 +81,14 @@ public class ModuleRes {
 
     public static int getColor(String resName) {
         var id = getId(resName, "color");
-        return id == 0 ? 0 : sResources.getColor(id);
+        return id == 0 ? 0 : sResources.getColor(id, null);
     }
 
     public static Drawable getDrawable(String resName) {
         var id = getId(resName, "drawable");
         // 尝试去 mipmap 找
         if (id == 0) id = getId(resName, "mipmap");
-        return id == 0 ? null : sResources.getDrawable(id);
+        return id == 0 ? null : sResources.getDrawable(id, null);
     }
 
     public static float getDimen(String resName) {

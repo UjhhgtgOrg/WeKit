@@ -1,7 +1,8 @@
-package moe.ouom.wekit.hooks.item.contacts
+package moe.ouom.wekit.hooks.items.contacts
 
 import android.app.Activity
 import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
 import android.widget.Toast
 import moe.ouom.wekit.core.model.BaseSwitchFunctionHookItem
@@ -63,7 +64,7 @@ object ShowWeChatIdHook : BaseSwitchFunctionHookItem() {
     private fun handleWeChatIdClick(activity: Activity): Boolean {
         try {
             val contactUser = activity.intent.getStringExtra("Contact_User")
-            val clipboard = activity.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+            val clipboard = activity.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
             val clip = ClipData.newPlainText("微信ID", contactUser)
             clipboard.setPrimaryClip(clip)
             Toast.makeText(activity, "已复制", Toast.LENGTH_SHORT).show()

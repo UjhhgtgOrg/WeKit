@@ -1,4 +1,4 @@
-package moe.ouom.wekit.hooks.item.moments
+package moe.ouom.wekit.hooks.items.moments
 
 enum class MomentsContentType(val typeId: Int, val displayName: String) {
     IMG(1, "图片"),

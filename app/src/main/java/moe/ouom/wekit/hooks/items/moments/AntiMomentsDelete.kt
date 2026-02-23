@@ -1,4 +1,4 @@
-package moe.ouom.wekit.hooks.item.moments
+package moe.ouom.wekit.hooks.items.moments
 
 import android.content.ContentValues
 import moe.ouom.wekit.core.model.BaseSwitchFunctionHookItem
@@ -13,7 +13,7 @@ import moe.ouom.wekit.utils.log.WeLogger
 )
 object AntiMomentsDelete : BaseSwitchFunctionHookItem(), WeDatabaseListener.IUpdateListener {
 
-    private const val LOG_TAG = "AntiMomentsDelete"
+    private const val TAG = "AntiMomentsDelete"
     private const val TBL_SNS_INFO = "SnsInfo"
     private const val DEFAULT_WATERMARK = "[拦截删除]"
 
@@ -25,19 +25,17 @@ object AntiMomentsDelete : BaseSwitchFunctionHookItem(), WeDatabaseListener.IUpd
                 TBL_SNS_INFO -> handleSnsRecord(values)
             }
         } catch (ex: Throwable) {
-            WeLogger.e(LOG_TAG, "拦截处理异常", ex)
+            WeLogger.e(TAG, "拦截处理异常", ex)
         }
         return false
     }
 
     override fun entry(classLoader: ClassLoader) {
         WeDatabaseListener.addListener(this)
-        WeLogger.i(LOG_TAG, "服务已启动 | 标记文本：'$DEFAULT_WATERMARK'")
     }
 
     override fun unload(classLoader: ClassLoader) {
         WeDatabaseListener.removeListener(this)
-        WeLogger.i(LOG_TAG, "服务已停止")
     }
 
     private fun handleSnsRecord(values: ContentValues) {
@@ -48,7 +46,7 @@ object AntiMomentsDelete : BaseSwitchFunctionHookItem(), WeDatabaseListener.IUpd
         if (sourceVal != 0) return
 
         val kindName = MomentsContentType.fromId(typeVal)?.displayName ?: "Unknown[$typeVal]"
-        WeLogger.d(LOG_TAG, "捕获删除信号 -> $kindName ($typeVal)")
+        WeLogger.d(TAG, "捕获删除信号 -> $kindName ($typeVal)")
 
         // 移除来源
         values.remove("sourceType")
@@ -62,10 +60,10 @@ object AntiMomentsDelete : BaseSwitchFunctionHookItem(), WeDatabaseListener.IUpd
 
                 if (appendWatermark(proto, 5)) {
                     values.put("content", proto.toMessageBytes())
-                    WeLogger.i(LOG_TAG, ">> 拦截成功：[$kindName] 已注入标记")
+                    WeLogger.i(TAG, ">> 拦截成功：[$kindName] 已注入标记")
                 }
             } catch (e: Exception) {
-                WeLogger.e(LOG_TAG, "朋友圈 Protobuf 处理失败", e)
+                WeLogger.e(TAG, "朋友圈 Protobuf 处理失败", e)
             }
         }
     }
@@ -74,7 +72,7 @@ object AntiMomentsDelete : BaseSwitchFunctionHookItem(), WeDatabaseListener.IUpd
         try {
             val json = proto.toJSON()
             val key = fieldNumber.toString()
-            WeLogger.d(LOG_TAG, json.toString())
+            WeLogger.d(TAG, json.toString())
 
             if (!json.has(key)) return false
 
@@ -89,7 +87,7 @@ object AntiMomentsDelete : BaseSwitchFunctionHookItem(), WeDatabaseListener.IUpd
                 return true
             }
         } catch (e: Exception) {
-            WeLogger.e(LOG_TAG, "注入标记失败", e)
+            WeLogger.e(TAG, "注入标记失败", e)
         }
         return false
     }

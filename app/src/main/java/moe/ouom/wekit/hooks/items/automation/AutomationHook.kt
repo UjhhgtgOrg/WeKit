@@ -74,7 +74,7 @@ object AutomationHook : BaseClickableFunctionHookItem(),
     )
 
     // --- ui ---
-    override fun onClick(context: Context?) {
+    override fun onClick(context: Context) {
         if (context == null) return
         showComposeDialog(context) { onDismiss ->
             BaseHooksSettingsDialogContent("管理规则", onDismiss) {
