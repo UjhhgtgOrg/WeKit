@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.database.Cursor
 import com.highcapable.kavaref.KavaRef.Companion.asResolver
 import moe.ouom.wekit.core.dsl.dexClass
+import moe.ouom.wekit.core.dsl.dexMethod
 import moe.ouom.wekit.core.model.ApiHookItem
 import moe.ouom.wekit.dexkit.intf.IDexFind
 import moe.ouom.wekit.hooks.core.annotation.HookItem
@@ -14,6 +15,7 @@ import moe.ouom.wekit.hooks.sdk.base.model.WeOfficial
 import moe.ouom.wekit.utils.log.WeLogger
 import org.luckypray.dexkit.DexKitBridge
 import java.lang.reflect.Method
+import java.lang.reflect.Modifier
 
 /**
  * 微信数据库 API
@@ -23,10 +25,10 @@ import java.lang.reflect.Method
 object WeDatabaseApi : ApiHookItem(), IDexFind {
 
     private val classMmKernel by dexClass()
-    private val classSqliteDb by dexClass()
-    private val classCoreStorage by dexClass()
+    private val methodGetStorage by dexMethod()
 
     var dbInstance: Any? = null
+    private var getStorageMethod: Method? = null
     var execQueryMethod: Method? = null
     var execStatementMethod: Method? = null
 
@@ -151,69 +153,119 @@ object WeDatabaseApi : ApiHookItem(), IDexFind {
             }
         }
 
-        classSqliteDb.find(dexKit, descriptors) {
+        methodGetStorage.find(dexKit, descriptors, true) {
             matcher {
-                methods {
-                    add {
-                        usingEqStrings("MicroMsg.DBInit", "initSysDB checkini:%b exist:%b db:%s ")
-                    }
-                }
-            }
-        }
-
-        classCoreStorage.find(dexKit, descriptors) {
-            matcher {
-                methods {
-                    add {
-                        usingEqStrings("MMKernel.CoreStorage",
-                            "CheckData path[%s] blocksize:%s blockcount:%s availcount:%s")
-                    }
-                }
+                declaredClass(classMmKernel.clazz)
+                modifiers = Modifier.PUBLIC or Modifier.STATIC
+                paramCount = 0
+                usingStrings("mCoreStorage not initialized!")
             }
         }
 
         return descriptors
     }
 
-    private fun getCoreStorage(): Any {
-        val mmKernel = classMmKernel.clazz
-        return mmKernel.asResolver()
-            .firstMethod {
-                returnType = classCoreStorage.clazz
-                parameterCount = 0
-            }
-            .invoke()!!
-    }
-
-    private fun getSqliteDatabase(coreStorage: Any): Any {
-        val db = coreStorage.asResolver()
-            .firstField {
-                type(classSqliteDb.clazz)
-            }
-            .get()!!
-        return db.asResolver()
-            .firstMethod {
-                returnType = "com.tencent.wcdb.database.SQLiteDatabase"
-                parameterCount = 0
-            }
-            .invoke()!!
-    }
-
     override fun entry(classLoader: ClassLoader) {
-        if (dbInstance != null) return
+        try {
+            getStorageMethod = methodGetStorage.method
 
-        val coreStorageObj = getCoreStorage()
-        dbInstance = getSqliteDatabase(coreStorageObj)
-        execQueryMethod = dbInstance!!.asResolver()
-            .firstMethod {
-                name = "rawQuery"
-                parameterCount = 2
-            }.self
-        execStatementMethod = dbInstance!!.asResolver()
-            .firstMethod {
-                name = "execSQL"
-                parameters(String::class)
-            }.self
+            if (getStorageMethod != null) {
+                hookAfter(getStorageMethod!!) { param ->
+                    val storageObj = param.result ?: return@hookAfter
+
+                    if (dbInstance == null) {
+                        initializeDatabase(storageObj)
+                    }
+                }
+            }
+
+        } catch (e: Exception) {
+            WeLogger.e(TAG, "Entry 初始化异常", e)
+        }
+    }
+
+    @Synchronized
+    private fun initializeDatabase(storageObj: Any): Boolean {
+        if (dbInstance != null && execQueryMethod != null) return true
+
+        try {
+            // 在 Storage 中寻找 Wrapper
+            val wrapperObj = findDbWrapper(storageObj)
+            if (wrapperObj == null) {
+                WeLogger.e(TAG, "初始化: 未找到 Wrapper")
+                return false
+            }
+
+            // 获取 DB 实例
+            val dbInstance = wrapperObj.asResolver()
+                .firstMethod {
+                    parameterCount = 0
+                    returnType = "com.tencent.wcdb.database.SQLiteDatabase"
+                }.invoke()!!
+
+            // 获取 rawQuery 方法并缓存
+            this.dbInstance = dbInstance
+            execQueryMethod = dbInstance.asResolver()
+                .firstMethod {
+                    name = "rawQuery"
+                    parameterCount = 2
+                }.self
+
+            execStatementMethod = dbInstance.asResolver()
+                .firstMethod {
+                    name = "execSQL"
+                    parameters(String::class)
+                }.self
+            return true
+
+        } catch (e: Exception) {
+            WeLogger.e(TAG, "数据库初始化失败", e)
+        }
+        return false
+    }
+
+    /**
+     * 快速查找 Wrapper
+     */
+    private fun findDbWrapper(storageObj: Any): Any? {
+        val fields = storageObj.javaClass.declaredFields
+        for (field in fields) {
+            try {
+                field.isAccessible = true
+                val obj = field.get(storageObj) ?: continue
+
+                val typeName = obj.javaClass.name
+                if (typeName.startsWith("java.") || typeName.startsWith("android.")) continue
+
+                if (checkMethodFeature(obj) || checkStringFeature(obj)) {
+                    return obj
+                }
+            } catch (_: Throwable) {}
+        }
+        return null
+    }
+
+    /**
+     * 检查是否有 "MicroMsg.SqliteDB" 字符串
+     */
+    private fun checkStringFeature(obj: Any): Boolean {
+        return try {
+            obj.javaClass.declaredFields.any {
+                it.isAccessible = true
+                it.type == String::class.java && it.get(obj) == "MicroMsg.SqliteDB"
+            }
+        } catch (_: Exception) { false }
+    }
+
+    /**
+     * 检查是否有无参方法返回 SQLiteDatabase
+     */
+    private fun checkMethodFeature(obj: Any): Boolean {
+        return try {
+            obj.javaClass.declaredMethods.any {
+                it.parameterCount == 0 && it.returnType.name == "com.tencent.wcdb.database.SQLiteDatabase"
+            }
+        } catch (_: Exception) { false }
     }
 
     fun executeQuery(sql: String, args: Array<Any>? = null): List<Map<String, Any?>> {
