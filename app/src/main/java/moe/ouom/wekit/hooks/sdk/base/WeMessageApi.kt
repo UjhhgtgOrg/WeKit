@@ -1,7 +1,7 @@
 package moe.ouom.wekit.hooks.sdk.base
 
 import android.annotation.SuppressLint
-import android.database.Cursor
+import android.content.ContentValues
 import com.highcapable.kavaref.KavaRef.Companion.asResolver
 import com.highcapable.kavaref.extension.createInstance
 import de.robv.android.xposed.XposedHelpers
@@ -33,42 +33,44 @@ object WeMessageApi : ApiHookItem(), IDexFind {
     // -------------------------------------------------------------------------------------
     // 基础消息类
     // -------------------------------------------------------------------------------------
-    private val dexClassNetSceneSendMsg by dexClass()
+    private val classNetSceneSendMsg by dexClass()
     private val dexClassNetSceneQueue by dexClass()
     val dexClassNetSceneBase by dexClass()
-    private val dexClassNetSceneObserverOwner by dexClass()
-    private val dexMethodGetSendMsgObject by dexMethod()
-    private val dexMethodPostToQueue by dexMethod()
-    private val dexMethodShareFile by dexMethod()
+    private val classNetSceneObserverOwner by dexClass()
+    private val methodGetSendMsgObject by dexMethod()
+    private val methodPostToQueue by dexMethod()
+    private val methodShareFile by dexMethod()
     val classMsgInfo by dexClass()
+    val classMsgInfoStorage by dexClass()
+    val methodMsgInfoStorageInsertMessage by dexMethod()
 
     // -------------------------------------------------------------------------------------
     // 图片发送组件
     // -------------------------------------------------------------------------------------
-    private val dexClassMvvmBase by dexClass()
-    private val dexClassImageSender by dexClass()      // 发送逻辑核心
-    private val dexClassImageTask by dexClass()        // 任务数据模型
-    private val dexMethodImageSendEntry by dexMethod() // 静态入口方法
-    private val dexClassServiceManager by dexClass()   // ServiceManager
-    private val dexClassConfigLogic by dexClass()      // ConfigStorageLogic
-    private val dexClassImageServiceImpl by dexClass()
+    private val classMvvmBase by dexClass()
+    private val classImageSender by dexClass()      // 发送逻辑核心
+    private val classImageTask by dexClass()        // 任务数据模型
+    private val methodImageSendEntry by dexMethod() // 静态入口方法
+    private val classServiceManager by dexClass()   // ServiceManager
+    private val classConfigLogic by dexClass()      // ConfigStorageLogic
+    private val classImageServiceImpl by dexClass()
 
     // -------------------------------------------------------------------------------------
     // 语音发送组件
     // -------------------------------------------------------------------------------------
-    private val dexClassVoiceParams by dexClass()     // 语音参数模型 (原 rc0.a)
+    private val classVoiceParams by dexClass()     // 语音参数模型 (原 rc0.a)
     private val dexClassVoiceTask by dexClass()       // 语音发送任务 (原 uc0.v)
-    private val dexClassVoiceNameGen by dexClass()    // 语音文件名生成 (原 py0.g1)
-    private val dexClassVFS by dexClass()             // VFS 文件操作 (原 w6)
-    private val dexClassPathUtil by dexClass()        // 路径计算工具 (原 h1)
-    private val dexClassKernel by dexClass()          // 核心 Kernel (原 j1)
-    private val dexMethodKernelGetStorage by dexMethod() // Kernel.getStorage
+    private val classVoiceNameGen by dexClass()    // 语音文件名生成 (原 py0.g1)
+    private val classVfs by dexClass()             // VFS 文件操作 (原 w6)
+    private val classPathUtil by dexClass()        // 路径计算工具 (原 h1)
+    private val classMmKernel by dexClass()          // 核心 Kernel (原 j1)
+    private val methodKernelGetStorage by dexMethod() // Kernel.getStorage
 
     // 查找 Service 接口 (sc0.e)
     private val dexClassVoiceServiceInterface by dexClass()
 
     // Service 实现类
-    private val dexClassVoiceServiceImpl by dexClass()
+    private val classVoiceServiceImpl by dexClass()
     private val dexMethodVoiceSend by dexMethod()
 
     // -------------------------------------------------------------------------------------
@@ -132,7 +134,7 @@ object WeMessageApi : ApiHookItem(), IDexFind {
             // ---------------------------------------------------------------------------------
             // 基础组件查找
             // ---------------------------------------------------------------------------------
-            dexClassNetSceneObserverOwner.find(dexKit, descriptors = descriptors) {
+            classNetSceneObserverOwner.find(dexKit, descriptors = descriptors) {
                 matcher {
                     methods {
                         add {
@@ -143,7 +145,7 @@ object WeMessageApi : ApiHookItem(), IDexFind {
                 }
             }
 
-            dexClassNetSceneSendMsg.find(dexKit, descriptors = descriptors) {
+            classNetSceneSendMsg.find(dexKit, descriptors = descriptors) {
                 matcher {
                     methods {
                         add {
@@ -177,14 +179,14 @@ object WeMessageApi : ApiHookItem(), IDexFind {
                 }
             }
 
-            dexMethodGetSendMsgObject.find(dexKit, descriptors, true) {
+            methodGetSendMsgObject.find(dexKit, descriptors, true) {
                 matcher {
                     paramCount = 0
-                    returnType = dexClassNetSceneObserverOwner.getDescriptorString() ?: ""
+                    returnType = classNetSceneObserverOwner.getDescriptorString() ?: ""
                 }
             }
 
-            dexMethodPostToQueue.find(dexKit, descriptors, true) {
+            methodPostToQueue.find(dexKit, descriptors, true) {
                 searchPackages("com.tencent.mm.modelbase")
                 matcher {
                     declaredClass = dexClassNetSceneQueue.getDescriptorString() ?: ""
@@ -194,7 +196,7 @@ object WeMessageApi : ApiHookItem(), IDexFind {
                 }
             }
 
-            dexMethodShareFile.find(dexKit, descriptors = descriptors) {
+            methodShareFile.find(dexKit, descriptors = descriptors) {
                 matcher {
                     paramTypes(
                         "com.tencent.mm.opensdk.modelmsg.WXMediaMessage",
@@ -214,10 +216,26 @@ object WeMessageApi : ApiHookItem(), IDexFind {
                 }
             }
 
+
+            classMsgInfoStorage.find(dexKit, descriptors) {
+                searchPackages("com.tencent.mm.storage")
+                matcher {
+                    usingEqStrings("MicroMsg.MsgInfoStorage", "deleted dirty msg ,count is %d")
+                }
+            }
+
+            methodMsgInfoStorageInsertMessage.find(dexKit, descriptors) {
+                matcher {
+                    declaredClass(classMsgInfoStorage.clazz)
+                    usingEqStrings("MsgInfo processAddMsg insert db error")
+                }
+            }
+
             // ---------------------------------------------------------------------------------
             // 图片组件查找
             // ---------------------------------------------------------------------------------
-            dexClassImageSender.find(dexKit, descriptors = descriptors) {
+
+            classImageSender.find(dexKit, descriptors = descriptors) {
                 matcher {
                     usingStrings(
                         "MicroMsg.ImgUpload.MsgImgSyncSendFSC",
@@ -226,7 +244,7 @@ object WeMessageApi : ApiHookItem(), IDexFind {
                 }
             }
 
-            val senderDesc = descriptors[dexClassImageSender.key]
+            val senderDesc = descriptors[classImageSender.key]
             if (senderDesc != null) {
                 val sendMethodData = dexKit.findMethod {
                     matcher {
@@ -238,10 +256,10 @@ object WeMessageApi : ApiHookItem(), IDexFind {
                 }.singleOrNull()
 
                 if (sendMethodData != null) {
-                    descriptors[dexMethodImageSendEntry.key] = sendMethodData.descriptor
+                    descriptors[methodImageSendEntry.key] = sendMethodData.descriptor
 
                     val taskClassName = sendMethodData.paramTypes[1]
-                    descriptors[dexClassImageTask.key] = taskClassName.name
+                    descriptors[classImageTask.key] = taskClassName.name
 
                     val taskDescriptorForSearch = "L" + taskClassName.name.replace(".", "/") + ";"
                     val mapFieldData = dexKit.findField {
@@ -257,7 +275,7 @@ object WeMessageApi : ApiHookItem(), IDexFind {
                     }
                 }
 
-                dexClassMvvmBase.find(dexKit, descriptors) {
+                classMvvmBase.find(dexKit, descriptors) {
                     matcher {
                         usingStrings(
                             "MicroMsg.Mvvm.MvvmPlugin",
@@ -266,9 +284,9 @@ object WeMessageApi : ApiHookItem(), IDexFind {
                     }
                 }
 
-                val mvvmBaseDesc = descriptors[dexClassMvvmBase.key]
+                val mvvmBaseDesc = descriptors[classMvvmBase.key]
                 if (mvvmBaseDesc != null) {
-                    dexClassImageServiceImpl.find(dexKit, descriptors) {
+                    classImageServiceImpl.find(dexKit, descriptors) {
                         matcher {
                             usingStrings("MicroMsg.ImgUpload.MsgImgFeatureService")
                             superClass(mvvmBaseDesc)
@@ -277,7 +295,7 @@ object WeMessageApi : ApiHookItem(), IDexFind {
                 }
 
                 // 查找 ServiceManager
-                dexClassServiceManager.find(dexKit, descriptors) {
+                classServiceManager.find(dexKit, descriptors) {
                     matcher {
                         usingStrings("MicroMsg.ServiceManager")
                         methods {
@@ -290,11 +308,11 @@ object WeMessageApi : ApiHookItem(), IDexFind {
                     }
                 }
 
-                dexClassConfigLogic.find(dexKit, descriptors) {
+                classConfigLogic.find(dexKit, descriptors) {
                     matcher { usingStrings("MicroMsg.ConfigStorageLogic", "get userinfo fail") }
                 }
 
-                dexClassImageTask.find(dexKit, descriptors) {
+                classImageTask.find(dexKit, descriptors) {
                     matcher { usingStrings("msg_raw_img_send") }
                 }
             }
@@ -303,19 +321,19 @@ object WeMessageApi : ApiHookItem(), IDexFind {
             // 语音/VFS 组件动态查找
             // ---------------------------------------------------------------------------------
 
-            dexClassVFS.find(dexKit, descriptors) {
+            classVfs.find(dexKit, descriptors) {
                 matcher {
                     usingStrings("MicroMsg.VFSFileOp", "Cannot resolve path or URI")
                 }
             }
 
-            dexClassVoiceNameGen.find(dexKit, descriptors) {
+            classVoiceNameGen.find(dexKit, descriptors) {
                 matcher {
                     usingStrings("CREATE TABLE IF NOT EXISTS voiceinfo ( FileName TEXT PRIMARY KEY")
                 }
             }
 
-            dexClassVoiceParams.find(dexKit, descriptors) {
+            classVoiceParams.find(dexKit, descriptors) {
                 matcher {
                     methods {
                         add {
@@ -327,23 +345,20 @@ object WeMessageApi : ApiHookItem(), IDexFind {
                 }
             }
 
-            val voiceParamsDesc = descriptors[dexClassVoiceParams.key]
-            if (voiceParamsDesc != null) {
-                dexClassVoiceTask.find(dexKit, descriptors) {
-                    matcher {
-                        usingStrings("MicroMsg.VoiceMsg.VoiceMsgSendTask")
-                        methods {
-                            add {
-                                name = "<init>"
-                                returnType = "void"
-                                paramTypes(voiceParamsDesc)
-                            }
+            dexClassVoiceTask.find(dexKit, descriptors) {
+                matcher {
+                    usingStrings("MicroMsg.VoiceMsg.VoiceMsgSendTask")
+                    methods {
+                        add {
+                            name = "<init>"
+                            returnType = "void"
+                            paramTypes(classVoiceParams.clazz)
                         }
                     }
                 }
             }
 
-            dexClassPathUtil.find(dexKit, descriptors) {
+            classPathUtil.find(dexKit, descriptors) {
                 searchPackages("com.tencent.mm.sdk.platformtools")
                 matcher {
                     methods {
@@ -362,30 +377,23 @@ object WeMessageApi : ApiHookItem(), IDexFind {
                 }
             }
 
-            // 查找 Kernel
-            dexClassKernel.find(dexKit, descriptors) {
+            classMmKernel.find(dexKit, descriptors) {
                 matcher {
                     usingStrings("MicroMsg.MMKernel", "Initialize skeleton")
                 }
             }
-            // 查找 Kernel.getStorage() 方法
-            val kernelDesc = descriptors[dexClassKernel.key]
-            if (kernelDesc != null) {
-                dexMethodKernelGetStorage.find(dexKit, descriptors, true) {
-                    matcher {
-                        declaredClass = kernelDesc
-                        modifiers = Modifier.PUBLIC or Modifier.STATIC
-                        paramCount = 0
-                        usingStrings("mCoreStorage not initialized!")
-                    }
+
+            methodKernelGetStorage.find(dexKit, descriptors, true) {
+                matcher {
+                    declaredClass(classMmKernel.clazz)
+                    modifiers = Modifier.PUBLIC or Modifier.STATIC
+                    paramCount = 0
+                    usingStrings("mCoreStorage not initialized!")
                 }
             }
 
-            // -----------------------------------------------------------------------------
-            // 利用异常字符串精准定位 Service 实现类和发送方法
-            // -----------------------------------------------------------------------------
             // 定位 VoiceServiceImpl (tc0.k)
-            dexClassVoiceServiceImpl.find(dexKit, descriptors, throwOnFailure = false) {
+            classVoiceServiceImpl.find(dexKit, descriptors, throwOnFailure = false) {
                 matcher {
                     usingStrings("MicroMsg.VoiceMsgAsyncSendFSC")
                     // 必须包含 sendSync 方法，且该方法使用特定字符串
@@ -398,11 +406,11 @@ object WeMessageApi : ApiHookItem(), IDexFind {
             }
 
             // 定位 sendSync 方法 (gh)
-            val serviceImplDesc = descriptors[dexClassVoiceServiceImpl.key]
+            val serviceImplDesc = descriptors[classVoiceServiceImpl.key]
             if (serviceImplDesc != null) {
                 dexMethodVoiceSend.find(dexKit, descriptors, true) {
                     matcher {
-                        declaredClass = serviceImplDesc
+                        declaredClass(classVoiceServiceImpl.clazz)
                         usingStrings("sendSync only support BaseSendMsgTask Type")
                         paramCount = 1
                     }
@@ -440,18 +448,19 @@ object WeMessageApi : ApiHookItem(), IDexFind {
         return descriptors
     }
 
-    fun createMsgInfoFromCursor(cursor: Cursor): Any {
+    fun createMsgInfoFromContentValues(contentValues: ContentValues, boolValue: Boolean): Any {
         val msgInfo = classMsgInfo.clazz.createInstance()
         msgInfo.asResolver().firstMethod {
-            superclass()
             name = "convertFrom"
-        }.invoke(cursor)
+            parameters(ContentValues::class, Boolean::class)
+            superclass()
+        }.invoke(contentValues, boolValue)
         return msgInfo
     }
 
     override fun entry(classLoader: ClassLoader) {
         try {
-            WeLogger.i(TAG, "WeMessageApi Entry 初始化...")
+            WeLogger.i(TAG, "WeMessageApi initializing...")
 
             try {
                 // 初始化 Unsafe 反射
@@ -460,11 +469,11 @@ object WeMessageApi : ApiHookItem(), IDexFind {
                 // -----------------------------------------------------------------------------
                 // 文本/文件组件初始化
                 // -----------------------------------------------------------------------------
-                netSceneSendMsgClass = dexClassNetSceneSendMsg.clazz
-                getSendMsgObjectMethod = dexMethodGetSendMsgObject.method
-                postToQueueMethod = dexMethodPostToQueue.method
-                shareFileMethod = dexMethodShareFile.method
-                p6Method = dexMethodImageSendEntry.method
+                netSceneSendMsgClass = classNetSceneSendMsg.clazz
+                getSendMsgObjectMethod = methodGetSendMsgObject.method
+                postToQueueMethod = methodPostToQueue.method
+                shareFileMethod = methodShareFile.method
+                p6Method = methodImageSendEntry.method
 
                 try {
                     wxFileObjectClass =
@@ -478,7 +487,7 @@ object WeMessageApi : ApiHookItem(), IDexFind {
                 // -----------------------------------------------------------------------------
                 // 图片组件初始化
                 // -----------------------------------------------------------------------------
-                val taskClazz = dexClassImageTask.clazz
+                val taskClazz = classImageTask.clazz
                 taskConstructor =
                     taskClazz.declaredConstructors.firstOrNull { it.parameterCount == 5 }
                 taskConstructor?.isAccessible = true
@@ -502,7 +511,7 @@ object WeMessageApi : ApiHookItem(), IDexFind {
                 // -----------------------------------------------------------------------------
 
                 // VFS
-                dexClassVFS.clazz.let { vfsClazz ->
+                classVfs.clazz.let { vfsClazz ->
                     vfsReadMethod = vfsClazz.declaredMethods.find {
                         Modifier.isStatic(it.modifiers) &&
                                 it.parameterCount == 1 &&
@@ -525,10 +534,10 @@ object WeMessageApi : ApiHookItem(), IDexFind {
                 }
 
                 // Kernel
-                kernelStorageMethod = dexMethodKernelGetStorage.method
+                kernelStorageMethod = methodKernelGetStorage.method
 
                 // PathUtil
-                dexClassPathUtil.clazz.let { pathClazz ->
+                classPathUtil.clazz.let { pathClazz ->
                     pathGenMethod = pathClazz.declaredMethods.find {
                         Modifier.isStatic(it.modifiers) &&
                                 it.parameterCount == 5 &&
@@ -538,14 +547,14 @@ object WeMessageApi : ApiHookItem(), IDexFind {
                 }
 
                 // Voice Components
-                dexClassVoiceNameGen.clazz.let { clazz ->
+                classVoiceNameGen.clazz.let { clazz ->
                     voiceNameGenMethod = clazz.declaredMethods.find {
                         Modifier.isStatic(it.modifiers) && it.parameterCount == 2 &&
                                 it.parameterTypes[0] == String::class.java && it.returnType == String::class.java
                     }
                 }
 
-                dexClassVoiceParams.clazz.let { clazz ->
+                classVoiceParams.clazz.let { clazz ->
                     voiceParamsClass = clazz
                     val intFields =
                         clazz.declaredFields.filter { it.type == Int::class.javaPrimitiveType }
@@ -659,7 +668,7 @@ object WeMessageApi : ApiHookItem(), IDexFind {
     fun sendImage(toUser: String, imgPath: String): Boolean {
         return try {
             val apiInterface = imageServiceApiClass ?: return false
-            val taskClass = dexClassImageTask.clazz
+            val taskClass = classImageTask.clazz
 
             val serviceObj = getServiceMethod?.invoke(null, apiInterface) ?: return false
 
@@ -741,7 +750,7 @@ object WeMessageApi : ApiHookItem(), IDexFind {
 
             // 尝试单例 Fallback
             if (finalServiceObj == null) {
-                val implClass = dexClassVoiceServiceImpl.clazz
+                val implClass = classVoiceServiceImpl.clazz
                 val instanceField = implClass.declaredFields.find {
                     it.name == "INSTANCE" || it.type == implClass
                 }
@@ -829,20 +838,20 @@ object WeMessageApi : ApiHookItem(), IDexFind {
     }
 
     private fun bindServiceFramework() {
-        val smClazz = dexClassServiceManager.clazz
+        val smClazz = classServiceManager.clazz
         getServiceMethod = smClazz.declaredMethods.firstOrNull {
             Modifier.isStatic(it.modifiers) && it.parameterCount == 1 && it.parameterTypes[0] == Class::class.java
         }
 
-        val clClazz = dexClassConfigLogic.clazz
+        val clClazz = classConfigLogic.clazz
         getSelfAliasMethod = clClazz.declaredMethods.firstOrNull {
             Modifier.isStatic(it.modifiers) && it.parameterCount == 0 && it.returnType == String::class.java && it.name.length <= 2
         }
     }
 
     private fun bindImageBusinessLogic() {
-        val implClazz = dexClassImageServiceImpl.clazz
-        val taskClazz = dexClassImageTask.clazz
+        val implClazz = classImageServiceImpl.clazz
+        val taskClazz = classImageTask.clazz
 
         imageServiceApiClass = implClazz.interfaces.firstOrNull {
             !it.name.startsWith("java.") && !it.name.startsWith("android.")

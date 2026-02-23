@@ -14,17 +14,16 @@ object WeServiceApi : ApiHookItem(), IDexFind {
     private val methodServiceManagerGetService by dexMethod()
     private val classEmojiFeatureService by dexClass()
     private val classContactStorage by dexClass()
-    private val classMsgInfoStorage by dexClass()
     private val classConversationStorage by dexClass()
-//    private val classStorageFeatureService by dexClass()
+    private val classStorageFeatureService by dexClass()
 
     val emojiFeatureService by lazy {
         getServiceByClass(classEmojiFeatureService.clazz)
     }
 
-//    val storageFeatureService by lazy {
-//        getServiceByClass(classStorageFeatureService.clazz)
-//    }
+    val storageFeatureService by lazy {
+        getServiceByClass(classStorageFeatureService.clazz)
+    }
 
     fun getServiceByClass(clazz: Class<*>): Any {
         return methodServiceManagerGetService.method.invoke(null, clazz)!!
@@ -59,13 +58,6 @@ object WeServiceApi : ApiHookItem(), IDexFind {
             }
         }
 
-        classMsgInfoStorage.find(dexKit, descriptors) {
-            searchPackages("com.tencent.mm.storage")
-            matcher {
-                usingEqStrings("MicroMsg.MsgInfoStorage", "deleted dirty msg ,count is %d")
-            }
-        }
-
         classConversationStorage.find(dexKit, descriptors) {
             searchPackages("com.tencent.mm.storage")
             matcher {
@@ -73,20 +65,20 @@ object WeServiceApi : ApiHookItem(), IDexFind {
             }
         }
 
-        // FIXME
-//        classStorageFeatureService.find(dexKit, descriptors) {
-//            searchPackages("com.tencent.mm.plugin.messenger.foundation")
-//            matcher {
-//                methods {
-//                    add {
-//                        paramTypes(
-//                            classContactStorage.clazz,
-//                            classMsgInfoStorage.clazz,
-//                            classConversationStorage.clazz)
-//                    }
-//                }
-//            }
-//        }
+        classStorageFeatureService.find(dexKit, descriptors) {
+            searchPackages("com.tencent.mm.plugin.messenger.foundation")
+            matcher {
+                addMethod {
+                    returnType(classContactStorage.clazz)
+                }
+                addMethod {
+                    returnType(WeMessageApi.classMsgInfoStorage.clazz)
+                }
+                addMethod {
+                    returnType(classConversationStorage.clazz)
+                }
+            }
+        }
 
         return descriptors
     }

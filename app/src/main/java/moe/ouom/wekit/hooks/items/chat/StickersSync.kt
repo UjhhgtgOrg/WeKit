@@ -32,6 +32,7 @@ import moe.ouom.wekit.core.dsl.dexMethod
 import moe.ouom.wekit.core.model.BaseClickableFunctionHookItem
 import moe.ouom.wekit.dexkit.intf.IDexFind
 import moe.ouom.wekit.hooks.core.annotation.HookItem
+import moe.ouom.wekit.hooks.sdk.base.WeDatabaseApi
 import moe.ouom.wekit.hooks.sdk.base.WeServiceApi
 import moe.ouom.wekit.host.HostInfo
 import moe.ouom.wekit.ui.utils.showComposeDialog
@@ -221,9 +222,6 @@ object StickersSync : BaseClickableFunctionHookItem(), IDexFind {
     private val classEmojiStorageMgr by dexClass()
     private val classEmojiInfoStorage by dexClass()
     private val methodSaveEmojiThumb by dexMethod()
-    private val classSqliteDb by dexClass()
-    private val classMmKernel by dexClass()
-    private val classCoreStorage by dexClass()
 
     private val stickersDir: Path?
         get() = PathUtils.moduleDataPath?.resolve("stickers")
@@ -268,30 +266,6 @@ object StickersSync : BaseClickableFunctionHookItem(), IDexFind {
             }
             .invoke(md5)!!
         return emojiThumb
-    }
-
-    private fun getCoreStorage(): Any {
-        val mmKernel = classMmKernel.clazz
-        return mmKernel.asResolver()
-            .firstMethod {
-                returnType = classCoreStorage.clazz
-                parameterCount = 0
-            }
-            .invoke()!!
-    }
-
-    private fun getSqliteDatabase(): Any {
-        val db = getCoreStorage().asResolver()
-            .firstField {
-                type(classSqliteDb.clazz)
-            }
-            .get()!!
-        return db.asResolver()
-            .firstMethod {
-                returnType = "com.tencent.wcdb.database.SQLiteDatabase"
-                parameterCount = 0
-            }
-            .invoke()!!
     }
 
     override fun entry(classLoader: ClassLoader) {
@@ -449,37 +423,6 @@ object StickersSync : BaseClickableFunctionHookItem(), IDexFind {
             }
         }
 
-        classSqliteDb.find(dexKit, descriptors) {
-            matcher {
-                methods {
-                    add {
-                        usingEqStrings("MicroMsg.DBInit", "initSysDB checkini:%b exist:%b db:%s ")
-                    }
-                }
-            }
-        }
-
-        classMmKernel.find(dexKit, descriptors) {
-            matcher {
-                methods {
-                    add {
-                        usingEqStrings("MicroMsg.MMKernel", "Kernel not null, has initialized.")
-                    }
-                }
-            }
-        }
-
-        classCoreStorage.find(dexKit, descriptors) {
-            matcher {
-                methods {
-                    add {
-                        usingEqStrings("MMKernel.CoreStorage",
-                            "CheckData path[%s] blocksize:%s blockcount:%s availcount:%s")
-                    }
-                }
-            }
-        }
-
         return descriptors
     }
 
@@ -494,10 +437,9 @@ object StickersSync : BaseClickableFunctionHookItem(), IDexFind {
                             modifier = androidx.compose.ui.Modifier
                                 .fillMaxWidth()
                                 .clickable {
-                                    val db = getSqliteDatabase()
                                     var deletedCount = 0
                                     stickerPacks.forEach { pack ->
-                                        db.asResolver()
+                                        WeDatabaseApi.dbInstance!!.asResolver()
                                             .firstMethod {
                                                 name = "delete"
                                                 parameters(String::class, String::class, Array<String>::class)

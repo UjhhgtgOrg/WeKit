@@ -1,7 +1,5 @@
 package moe.ouom.wekit.constants
 
-import moe.ouom.wekit.host.HostInfo
-
 object MMVersion {
     const val MM_8_0_67 = 3000
     const val MM_8_0_66 = 2980
@@ -15,6 +13,7 @@ object MMVersion {
     const val MM_8_0_57 = 2820
     const val MM_8_0_56 = 2800
     const val MM_8_0_49 = 2600
+    const val MM_8_0_48_Play = 2583
     const val MM_8_0_43 = 2480
 
     const val V_8_0_67 = "8.0.67"
@@ -31,6 +30,4 @@ object MMVersion {
     const val V_8_0_49 = "8.0.49"
     const val V_8_0_43 = "8.0.43"
 
-    const val MM_8_0_48_Play = 2583
-    const val V_8_0_48_Play = "8.0.48"
 }
