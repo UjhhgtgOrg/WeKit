@@ -42,7 +42,7 @@ kavaref = "1.0.2"
 hiddenApiBypass = "6.1"
 runtime = "1.10.3"
 composeMaterial3 = "1.5.0-alpha14"
-chaquopy = "17.0.0"
+libsu = "5.2.2"
 
 [libraries]
 accompanist-drawablepainter = { module = "com.google.accompanist:accompanist-drawablepainter", version.ref = "accompanist" }
@@ -92,6 +92,7 @@ dalvik-dx = { module = "com.jakewharton.android.repackaged:dalvik-dx", version =
 hiddenApiBypass = { module = "org.lsposed.hiddenapibypass:hiddenapibypass", version.ref = "hiddenApiBypass" }
 kavaref-core = { module = "com.highcapable.kavaref:kavaref-core", version.ref = "kavaref" }
 kavaref-extension = { module = "com.highcapable.kavaref:kavaref-extension", version.ref = "kavaref" }
+libsu-core = { module = "com.github.topjohnwu.libsu:core", version.ref = "libsu" }
 
 rhino-android = { module = "io.apisense:rhino-android", version.ref = "rhino" }
 
@@ -107,4 +108,3 @@ protobuf = { id = "com.google.protobuf", version = "0.9.6" }
 serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 google-devtools-ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
-chaquo-python = { id = "com.chaquo.python", version.ref = "chaquopy" }

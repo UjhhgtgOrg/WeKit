@@ -11,6 +11,7 @@ import moe.ouom.wekit.core.model.ApiHookItem
 import moe.ouom.wekit.dexkit.intf.IDexFind
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.hooks.sdk.base.WeMessageApi
+import moe.ouom.wekit.hooks.sdk.base.model.MessageInfo
 import moe.ouom.wekit.utils.log.WeLogger
 import org.luckypray.dexkit.DexKitBridge
 import java.util.concurrent.CopyOnWriteArrayList
@@ -20,15 +21,11 @@ import java.util.concurrent.CopyOnWriteArrayList
 object WeChatMessageContextMenuApi : ApiHookItem(), IDexFind {
 
     interface IMenuItemsProvider {
-        fun getMenuItems(hookParam: XC_MethodHook.MethodHookParam, msgInfoBean: Any): List<MenuItem>
+        fun getMenuItems(hookParam: XC_MethodHook.MethodHookParam, msgInfo: MessageInfo): List<MenuItem>
     }
-
-//    data class MenuItem(val resourceId: Int,
-//                        val text: String, val drawableResourceId: Int,
-//                        val onClickListener: (Any, Any) -> Unit /* ChattingContext, MsgInfoBean */)
-        data class MenuItem(val id: Int,
+    data class MenuItem(val id: Int,
                             val text: String, val drawable: Drawable,
-                            val onClickListener: (View, Any, Any) -> Unit /* ChattingContext, MsgInfoBean */)
+                            val onClickListener: (View, Any, MessageInfo) -> Unit /* ChattingContext, MsgInfoBean */)
 
     private const val TAG: String = "WeChatMessageContextMenuApi"
 
@@ -48,12 +45,10 @@ object WeChatMessageContextMenuApi : ApiHookItem(), IDexFind {
         WeLogger.i(TAG, "provider remove ${if (removed) "succeeded" else "failed"}, current provider count: ${providers.size}")
     }
 
-    private val classChattingContext by dexClass()
     private val methodApiManagerGetApi by dexMethod()
     private val methodCreateMenu by dexMethod()
     private val methodSelectMenu by dexMethod()
     private val classChattingMessBox by dexClass()
-    private val classChattingDataAdapter by dexClass()
     private var currentView: View? = null // selectMenu is guaranteed to be called after createMenu, so this will not cause NPE
 
     override fun entry(classLoader: ClassLoader) {
@@ -72,7 +67,7 @@ object WeChatMessageContextMenuApi : ApiHookItem(), IDexFind {
 //                        }
 //                        .invoke()
 
-                    val msgInfoBean = tag.asResolver()
+                    val msgInfo = tag.asResolver()
                         .firstMethod {
                             returnType = WeMessageApi.classMsgInfo.clazz
                             parameterCount(0)
@@ -81,7 +76,7 @@ object WeChatMessageContextMenuApi : ApiHookItem(), IDexFind {
                         .invoke()!!
                     for (provider in providers) {
                         try {
-                            for (item in provider.getMenuItems(param, msgInfoBean)) {
+                            for (item in provider.getMenuItems(param, MessageInfo(msgInfo))) {
                                 arg0.asResolver()
                                     .firstMethod {
                                         parameters(
@@ -122,7 +117,7 @@ object WeChatMessageContextMenuApi : ApiHookItem(), IDexFind {
                         .get() as View.OnLongClickListener
                     val chattingContext = viewOnLongClickListener.asResolver()
                         .firstField {
-                            type = classChattingContext.clazz
+                            type = WeMessageApi.classChattingContext.clazz
                             superclass()
                         }
                         .get()!!
@@ -137,7 +132,7 @@ object WeChatMessageContextMenuApi : ApiHookItem(), IDexFind {
                     )
                     val chattingContext2 = api.asResolver()
                         .firstField {
-                            type = classChattingContext.clazz
+                            type = WeMessageApi.classChattingContext.clazz
                             superclass()
                         }
                         .get()!!
@@ -148,23 +143,24 @@ object WeChatMessageContextMenuApi : ApiHookItem(), IDexFind {
                         .get()!!
                     val api2 = methodApiManagerGetApi.method.invoke(
                         apiManager2,
-                        classChattingDataAdapter.clazz.interfaces[0]
+                        WeMessageApi.classChattingDataAdapter.clazz.interfaces[0]
                     )
 
                     val menuItem = param.args[0] as android.view.MenuItem
-                    val msgInfoBean = api2.asResolver()
+                    val msgInfo = api2.asResolver()
                         .firstMethod {
                             name = "getItem"
                         }
                         .invoke(menuItem.groupId)!!
+                    val msgInfoWrapper = MessageInfo(msgInfo)
                     for (provider in providers) {
-                        for (item in provider.getMenuItems(param, msgInfoBean)) {
+                        for (item in provider.getMenuItems(param, msgInfoWrapper)) {
                             if (item.id == menuItem.itemId) {
                                 try {
                                     item.onClickListener.invoke(
                                         currentView!!,
                                         chattingContext,
-                                        msgInfoBean
+                                        msgInfoWrapper
                                     )
                                 } catch (e: Throwable) {
                                     WeLogger.e(TAG, "onClickListener threw an exception", e)
@@ -180,12 +176,6 @@ object WeChatMessageContextMenuApi : ApiHookItem(), IDexFind {
 
     override fun dexFind(dexKit: DexKitBridge): Map<String, String> {
         val descriptors = mutableMapOf<String, String>()
-
-        classChattingContext.find(dexKit, descriptors) {
-            matcher {
-                usingEqStrings("MicroMsg.ChattingContext", "[notifyDataSetChange]")
-            }
-        }
 
         methodApiManagerGetApi.find(dexKit, descriptors) {
             searchPackages("com.tencent.mm.ui.chatting.manager")
@@ -212,12 +202,6 @@ object WeChatMessageContextMenuApi : ApiHookItem(), IDexFind {
             searchPackages("com.tencent.mm.ui.chatting.component")
             matcher {
                 usingEqStrings("MicroMsg.ChattingUI.FootComponent", "onNotifyChange event %s talker %s")
-            }
-        }
-
-        classChattingDataAdapter.find(dexKit, descriptors) {
-            matcher {
-                usingEqStrings("MicroMsg.ChattingDataAdapterV3", "[handleMsgChange] isLockNotify:")
             }
         }
 

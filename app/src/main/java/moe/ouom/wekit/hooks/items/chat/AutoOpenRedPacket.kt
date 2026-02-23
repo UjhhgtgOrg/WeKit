@@ -15,7 +15,7 @@ import moe.ouom.wekit.core.dsl.dexMethod
 import moe.ouom.wekit.core.model.BaseClickableFunctionHookItem
 import moe.ouom.wekit.dexkit.intf.IDexFind
 import moe.ouom.wekit.hooks.core.annotation.HookItem
-import moe.ouom.wekit.hooks.sdk.base.WeDatabaseListener
+import moe.ouom.wekit.hooks.sdk.base.WeDatabaseListenerApi
 import moe.ouom.wekit.hooks.sdk.base.WeNetworkApi
 import moe.ouom.wekit.ui.utils.showComposeDialog
 import moe.ouom.wekit.ui.content.BaseRikkaDialog
@@ -29,7 +29,7 @@ import kotlin.random.Random
 @HookItem(path = "聊天与消息/自动抢红包", desc = "监听消息并自动拆开红包")
 object AutoOpenRedPacket : BaseClickableFunctionHookItem(),
     
-    WeDatabaseListener.IInsertListener, IDexFind {
+    WeDatabaseListenerApi.IInsertListener, IDexFind {
 
     private const val TAG: String = "WeRedPacketAuto"
 
@@ -55,7 +55,7 @@ object AutoOpenRedPacket : BaseClickableFunctionHookItem(),
     override fun entry(classLoader: ClassLoader) {
         WeLogger.i(TAG, "entry() called, registering db listener")
         // 注册数据库监听
-        WeDatabaseListener.addListener(this)
+        WeDatabaseListenerApi.addListener(this)
         WeLogger.i(TAG, "registered db listener")
 
         // Hook 具体的网络回调
@@ -205,7 +205,7 @@ object AutoOpenRedPacket : BaseClickableFunctionHookItem(),
 
     override fun unload(classLoader: ClassLoader) {
         WeLogger.i(TAG, "unload() called, removing db listener")
-        WeDatabaseListener.removeListener(this)
+        WeDatabaseListenerApi.removeListener(this)
         currentRedPacketMap.clear()
         WeLogger.i(TAG, "removed db listener and cleared red packet map")
         super.unload(classLoader)
@@ -321,17 +321,15 @@ object AutoOpenRedPacket : BaseClickableFunctionHookItem(),
                         }
                     },
                     dismissButton = {
-                        TextButton(onClick = { onDismiss() }) {
+                        TextButton(onClick = onDismiss) {
                             Text("取消")
                         }
                     }
                 )
             }
-            // Return false to prevent the UI from toggling until "确定" is pressed
             return false
         }
 
-        // Direct allow when disabling
         return true
     }
 }

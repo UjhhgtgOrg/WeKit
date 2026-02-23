@@ -171,7 +171,6 @@ private fun SearchStep(
                     .focusRequester(focusRequester),
                 placeholder = { Text("输入群名 / 拼音 / ID（留空显示全部）") },
                 leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = null) },
-                singleLine = true,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                 keyboardActions = KeyboardActions(onSearch = { onQuery(keyword.trim()) }),
             )

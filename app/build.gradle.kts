@@ -402,6 +402,7 @@ dependencies {
     implementation(libs.hiddenApiBypass)
     implementation(libs.kavaref.core)
     implementation(libs.kavaref.extension)
+    implementation(libs.libsu.core)
 
     implementation(projects.libs.common.annotationScanner)
     ksp(projects.libs.common.annotationScanner)

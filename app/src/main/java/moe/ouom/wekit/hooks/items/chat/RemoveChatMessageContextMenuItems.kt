@@ -10,6 +10,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import com.highcapable.kavaref.KavaRef.Companion.asResolver
 import moe.ouom.wekit.config.WeConfig
 import moe.ouom.wekit.constants.Constants
 import moe.ouom.wekit.core.dsl.dexMethod
@@ -25,19 +26,22 @@ object RemoveChatMessageContextMenuItems : BaseClickableFunctionHookItem(), IDex
     // although there are multiple addMenuItem() methods, i only found the usage of those two in the context menu of chat messages
     private val methodAddMenuItem1 by dexMethod()
     private val methodAddMenuItem2 by dexMethod()
-    private val config by lazy { WeConfig.getDefaultConfig() }
+    private val config = WeConfig.getDefaultConfig()
     private const val KEY_REMOVED_ITEM_NAMES = "removed_menu_item_names"
-    private const val DEFAULT_REMOVED_ITEM_NAMES = "收藏,提醒,翻译,搜一搜,编辑,打开"
+    private const val DEFAULT_REMOVED_ITEM_NAMES = "收藏,提醒,翻译,搜一搜,编辑,打开,相关表情,合拍,查看专辑"
 
     override fun entry(classLoader: ClassLoader) {
         methodAddMenuItem1.toDexMethod {
             hook {
-                beforeIfEnabled { param ->
+                afterIfEnabled { param ->
                     val name = param.args[3] as CharSequence
                     val removedNames = config.getStringPrek(KEY_REMOVED_ITEM_NAMES, DEFAULT_REMOVED_ITEM_NAMES).split(',')
 
                     if (removedNames.contains(name)) {
-                        param.result = null
+                        val list = param.thisObject.asResolver()
+                            .firstField { type = List::class }
+                            .get()!! as ArrayList<*>
+                        list.removeAt(list.size - 1)
                     }
                 }
             }
@@ -45,12 +49,15 @@ object RemoveChatMessageContextMenuItems : BaseClickableFunctionHookItem(), IDex
 
         methodAddMenuItem2.toDexMethod {
             hook {
-                beforeIfEnabled { param ->
+                afterIfEnabled { param ->
                     val name = param.args[3] as CharSequence
                     val removedNames = config.getStringPrek(KEY_REMOVED_ITEM_NAMES, DEFAULT_REMOVED_ITEM_NAMES).split(',')
 
                     if (removedNames.contains(name)) {
-                        param.result = null
+                        val list = param.thisObject.asResolver()
+                            .firstField { type = List::class }
+                            .get()!! as ArrayList<*>
+                        list.removeAt(list.size - 1)
                     }
                 }
             }

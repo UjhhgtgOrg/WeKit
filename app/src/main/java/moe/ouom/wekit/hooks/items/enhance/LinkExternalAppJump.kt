@@ -41,14 +41,14 @@ import androidx.core.net.toUri
 import de.robv.android.xposed.XC_MethodHook
 import moe.ouom.wekit.core.model.BaseSwitchFunctionHookItem
 import moe.ouom.wekit.hooks.core.annotation.HookItem
-import moe.ouom.wekit.hooks.sdk.base.WeStartActivityListener
+import moe.ouom.wekit.hooks.sdk.ui.WeStartActivityListenerApi
 import moe.ouom.wekit.host.HostInfo
 import moe.ouom.wekit.ui.utils.showComposeDialog
 import moe.ouom.wekit.utils.common.ToastUtils
 import moe.ouom.wekit.utils.log.WeLogger
 
 @HookItem(path = "聊天与消息/链接跳转系统打开方式", desc = "打开链接或卡片链接时显示对话框, 可直接使用系统打开方式打开")
-object LinkExternalAppJump : BaseSwitchFunctionHookItem(), WeStartActivityListener.IStartActivityListener {
+object LinkExternalAppJump : BaseSwitchFunctionHookItem(), WeStartActivityListenerApi.IStartActivityListener {
 
     private const val TAG = "ExternalBrowsableAppJump"
 
@@ -57,11 +57,11 @@ object LinkExternalAppJump : BaseSwitchFunctionHookItem(), WeStartActivityListen
     )
 
     override fun entry(classLoader: ClassLoader) {
-        WeStartActivityListener.addListener(this)
+        WeStartActivityListenerApi.addListener(this)
     }
 
     override fun unload(classLoader: ClassLoader) {
-        WeStartActivityListener.removeListener(this)
+        WeStartActivityListenerApi.removeListener(this)
         super.unload(classLoader)
     }
 

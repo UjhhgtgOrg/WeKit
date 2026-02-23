@@ -28,7 +28,7 @@ import androidx.compose.ui.unit.dp
 import moe.ouom.wekit.core.model.BaseClickableFunctionHookItem
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.hooks.item.automation.EmbeddedBuiltinJs
-import moe.ouom.wekit.hooks.sdk.base.WeDatabaseListener
+import moe.ouom.wekit.hooks.sdk.base.WeDatabaseListenerApi
 import moe.ouom.wekit.hooks.sdk.protocol.intf.IWePkgInterceptor
 import moe.ouom.wekit.ui.utils.showComposeDialog
 import moe.ouom.wekit.ui.content.BaseHooksSettingsDialogContent
@@ -38,7 +38,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 
 @HookItem(path = "自动化/自动化引擎", desc = "点击管理自动化规则")
 object AutomationHook : BaseClickableFunctionHookItem(),
-    WeDatabaseListener.IInsertListener,
+    WeDatabaseListenerApi.IInsertListener,
     IWePkgInterceptor
 {
     private const val TAG = "AutomationRuleManager"
@@ -85,7 +85,7 @@ object AutomationHook : BaseClickableFunctionHookItem(),
 
     override fun entry(classLoader: ClassLoader) {
         WeLogger.i(TAG, "registering automation DB listener")
-        WeDatabaseListener.addListener(this)
+        WeDatabaseListenerApi.addListener(this)
     }
 
     // --- onMessage ---
@@ -112,7 +112,7 @@ object AutomationHook : BaseClickableFunctionHookItem(),
 
     override fun unload(classLoader: ClassLoader) {
         WeLogger.i(TAG, "removing automation DB listener")
-        WeDatabaseListener.removeListener(this)
+        WeDatabaseListenerApi.removeListener(this)
         super.unload(classLoader)
     }
 

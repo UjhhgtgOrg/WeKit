@@ -1,4 +1,4 @@
-package moe.ouom.wekit.hooks.items.chat
+package moe.ouom.wekit.hooks.sdk.base.model
 
 enum class MessageType(val code: Int) {
     MOMENTS(0),

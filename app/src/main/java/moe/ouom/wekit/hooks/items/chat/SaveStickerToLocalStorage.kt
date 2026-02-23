@@ -11,6 +11,7 @@ import moe.ouom.wekit.core.dsl.dexClass
 import moe.ouom.wekit.core.model.BaseSwitchFunctionHookItem
 import moe.ouom.wekit.dexkit.intf.IDexFind
 import moe.ouom.wekit.hooks.core.annotation.HookItem
+import moe.ouom.wekit.hooks.sdk.base.model.MessageInfo
 import moe.ouom.wekit.hooks.sdk.ui.WeChatMessageContextMenuApi
 import moe.ouom.wekit.host.HostInfo
 import moe.ouom.wekit.utils.common.ModuleRes
@@ -52,11 +53,9 @@ object SaveStickerToLocalStorage : BaseSwitchFunctionHookItem(), IDexFind, WeCha
 
     override fun getMenuItems(
         hookParam: XC_MethodHook.MethodHookParam,
-        msgInfoBean: Any
+        msgInfo: MessageInfo
     ): List<WeChatMessageContextMenuApi.MenuItem> {
-        val type = msgInfoBean.asResolver()
-            .firstField { name = "field_type"
-                superclass() }.get() as Int
+        val type = msgInfo.type
 
         WeLogger.d(TAG, "type=$type")
         if (type != 47) {

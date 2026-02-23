@@ -44,7 +44,4 @@ object AutoApproveDeviceLogin : BaseSwitchFunctionHookItem() {
             button.callOnClick()
         }
     }
-
-    override fun unload(classLoader: ClassLoader) {
-    }
 }

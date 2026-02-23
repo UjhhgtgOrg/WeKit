@@ -19,11 +19,13 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -54,6 +56,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import com.topjohnwu.superuser.Shell
 import io.github.libxposed.service.XposedService
 import kotlinx.coroutines.delay
 import moe.ouom.wekit.BuildConfig
@@ -90,6 +93,9 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+
+private const val packageName = "com.tencent.mm"
+private const val launchActivity = "com.tencent.mm.ui.LauncherUI"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -294,6 +300,55 @@ fun AppContent(onUrlClick: (String) -> Unit) {
                     }
                 }
 
+                var showErrorDialog by remember { mutableStateOf(false) }
+
+                // Open WeChat Card
+                ElevatedCard(
+                    onClick = {
+                        Shell.cmd(
+                            "am force-stop $packageName",
+                            "am start -n $packageName/$launchActivity"
+                        ).submit { result ->
+                            if (!result.isSuccess) {
+                                showErrorDialog = true
+                            }
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Default.OpenInNew,
+                            contentDescription = null,
+                            modifier = Modifier.size(24.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Column {
+                            Text(
+                                text = "打开微信",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = "一键强制停止并启动微信",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+
+                if (showErrorDialog) {
+                    AlertDialog(onDismissRequest = { showErrorDialog = false },
+                        title = { Text("未授予 Root 权限") },
+                        text = { Text("请授予 Root 权限以一键强制停止并启动微信") },
+                        confirmButton = { Button(onClick = { showErrorDialog = false }) { Text("确定") } })
+                }
+
                 HorizontalDivider(
                     modifier = Modifier
                         .padding(vertical = 8.dp)
@@ -303,20 +358,17 @@ fun AppContent(onUrlClick: (String) -> Unit) {
 
                 // Link Cards
                 LinkCard(
-                    iconRes = R.drawable.ic_telegram,
-                    title = "Telegram",
-                    subtitle = "@ouom_pub",
-                    onClick = { onUrlClick("https://t.me/ouom_pub") }
-                )
-
-                LinkCard(
                     iconRes = R.drawable.ic_github,
                     title = "GitHub",
                     subtitle = "修改于 Ujhhgtg/WeKit (原始: cwuom/WeKit)",
                     onClick = { onUrlClick("https://github.com/Ujhhgtg/WeKit") }
                 )
-
-                Spacer(modifier = Modifier.height(30.dp))
+                LinkCard(
+                    iconRes = R.drawable.ic_telegram,
+                    title = "Telegram",
+                    subtitle = "@ouom_pub",
+                    onClick = { onUrlClick("https://t.me/ouom_pub") }
+                )
             }
 
             // 关于弹窗逻辑

@@ -9,7 +9,7 @@ import com.highcapable.kavaref.extension.toClass
 import moe.ouom.wekit.core.model.BaseSwitchFunctionHookItem
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.hooks.sdk.base.WeDatabaseApi
-import moe.ouom.wekit.hooks.sdk.base.WeDatabaseListener
+import moe.ouom.wekit.hooks.sdk.base.WeDatabaseListenerApi
 import moe.ouom.wekit.hooks.sdk.ui.WeMomentsContextMenuApi
 import moe.ouom.wekit.ui.utils.CommonContextWrapper
 import moe.ouom.wekit.utils.Initiator.loadClass
@@ -22,7 +22,7 @@ import java.util.LinkedList
     path = "朋友圈/朋友圈伪集赞",
     desc = "自定义朋友圈点赞用户列表"
 )
-object FakeMomentsLikes : BaseSwitchFunctionHookItem(), WeDatabaseListener.IUpdateListener  {
+object FakeMomentsLikes : BaseSwitchFunctionHookItem(), WeDatabaseListenerApi.IUpdateListener  {
 
     private const val TAG = "FakeMomentsLikes"
     private const val MENU_ID_FAKE_LIKES = 20001
@@ -59,11 +59,11 @@ object FakeMomentsLikes : BaseSwitchFunctionHookItem(), WeDatabaseListener.IUpda
 
         WeMomentsContextMenuApi.addOnCreateListener(onCreateListener)
         WeMomentsContextMenuApi.addOnSelectListener(onSelectListener)
-        WeDatabaseListener.addListener(this)
+        WeDatabaseListenerApi.addListener(this)
     }
 
     override fun unload(classLoader: ClassLoader) {
-        WeDatabaseListener.removeListener(this)
+        WeDatabaseListenerApi.removeListener(this)
         WeMomentsContextMenuApi.removeOnCreateListener(onCreateListener)
         WeMomentsContextMenuApi.removeOnSelectListener(onSelectListener)
     }

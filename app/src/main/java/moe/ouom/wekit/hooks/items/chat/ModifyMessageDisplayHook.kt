@@ -12,15 +12,17 @@ import com.highcapable.kavaref.KavaRef.Companion.asResolver
 import de.robv.android.xposed.XC_MethodHook
 import moe.ouom.wekit.core.model.BaseSwitchFunctionHookItem
 import moe.ouom.wekit.hooks.core.annotation.HookItem
+import moe.ouom.wekit.hooks.sdk.base.model.MessageInfo
 import moe.ouom.wekit.hooks.sdk.ui.WeChatMessageContextMenuApi
 import moe.ouom.wekit.ui.utils.showComposeDialog
 import moe.ouom.wekit.utils.common.ModuleRes
 
 @HookItem(
     path = "聊天与消息/修改消息显示",
-    desc = "修改本地消息显示内容"
+    desc = "向消息长按菜单添加菜单项, 可修改本地消息显示内容"
 )
-object ModifyMessageDisplayHook : BaseSwitchFunctionHookItem(), WeChatMessageContextMenuApi.IMenuItemsProvider {
+object ModifyMessageDisplayHook : BaseSwitchFunctionHookItem(),
+    WeChatMessageContextMenuApi.IMenuItemsProvider {
 
     override fun entry(classLoader: ClassLoader) {
         WeChatMessageContextMenuApi.addProvider(this)
@@ -33,16 +35,9 @@ object ModifyMessageDisplayHook : BaseSwitchFunctionHookItem(), WeChatMessageCon
 
     override fun getMenuItems(
         hookParam: XC_MethodHook.MethodHookParam,
-        msgInfoBean: Any
+        msgInfo: MessageInfo
     ): List<WeChatMessageContextMenuApi.MenuItem> {
-        val type = msgInfoBean.asResolver()
-            .firstField {
-                name = "field_type"
-                superclass()
-            }
-            .get() as Int
-
-        if (!MessageType.isText(type)) {
+        if (!msgInfo.isText) {
             return emptyList()
         }
 

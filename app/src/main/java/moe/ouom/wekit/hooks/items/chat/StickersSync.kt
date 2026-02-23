@@ -180,7 +180,7 @@ object StickersSync : BaseClickableFunctionHookItem(), IDexFind {
                 }.awaitAll().filterNotNull()
 
                 val totalStickers = packs.sumOf { it.stickers.size }
-                safeShowToast("成功加载 ${packs.size} 个包, 共 $totalStickers 个贴纸")
+                safeShowToast("成功加载 ${packs.size} 个贴纸包, 共 $totalStickers 个贴纸")
 
                 packs
             }

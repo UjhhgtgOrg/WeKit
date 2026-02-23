@@ -43,6 +43,8 @@ object WeMessageApi : ApiHookItem(), IDexFind {
     val classMsgInfo by dexClass()
     val classMsgInfoStorage by dexClass()
     val methodMsgInfoStorageInsertMessage by dexMethod()
+    val classChattingContext by dexClass()
+    val classChattingDataAdapter by dexClass()
 
     // -------------------------------------------------------------------------------------
     // 图片发送组件
@@ -134,6 +136,19 @@ object WeMessageApi : ApiHookItem(), IDexFind {
             // ---------------------------------------------------------------------------------
             // 基础组件查找
             // ---------------------------------------------------------------------------------
+
+            classChattingDataAdapter.find(dexKit, descriptors) {
+                matcher {
+                    usingEqStrings("MicroMsg.ChattingDataAdapterV3", "[handleMsgChange] isLockNotify:")
+                }
+            }
+
+            classChattingContext.find(dexKit, descriptors) {
+                matcher {
+                    usingEqStrings("MicroMsg.ChattingContext", "[notifyDataSetChange]")
+                }
+            }
+
             classNetSceneObserverOwner.find(dexKit, descriptors = descriptors) {
                 matcher {
                     methods {

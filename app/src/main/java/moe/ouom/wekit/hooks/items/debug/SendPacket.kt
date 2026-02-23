@@ -38,16 +38,16 @@ object SendPacket : BaseClickableFunctionHookItem() {
                 text = {
                     Column {
                         TextField(uri, onValueChange = { uri = it },
-                            label = { Text("CGI 路径 (str)") }, singleLine = true)
+                            label = { Text("CGI 路径 (str)") })
                         Spacer(Modifier.height(8.dp))
                         TextField(cmdIdStr, onValueChange = { cmdIdStr = it },
-                            label = { Text("cmdId (int)") }, singleLine = true)
+                            label = { Text("cmdId (int)") })
                         Spacer(Modifier.height(8.dp))
                         TextField(funcIdStr, onValueChange = { funcIdStr = it },
-                            label = { Text("funcId (int)") }, singleLine = true)
+                            label = { Text("funcId (int)") })
                         Spacer(Modifier.height(8.dp))
                         TextField(routeIdStr, onValueChange = { routeIdStr = it },
-                            label = { Text("routeId (int)") }, singleLine = true)
+                            label = { Text("routeId (int)") })
                         Spacer(Modifier.height(8.dp))
                         TextField(jsonPayloadStr, onValueChange = { jsonPayloadStr = it }, label = { Text("JSON 载荷 (str)") })
                     }
