@@ -47,13 +47,13 @@ import moe.ouom.wekit.ui.utils.showComposeDialog
 import moe.ouom.wekit.utils.common.ToastUtils
 import moe.ouom.wekit.utils.log.WeLogger
 
-@HookItem(path = "聊天与消息/链接跳转系统打开方式", desc = "打开链接或卡片链接时显示对话框, 可直接使用系统打开方式打开")
+@HookItem(path = "聊天与消息/链接跳转系统打开方式", desc = "打开链接或卡片链接时显示对话框, 可直接使用系统打开方式打开\n若要跳转到第三方应用, 需先在对应应用设置中启用 '在此应用中打开支持的网页链接'")
 object LinkExternalAppJump : BaseSwitchFunctionHookItem(), WeStartActivityListenerApi.IStartActivityListener {
 
     private const val TAG = "ExternalBrowsableAppJump"
 
     private val WECHAT_INTERNAL_HOSTS = setOf(
-        "weixin.com", "qq.com", "weixin.qq.com.cn", "wechatpay.cn", "tenpay.com", "weixinbridge.com"
+        "weixin.com", "qq.com", "weixin.qq.com.cn", "wechatpay.cn", "tenpay.com", "weixinbridge.com", "kf.qq.com"
     )
 
     override fun entry(classLoader: ClassLoader) {
@@ -104,32 +104,26 @@ object LinkExternalAppJump : BaseSwitchFunctionHookItem(), WeStartActivityListen
             AlertDialog(onDismissRequest = onDismiss,
                 title = { Text("选择打开方式") },
                 text = {
-                    if (resolveInfos.isEmpty()) {
-                        Text(
-                            text = "找不到可处理此链接的应用：\n$url",
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    } else {
-                        LazyColumn {
-                            items(resolveInfos) { info ->
-                                AppItemRow(info, packageManager) {
-                                    launchApp(context, info, url)
-                                }
+                    LazyColumn {
+                        items(resolveInfos) { info ->
+                            AppItemRow(info, packageManager) {
+                                launchApp(context, info, url)
+                                onDismiss()
                             }
+                        }
 
+                        if (!resolveInfos.isEmpty())
                             item { HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp)) }
 
-                            item {
-                                InternalWebViewRow {
-                                    try {
-                                        intent.putExtra("skip_link_hook", true)
-                                        context.startActivity(intent)
-                                    } catch (e: Exception) {
-                                        WeLogger.e(TAG, "打开内置浏览器失败: ${e.message}")
-                                    }
-                                    onDismiss()
+                        item {
+                            InternalWebViewRow {
+                                try {
+                                    intent.putExtra("skip_link_hook", true)
+                                    context.startActivity(intent)
+                                } catch (e: Exception) {
+                                    WeLogger.e(TAG, "打开内置浏览器失败: ${e.message}")
                                 }
+                                onDismiss()
                             }
                         }
                     }

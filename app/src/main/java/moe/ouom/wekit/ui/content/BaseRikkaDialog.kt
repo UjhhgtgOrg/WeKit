@@ -6,7 +6,6 @@ import android.text.InputType
 import android.view.View
 import android.widget.TextView
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Column
@@ -541,14 +540,14 @@ private fun SwitchRow(
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        // Icon placeholder (same visual weight as text rows)
         if (row.iconName != null) {
             val drawable = remember(row.iconName) { ModuleRes.getDrawable(row.iconName) }
             if (drawable != null) {
-                Image(
+                Icon(
                     painter = rememberDrawablePainter(drawable),
                     contentDescription = null,
                     modifier = Modifier.size(24.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(Modifier.width(16.dp))
             }
@@ -606,10 +605,11 @@ private fun SimpleRow(
             // TODO: some icons' tint color is wrong (doesn't follow dark mode)
             val drawable = remember(iconName) { ModuleRes.getDrawable(iconName) }
             if (drawable != null) {
-                Image(
+                Icon(
                     painter = rememberDrawablePainter(drawable),
                     contentDescription = null,
                     modifier = Modifier.size(24.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(Modifier.width(16.dp))
             }

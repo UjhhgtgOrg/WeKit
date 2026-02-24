@@ -151,7 +151,7 @@ object WeDatabaseListenerApi : ApiHookItem() {
             val isPlay = HostInfo.isGooglePlayVersion
             val version = HostInfo.getVersionCode()
             val isNewVersion = (!isPlay && version >= MMVersion.MM_8_0_43) ||
-                    (isPlay && version >= MMVersion.MM_8_0_48_Play)
+                    (isPlay && version >= MMVersion.MM_8_0_48_PLAY)
 
             val clsName = if (isNewVersion) Constants.CLAZZ_COMPAT_SQLITE_DATABASE else Constants.CLAZZ_SQLITE_DATABASE
             val clsSQLite = loadClass(clsName)
@@ -201,7 +201,7 @@ object WeDatabaseListenerApi : ApiHookItem() {
             val isPlay = HostInfo.isGooglePlayVersion
             val version = HostInfo.getVersionCode()
             val isNewVersion = (!isPlay && version >= MMVersion.MM_8_0_43) ||
-                    (isPlay && version >= MMVersion.MM_8_0_48_Play)
+                    (isPlay && version >= MMVersion.MM_8_0_48_PLAY)
 
             if (isNewVersion) {
                 hookNewVersionQuery()

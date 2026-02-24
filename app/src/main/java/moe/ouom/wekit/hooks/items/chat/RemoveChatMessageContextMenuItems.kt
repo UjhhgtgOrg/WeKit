@@ -28,7 +28,7 @@ object RemoveChatMessageContextMenuItems : BaseClickableFunctionHookItem(), IDex
     private val methodAddMenuItem2 by dexMethod()
     private val config = WeConfig.getDefaultConfig()
     private const val KEY_REMOVED_ITEM_NAMES = "removed_menu_item_names"
-    private const val DEFAULT_REMOVED_ITEM_NAMES = "收藏,提醒,翻译,搜一搜,编辑,打开,相关表情,合拍,查看专辑"
+    private const val DEFAULT_REMOVED_ITEM_NAMES = "收藏,提醒,翻译,搜一搜,编辑,打开,相关表情,合拍,查看专辑,静音播放"
 
     override fun entry(classLoader: ClassLoader) {
         methodAddMenuItem1.toDexMethod {

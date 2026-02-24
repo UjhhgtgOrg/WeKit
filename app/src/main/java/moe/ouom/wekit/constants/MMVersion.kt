@@ -13,7 +13,7 @@ object MMVersion {
     const val MM_8_0_57 = 2820
     const val MM_8_0_56 = 2800
     const val MM_8_0_49 = 2600
-    const val MM_8_0_48_Play = 2583
+    const val MM_8_0_48_PLAY = 2583
     const val MM_8_0_43 = 2480
 
     const val V_8_0_67 = "8.0.67"
