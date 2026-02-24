@@ -17,7 +17,7 @@ object DisableTypingStatusUploading : BaseSwitchFunctionHookItem(), IDexFind {
     override fun entry(classLoader: ClassLoader) {
         classMmTypingSendReq.clazz.asResolver().firstMethod { name = "doScene" }.hookBefore { param ->
             WeLogger.i(TAG, "preventing upload of typing status")
-            param.result = null
+            param.result = -1
         }
     }
 
