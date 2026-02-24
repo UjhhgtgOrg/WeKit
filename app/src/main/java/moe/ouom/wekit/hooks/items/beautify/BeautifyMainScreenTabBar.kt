@@ -28,23 +28,18 @@ import androidx.lifecycle.setViewTreeLifecycleOwner
 import androidx.lifecycle.setViewTreeViewModelStoreOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.highcapable.kavaref.KavaRef.Companion.asResolver
-import moe.ouom.wekit.core.dsl.dexMethod
 import moe.ouom.wekit.core.model.BaseSwitchFunctionHookItem
-import moe.ouom.wekit.dexkit.intf.IDexFind
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.ui.utils.XposedLifecycleOwner
 import moe.ouom.wekit.utils.log.WeLogger
-import org.luckypray.dexkit.DexKitBridge
 
 @HookItem(path = "美化/美化首页底部导航栏", desc = "将首页底部导航栏替换为 Jetpack Compose 组件")
-object BeautifyMainScreenTabBar : BaseSwitchFunctionHookItem(), IDexFind {
+object BeautifyMainScreenTabBar : BaseSwitchFunctionHookItem() {
 
     private const val TAG = "BeautifyMainScreenTabBar"
 
-    private val methodDoOnCreate by dexMethod()
-
     override fun entry(classLoader: ClassLoader) {
-        methodDoOnCreate.toDexMethod {
+        WeMainActivityBeautifyApi.methodDoOnCreate.toDexMethod {
             hook {
                 afterIfEnabled { param ->
                     val activity = param.thisObject.asResolver()
@@ -95,7 +90,7 @@ object BeautifyMainScreenTabBar : BaseSwitchFunctionHookItem(), IDexFind {
                         }
 
                     bottomTabViewGroup.removeAllViews()
-                    WeLogger.i(TAG, "injected ComposeView into tab bar")
+                    WeLogger.i(TAG, "replaced tab bar with compose")
                     bottomTabViewGroup.addView(
                         ComposeView(activity).apply {
                             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnDetachedFromWindowOrReleasedFromPool)
@@ -170,18 +165,5 @@ object BeautifyMainScreenTabBar : BaseSwitchFunctionHookItem(), IDexFind {
             blue = start.blue + (stop.blue - start.blue) * f,
             alpha = start.alpha + (stop.alpha - start.alpha) * f
         )
-    }
-
-    override fun dexFind(dexKit: DexKitBridge): Map<String, String> {
-        val descriptors = mutableMapOf<String, String>()
-
-        methodDoOnCreate.find(dexKit, descriptors) {
-            matcher {
-                declaredClass = "com.tencent.mm.ui.MainTabUI"
-                usingEqStrings("MicroMsg.LauncherUI.MainTabUI", "doOnCreate")
-            }
-        }
-
-        return descriptors
     }
 }

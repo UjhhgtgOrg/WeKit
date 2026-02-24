@@ -45,7 +45,9 @@ object EnableWebViewFeatures : BaseSwitchFunctionHookItem(), IDexFind {
                         name = "getIntent"
                         superclass()
                     }.invoke() as Intent
-                    intent.putExtra("show_feedback", false)
+                    for (key in TRUE_INTENT_KEYS) {
+                        intent.putExtra(key, true)
+                    }
                 }
             }
         }

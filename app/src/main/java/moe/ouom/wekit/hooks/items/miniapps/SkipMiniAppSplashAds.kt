@@ -7,14 +7,14 @@ import moe.ouom.wekit.hooks.core.annotation.HookItem
 import org.luckypray.dexkit.DexKitBridge
 
 @HookItem(path = "小程序/跳过开屏广告", desc = "跳过小程序开屏广告")
-object SkipMiniAppsSplashAds : BaseSwitchFunctionHookItem(), IDexFind {
+object SkipMiniAppSplashAds : BaseSwitchFunctionHookItem(), IDexFind {
     private val methodAdDataCallback by dexMethod()
 
     override fun entry(classLoader: ClassLoader) {
         methodAdDataCallback.toDexMethod {
             hook {
-                replace {
-                    null
+                beforeIfEnabled { param ->
+                    param.result = null
                 }
             }
         }
