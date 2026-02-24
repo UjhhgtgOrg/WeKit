@@ -12,7 +12,6 @@ import org.luckypray.dexkit.DexKitBridge
 @HookItem(path = "聊天与消息/引用消息直达", desc = "点击被引用消息时直接跳转至对应消息")
 object QuotedMessageDirectJump : BaseSwitchFunctionHookItem(), IDexFind {
 
-    private const val TAG = "QuotedMessageDirectJump"
     private val methodClickEvent by dexMethod()
     private val methodClickToPositionEvent by dexMethod()
     private val methodGetQuoteMessageInfo by dexMethod()

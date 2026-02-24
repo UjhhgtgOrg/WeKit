@@ -1,0 +1,39 @@
+package moe.ouom.wekit.hooks.items.chat
+
+import moe.ouom.wekit.core.dsl.dexMethod
+import moe.ouom.wekit.core.model.BaseSwitchFunctionHookItem
+import moe.ouom.wekit.dexkit.intf.IDexFind
+import moe.ouom.wekit.hooks.core.annotation.HookItem
+import moe.ouom.wekit.utils.log.WeLogger
+import org.luckypray.dexkit.DexKitBridge
+
+@HookItem(path = "聊天与消息/禁止上传正在输入状态", desc = "禁止应用上传 '正在输入...' 状态")
+object DisableTypingStatusUploading : BaseSwitchFunctionHookItem(), IDexFind {
+
+    private const val TAG = "DisableTypingStatusUploading"
+    private val methodMmTypingSendReqDoScene by dexMethod()
+
+    override fun entry(classLoader: ClassLoader) {
+        methodMmTypingSendReqDoScene.toDexMethod {
+            hook {
+                beforeIfEnabled { param ->
+                    WeLogger.i(TAG, "preventing upload of typing status")
+                    param.result = null
+                }
+            }
+        }
+    }
+
+    override fun dexFind(dexKit: DexKitBridge): Map<String, String> {
+        val descriptors = mutableMapOf<String, String>()
+
+        methodMmTypingSendReqDoScene.find(dexKit, descriptors) {
+            searchPackages("com.tencent.mm.modelsimple")
+            matcher {
+                usingEqStrings("null cannot be cast to non-null type com.tencent.mm.protocal.MMTypingSend.Req")
+            }
+        }
+
+        return descriptors
+    }
+}

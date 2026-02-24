@@ -1,6 +1,6 @@
 # WeKit
 
-WeKit 修改版
+适用于微信的 Xposed 模块
 
 ## 修改内容
 
