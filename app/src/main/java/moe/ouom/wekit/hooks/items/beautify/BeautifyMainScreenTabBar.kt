@@ -107,7 +107,7 @@ object BeautifyMainScreenTabBar : BaseSwitchFunctionHookItem() {
                                 // or else different color palettes clash and it's hideous
                                 val isDark = isSystemInDarkTheme()
                                 val backgroundColor = if (isDark) Color(0xFF191919) else Color(0xFFF7F7F7)
-                                val activeColor = if (isDark) Color(0xFF07C160) else Color(0xFF07C160)
+                                val activeColor = Color(0xFF07C160)
                                 val inactiveColor = if (isDark) Color(0xFF999999) else Color(0xFF181818)
 
                                 Row(
