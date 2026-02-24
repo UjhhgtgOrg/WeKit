@@ -29,7 +29,7 @@ object WeConversationApi : ApiHookItem(), IDexFind {
 
     fun clearUnreadCounts() {
         val cursor = WeDatabaseApi.execQueryMethod!!.invoke(WeDatabaseApi.dbInstance,
-            "SELECT username FROM rconversation WHERE unReadCount>0 OR unReadMuteCount>0") as Cursor
+            "SELECT username FROM rconversation WHERE unReadCount>0 OR unReadMuteCount>0", arrayOf<String>()) as Cursor
         while (cursor.moveToNext()) {
             val talker = cursor.getString(0)
             try {
