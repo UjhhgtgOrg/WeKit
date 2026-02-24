@@ -13,24 +13,19 @@ import moe.ouom.wekit.utils.log.WeLogger
 
 @HookItem(
     path = "联系人/显示微信 ID",
-    desc = "在联系人页面显示微信 ID"
+    desc = "在联系人详情页面显示微信 ID"
 )
-object ShowWeChatIdHook : BaseSwitchFunctionHookItem() {
+object ShowWxIdInContactDetails : BaseSwitchFunctionHookItem() {
 
     private const val TAG = "ShowWeChatIdHook"
     private const val PREF_KEY = "wechat_id_display"
 
-    // 创建初始化回调
     private val initCallback = WeChatContactInfoAdapterItemHook.InitContactInfoViewCallback { activity ->
         val wechatId = try {
             "微信 ID: ${activity.intent.getStringExtra("Contact_User") ?: "未知"}"
         } catch (e: Exception) {
             WeLogger.e(TAG, "获取微信ID失败", e)
             "微信 ID: 获取失败"
-        }
-        if (wechatId.contains("gh_")) {
-            WeLogger.d(TAG, "检测到公众号，不处理")
-            return@InitContactInfoViewCallback null
         }
 
         ContactInfoItem(
@@ -51,13 +46,10 @@ object ShowWeChatIdHook : BaseSwitchFunctionHookItem() {
 
     override fun entry(classLoader: ClassLoader) {
         try {
-            // 添加初始化回调
             WeChatContactInfoAdapterItemHook.addInitCallback(initCallback)
-            // 添加点击监听器
             WeChatContactInfoAdapterItemHook.addClickListener(clickListener)
-            WeLogger.i(TAG, "显示微信ID Hook 注册成功")
         } catch (e: Exception) {
-            WeLogger.e(TAG, "注册失败: ${e.message}", e)
+            WeLogger.e(TAG, "注册失败", e)
         }
     }
 
@@ -68,10 +60,9 @@ object ShowWeChatIdHook : BaseSwitchFunctionHookItem() {
             val clip = ClipData.newPlainText("微信ID", contactUser)
             clipboard.setPrimaryClip(clip)
             Toast.makeText(activity, "已复制", Toast.LENGTH_SHORT).show()
-            WeLogger.d(TAG, "Contact User: $contactUser")
             return true
         } catch (e: Exception) {
-            WeLogger.e(TAG, "处理点击失败: ${e.message}", e)
+            WeLogger.e(TAG, "处理点击失败", e)
             return false
         }
     }

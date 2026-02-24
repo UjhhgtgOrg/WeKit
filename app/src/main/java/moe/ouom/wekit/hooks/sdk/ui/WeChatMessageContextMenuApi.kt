@@ -25,7 +25,7 @@ object WeChatMessageContextMenuApi : ApiHookItem(), IDexFind {
     }
     data class MenuItem(val id: Int,
                             val text: String, val drawable: Drawable,
-                            val onClickListener: (View, Any, MessageInfo) -> Unit /* ChattingContext, MsgInfoBean */)
+                            val onClick: (View, Any, MessageInfo) -> Unit /* ChattingContext, MsgInfoBean */)
 
     private const val TAG: String = "WeChatMessageContextMenuApi"
 
@@ -157,13 +157,13 @@ object WeChatMessageContextMenuApi : ApiHookItem(), IDexFind {
                         for (item in provider.getMenuItems(param, msgInfoWrapper)) {
                             if (item.id == menuItem.itemId) {
                                 try {
-                                    item.onClickListener.invoke(
+                                    item.onClick(
                                         currentView!!,
                                         chattingContext,
                                         msgInfoWrapper
                                     )
                                 } catch (e: Throwable) {
-                                    WeLogger.e(TAG, "onClickListener threw an exception", e)
+                                    WeLogger.e(TAG, "onClick threw", e)
                                 }
                                 break
                             }

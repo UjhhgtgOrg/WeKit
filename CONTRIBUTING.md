@@ -3094,48 +3094,11 @@ close #1
 输出位置：`app/build/outputs/apk/debug/app-debug.apk`
 
 #### Release 构建
-当构建 **Release 变体 APK** 时，软件启动阶段将执行双重签名校验。为进行本地测试，需**临时**修改以下两处配置：
-<64位SHA256签名> 通过 SignatureVerifier.getSignatureHash() 生成
-
-**Native 层（`secrets.h`）**:
-
 ```bash
-python generate_secrets_h.py <64位SHA256签名>
-# 将输出内容临时覆盖 app/src/main/cpp/include/secrets.h
+./gradlew assembleRelease
 ```
 
-**Java 层（`SignatureVerifier.java`）**:
-
-```java
-private static final String[] VALID_SIGNATURE_HASHES = {
-    "<64位SHA256签名>"  // 仅限本地测试
-};
-```
-
-> ⚠️ **关键要求**：  
-> 以上修改**仅用于本地 Release 构建测试**，测试完成后 **`secrets.h` 和 `SignatureVerifier.java` 必须立即还原**至仓库原始版本，**严禁提交至仓库**，包含测试签名的 PR 将被拒绝合并
-
-### 自定义构建任务
-
-**代码保护机制说明**:
-
-此任务会在 R8 混淆之前拦截 `hooks` 包下的敏感类，将它们编译为独立的 DEX 文件，然后 XOR 加密后嵌入到 Native 层。
-
-**保护规则**:
-- ✅ **会被加密**: `hooks` 包下的普通类（如 `AntiRevokeMsg.kt`）
-- ✅ **会被加密**: `StringsKt` 类（字符串常量）
-- ❌ **不会被加密**: 以 `_` 开头的类（如 `_ExceptionFactory.java`）
-- ❌ **不会被加密**: 路径中包含 `/_` 的类（如 `hooks/_public/SomeClass.java`）
-
-**命名建议**:
-- 如果你的类需要被外部模块访问，使用 `_` 前缀命名
-- 如果你的类是内部实现，使用普通命名以获得加密保护
-
-**工作流程**:
-```
-编译 Java/Kotlin -> protectSensitiveCode 拦截 -> D8 编译为 DEX -> XOR 加密 ->
-嵌入 Native 层 -> R8 混淆剩余代码 -> 打包 APK
-```
+输出位置：`app/build/outputs/apk/release/app-release.apk`
 
 ## 文档贡献
 

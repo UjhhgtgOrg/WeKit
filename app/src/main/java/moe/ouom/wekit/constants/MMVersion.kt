@@ -29,5 +29,4 @@ object MMVersion {
     const val V_8_0_56 = "8.0.56"
     const val V_8_0_49 = "8.0.49"
     const val V_8_0_43 = "8.0.43"
-
 }

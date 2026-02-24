@@ -287,11 +287,11 @@ object StickersSync : BaseClickableFunctionHookItem(), IDexFind {
                         val stickersPackData = ContentValues()
                         stickersPackData.put(
                             "packGrayIconUrl",
-                            "https://avatars.githubusercontent.com/u/49312623"
+                            "https://avatars.githubusercontent.com/Ujhhgtg"
                         )
                         stickersPackData.put(
                             "packIconUrl",
-                            "https://avatars.githubusercontent.com/u/49312623"
+                            "https://avatars.githubusercontent.com/Ujhhgtg"
                         )
                         stickersPackData.put("packName", pack.packName)
                         stickersPackData.put("packStatus", 1)

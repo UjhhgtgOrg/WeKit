@@ -158,7 +158,7 @@ object WeChatContactInfoAdapterItemHook : ApiHookItem() {
 
             WeLogger.i(TAG, "Hook 注册成功")
         } catch (e: Exception) {
-            WeLogger.e(TAG, "Hook 失败 - ${e.message}", e)
+            WeLogger.e(TAG, "Hook 失败", e)
         }
     }
 

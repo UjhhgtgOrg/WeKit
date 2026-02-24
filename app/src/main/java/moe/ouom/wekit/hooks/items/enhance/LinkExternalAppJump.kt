@@ -53,7 +53,7 @@ object LinkExternalAppJump : BaseSwitchFunctionHookItem(), WeStartActivityListen
     private const val TAG = "ExternalBrowsableAppJump"
 
     private val WECHAT_INTERNAL_HOSTS = setOf(
-        "weixin.com", "qq.com", "weixin.qq.com.cn", "wechatpay.cn", "tenpay.com", "weixinbridge.com", "kf.qq.com"
+        "weixin.com", "qq.com", "weixin.qq.com.cn", "wechatpay.cn", "tenpay.com", "weixinbridge.com", "kf.qq.com", "pay.wechatpay.cn"
     )
 
     override fun entry(classLoader: ClassLoader) {

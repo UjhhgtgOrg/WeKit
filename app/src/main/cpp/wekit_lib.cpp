@@ -3,7 +3,7 @@
 #include <android/log.h>
 #include "native_crash_handler.h"
 
-#define LOG_TAG "[WeKit-TAG] wekit-native"
+#define LOG_TAG "WeKit-Native"
 
 //#define ENABLE_WEKIT_LOGS
 

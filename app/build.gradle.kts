@@ -152,7 +152,7 @@ android {
         versionName = getBuildVersionName()
 
         buildConfigField("String", "BUILD_UUID", "\"${buildUuid}\"")
-        buildConfigField("String", "TAG", "\"[WeKit-TAG]\"")
+        buildConfigField("String", "TAG", "\"WeKit\"")
         buildConfigField("long", "BUILD_TIMESTAMP", "${System.currentTimeMillis()}L")
         // noinspection ChromeOsAbiSupport
         ndk {
@@ -190,8 +190,8 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = true
-            isShrinkResources = true
+            isMinifyEnabled = false
+            isShrinkResources = false
 
             signingConfig = signingConfigs.getByName("debug")
 

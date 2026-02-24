@@ -1,6 +1,7 @@
 package moe.ouom.wekit.hooks.items.chat
 
-import moe.ouom.wekit.core.dsl.dexMethod
+import com.highcapable.kavaref.KavaRef.Companion.asResolver
+import moe.ouom.wekit.core.dsl.dexClass
 import moe.ouom.wekit.core.model.BaseSwitchFunctionHookItem
 import moe.ouom.wekit.dexkit.intf.IDexFind
 import moe.ouom.wekit.hooks.core.annotation.HookItem
@@ -11,26 +12,22 @@ import org.luckypray.dexkit.DexKitBridge
 object DisableTypingStatusUploading : BaseSwitchFunctionHookItem(), IDexFind {
 
     private const val TAG = "DisableTypingStatusUploading"
-    private val methodMmTypingSendReqDoScene by dexMethod()
+    private val classMmTypingSendReq by dexClass()
 
     override fun entry(classLoader: ClassLoader) {
-        methodMmTypingSendReqDoScene.toDexMethod {
-            hook {
-                beforeIfEnabled { param ->
-                    WeLogger.i(TAG, "preventing upload of typing status")
-                    param.result = null
-                }
-            }
+        classMmTypingSendReq.clazz.asResolver().firstMethod { name = "doScene" }.hookBefore { param ->
+            WeLogger.i(TAG, "preventing upload of typing status")
+            param.result = null
         }
     }
 
     override fun dexFind(dexKit: DexKitBridge): Map<String, String> {
         val descriptors = mutableMapOf<String, String>()
 
-        methodMmTypingSendReqDoScene.find(dexKit, descriptors) {
+        classMmTypingSendReq.find(dexKit, descriptors) {
             searchPackages("com.tencent.mm.modelsimple")
             matcher {
-                usingEqStrings("null cannot be cast to non-null type com.tencent.mm.protocal.MMTypingSend.Req")
+                usingEqStrings("null cannot be cast to non-null type com.tencent.mm.protocal.MMTypingSend.Req", "autoAuth")
             }
         }
 

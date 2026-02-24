@@ -233,16 +233,15 @@ fun AppContent(onUrlClick: (String) -> Unit) {
             )
         }
     ) { innerPadding ->
-
         Box(modifier = Modifier.fillMaxSize()) {
             // 内容层
             Column(
                 modifier = Modifier
                     .padding(innerPadding)
                     .verticalScroll(rememberScrollState())
-                    .padding(top = 24.dp)
+                    .padding(top = 16.dp)
                     .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 // Activation Status Card
                 Card(
@@ -351,7 +350,7 @@ fun AppContent(onUrlClick: (String) -> Unit) {
 
                 HorizontalDivider(
                     modifier = Modifier
-                        .padding(vertical = 8.dp)
+                        .padding(vertical = 4.dp)
                         .alpha(0.1f),
                     color = MaterialTheme.colorScheme.onSurface
                 )
