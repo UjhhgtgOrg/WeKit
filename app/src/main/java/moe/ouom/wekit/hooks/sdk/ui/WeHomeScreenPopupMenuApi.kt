@@ -77,7 +77,7 @@ object WeHomeScreenPopupMenuApi : ApiHookItem(), IDexFind {
                             }
                         }
                         catch (ex: Exception) {
-                            WeLogger.e(TAG, "provider ${provider.javaClass.simpleName} threw", ex)
+                            WeLogger.e(TAG, "provider ${provider.javaClass.name} threw while providing menu items", ex)
                         }
                     }
                     baseAdapter.notifyDataSetChanged()
@@ -111,7 +111,7 @@ object WeHomeScreenPopupMenuApi : ApiHookItem(), IDexFind {
                                     return@beforeIfEnabled
                                 }
                                 catch (ex: Exception) {
-                                    WeLogger.e(TAG, "onClick threw", ex)
+                                    WeLogger.e(TAG, "provider ${provider.javaClass.name} threw while handling click event", ex)
                                 }
                             }
                         }

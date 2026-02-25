@@ -547,7 +547,7 @@ private fun SwitchRow(
                     painter = rememberDrawablePainter(drawable),
                     contentDescription = null,
                     modifier = Modifier.size(24.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    tint = MaterialTheme.colorScheme.onSurface
                 )
                 Spacer(Modifier.width(16.dp))
             }
@@ -602,14 +602,13 @@ private fun SimpleRow(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (iconName != null) {
-            // TODO: some icons' tint color is wrong (doesn't follow dark mode)
             val drawable = remember(iconName) { ModuleRes.getDrawable(iconName) }
             if (drawable != null) {
                 Icon(
                     painter = rememberDrawablePainter(drawable),
                     contentDescription = null,
                     modifier = Modifier.size(24.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    tint = MaterialTheme.colorScheme.onSurface
                 )
                 Spacer(Modifier.width(16.dp))
             }

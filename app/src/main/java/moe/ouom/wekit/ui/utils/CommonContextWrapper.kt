@@ -56,7 +56,7 @@ class CommonContextWrapper(base: Context?, themeResId: Int) : ContextWrapper(bas
     private fun getResourceIdSafe(name: String?, type: String?): Int {
         return try {
             ModuleRes.getId(name, type)
-        } catch (e: Throwable) {
+        } catch (_: Throwable) {
             0
         }
     }

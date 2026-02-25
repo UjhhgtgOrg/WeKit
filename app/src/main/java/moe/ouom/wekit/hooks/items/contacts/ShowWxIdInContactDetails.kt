@@ -24,7 +24,7 @@ object ShowWxIdInContactDetails : BaseSwitchFunctionHookItem() {
         val wechatId = try {
             "微信 ID: ${activity.intent.getStringExtra("Contact_User") ?: "未知"}"
         } catch (e: Exception) {
-            WeLogger.e(TAG, "获取微信ID失败", e)
+            WeLogger.e(TAG, "获取微信 ID 失败", e)
             "微信 ID: 获取失败"
         }
 
@@ -57,7 +57,7 @@ object ShowWxIdInContactDetails : BaseSwitchFunctionHookItem() {
         try {
             val contactUser = activity.intent.getStringExtra("Contact_User")
             val clipboard = activity.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-            val clip = ClipData.newPlainText("微信ID", contactUser)
+            val clip = ClipData.newPlainText("WxId", contactUser)
             clipboard.setPrimaryClip(clip)
             Toast.makeText(activity, "已复制", Toast.LENGTH_SHORT).show()
             return true

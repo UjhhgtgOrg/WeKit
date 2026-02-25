@@ -7,9 +7,7 @@ import android.os.Process
 import android.view.ViewGroup
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.expandVertically
-import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
@@ -171,25 +169,19 @@ object AddMainScreenFab : BaseSwitchFunctionHookItem() {
                                                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                                                     ) {
                                                         // The Floating Label
-                                                        AnimatedVisibility(
-                                                            visible = expanded,
-                                                            enter = expandHorizontally(expandFrom = Alignment.End),
-                                                            exit = shrinkHorizontally(shrinkTowards = Alignment.End)
+                                                        Surface(
+                                                            shape = RoundedCornerShape(8.dp),
+                                                            color = backgroundColor,
+                                                            tonalElevation = 2.dp,
+                                                            shadowElevation = 2.dp
                                                         ) {
-                                                            Surface(
-                                                                shape = RoundedCornerShape(8.dp),
-                                                                color = backgroundColor,
-                                                                tonalElevation = 2.dp,
-                                                                shadowElevation = 2.dp
-                                                            ) {
-                                                                Text(
-                                                                    text = name,
-                                                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                                                                    color = activeColor,
-                                                                    fontSize = 14.sp,
-                                                                    fontWeight = FontWeight.Medium
-                                                                )
-                                                            }
+                                                            Text(
+                                                                text = name,
+                                                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                                                color = activeColor,
+                                                                fontSize = 14.sp,
+                                                                fontWeight = FontWeight.Medium
+                                                            )
                                                         }
 
                                                         // The Small FAB

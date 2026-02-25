@@ -17,7 +17,7 @@ import org.luckypray.dexkit.DexKitBridge
 import java.util.concurrent.CopyOnWriteArrayList
 
 @SuppressLint("StaticFieldLeak")
-@HookItem(path = "API/聊天界面消息菜单扩展", desc = "为聊天界面消息长按菜单提供自定义菜单项功能")
+@HookItem(path = "API/聊天界面消息菜单扩展", desc = "为聊天界面消息长按菜单提供添加菜单项功能")
 object WeChatMessageContextMenuApi : ApiHookItem(), IDexFind {
 
     interface IMenuItemsProvider {
@@ -47,7 +47,7 @@ object WeChatMessageContextMenuApi : ApiHookItem(), IDexFind {
 
     private val methodApiManagerGetApi by dexMethod()
     private val methodCreateMenu by dexMethod()
-    private val methodSelectMenu by dexMethod()
+    private val methodSelectMenuItem by dexMethod()
     private val classChattingMessBox by dexClass()
     private var currentView: View? = null // selectMenu is guaranteed to be called after createMenu, so this will not cause NPE
 
@@ -55,17 +55,10 @@ object WeChatMessageContextMenuApi : ApiHookItem(), IDexFind {
         methodCreateMenu.toDexMethod {
             hook {
                 beforeIfEnabled { param ->
-                    val arg0 = param.args[0]
+                    val menu = param.args[0]
 
                     currentView = param.args[1] as View
                     val tag = currentView!!.tag
-//                    val num = tag.asResolver()
-//                        .firstMethod {
-//                            returnType = Int::class
-//                            parameterCount(0)
-//                            superclass()
-//                        }
-//                        .invoke()
 
                     val msgInfo = tag.asResolver()
                         .firstMethod {
@@ -74,29 +67,19 @@ object WeChatMessageContextMenuApi : ApiHookItem(), IDexFind {
                             superclass()
                         }
                         .invoke()!!
+
                     for (provider in providers) {
                         try {
                             for (item in provider.getMenuItems(param, MessageInfo(msgInfo))) {
-                                arg0.asResolver()
+                                menu.asResolver()
                                     .firstMethod {
-                                        parameters(
-//                                            Int::class,
-//                                            Int::class,
-//                                            Int::class,
-//                                            CharSequence::class,
-//                                            Int::class
-                                            Int::class,
-                                            CharSequence::class,
-                                            Drawable::class
-                                        )
+                                        parameters(Int::class, CharSequence::class, Drawable::class)
                                         returnType = android.view.MenuItem::class
                                     }
-//                                    .invoke(num, item.resourceId, 0, item.text, item.drawableResourceId)
                                     .invoke(item.id, item.text, item.drawable)
-                                WeLogger.i(TAG, "added menu item ${item.text}")
                             }
                         } catch (e: Throwable) {
-                            WeLogger.e(TAG, "provider threw an exception", e)
+                            WeLogger.e(TAG, "provider ${provider.javaClass.name} threw while providing menu items", e)
                         }
                     }
                 }
@@ -104,7 +87,7 @@ object WeChatMessageContextMenuApi : ApiHookItem(), IDexFind {
         }
 
 
-        methodSelectMenu.toDexMethod {
+        methodSelectMenuItem.toDexMethod {
             hook {
                 beforeIfEnabled { param ->
                     val thisObj = param.thisObject
@@ -154,19 +137,20 @@ object WeChatMessageContextMenuApi : ApiHookItem(), IDexFind {
                         .invoke(menuItem.groupId)!!
                     val msgInfoWrapper = MessageInfo(msgInfo)
                     for (provider in providers) {
-                        for (item in provider.getMenuItems(param, msgInfoWrapper)) {
-                            if (item.id == menuItem.itemId) {
-                                try {
+                        try {
+                            for (item in provider.getMenuItems(param, msgInfoWrapper)) {
+                                if (item.id == menuItem.itemId) {
                                     item.onClick(
                                         currentView!!,
                                         chattingContext,
                                         msgInfoWrapper
                                     )
-                                } catch (e: Throwable) {
-                                    WeLogger.e(TAG, "onClick threw", e)
+                                    param.result = null
+                                    return@beforeIfEnabled
                                 }
-                                break
                             }
+                        } catch (e: Throwable) {
+                            WeLogger.e(TAG, "provider ${provider.javaClass.name} threw while handling click event", e)
                         }
                     }
                 }
@@ -191,7 +175,7 @@ object WeChatMessageContextMenuApi : ApiHookItem(), IDexFind {
             }
         }
 
-        methodSelectMenu.find(dexKit, descriptors) {
+        methodSelectMenuItem.find(dexKit, descriptors) {
             searchPackages("com.tencent.mm.ui.chatting.viewitems")
             matcher {
                 usingEqStrings("MicroMsg.ChattingItem", "context item select failed, null dataTag")
