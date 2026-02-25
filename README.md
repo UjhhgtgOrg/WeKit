@@ -45,6 +45,10 @@
 
 提交 PR 前请确保可以通过编译, 功能正常, 不影响其他功能
 
+## 已知问题
+
+- 每次 DEX 解析缓存清空后, WeMessageApi.classChattingContext 第一次将会必定解析失败, 重启应用重试即可恢复正常, 原因暂时未知
+
 ## lol
 
 ```none

@@ -44,7 +44,7 @@
 ### 核心信息
 - **包名**: `moe.ouom.wekit`
 - **目标应用**: 微信 (com.tencent.mm)
-- **最低 Android 版本**: Android 10.0+ (API 29)
+- **最低 Android 版本**: Android 10 (API 29)
 - **最低微信版本**: 8.0.67
 - **Xposed 最低版本**: 51
 
@@ -62,7 +62,7 @@
 ### 必需工具
 
 1. **Android Studio**: Ladybug | 2024.2.1 或更高版本
-2. **JDK**: JDK 17
+2. **JDK**: JDK 21
 3. **Android SDK**:
    - Compile SDK: 36
    - Build Tools: 最新版本
@@ -72,7 +72,7 @@
 ### 克隆项目
 
 ```bash
-git clone --recursive https://github.com/cwuom/wekit.git 
+git clone https://github.com/Ujhhgtg/wekit.git 
 cd wekit
 ```
 
@@ -88,6 +88,8 @@ cd wekit
 ```bash
 # Debug 版本
 ./gradlew assembleDebug
+# Release 版本
+./gradlew assembleRelease
 ```
 
 ---
@@ -198,8 +200,6 @@ wekit/
 │   ├── src/main/
 │   │   ├── cpp/               # C++ Native 代码
 │   │   │   ├── wekit_lib.cpp  # 主实现
-│   │   │   ├── sha256.h       # SHA256 算法
-│   │   │   ├── skCrypter.h    # 字符串加密
 │   │   │   └── include/       # 头文件
 │   │   ├── java/              # Java/Kotlin 源码
 │   │   │   └── moe/ouom/wekit/
@@ -259,13 +259,18 @@ moe.ouom.wekit/
 │   │   ├── annotation/        # 注解定义
 │   │   └── factory/           # 工厂类
 │   ├── item/                  # 具体功能实现
-│   │   ├── chat/              # 聊天与消息
-│   │   ├── contact/           # 联系人
-│   │   ├── moment/            # 朋友圈
-│   │   ├── fix/               # 优化与修复
-│   │   ├── dev/               # 开发者选项
-│   │   ├── func/               # 娱乐功能
-│   │   ├── script/            # 脚本管理
+│   │   ├── chat/              # 聊天
+│   │   ├── contact/           # 联系人与群组
+│   │   ├── payment/           # 红包与支付
+│   │   ├── moments/           # 朋友圈
+│   │   ├── system/            # 系统与隐私
+│   │   ├── notifications/     # 通知
+│   │   ├── beautify/          # 界面美化
+│   │   ├── miniapps/          # 小程序
+│   │   ├── shortvideos/       # 视频号
+│   │   ├── profile/           # 个人资料
+│   │   ├── debug/             # 调试
+│   │   ├── automation/        # 自动化
 │   │   └── example/           # 示例代码
 │   └── sdk/                   # SDK 封装
 │       ├── api/               # API 封装
@@ -280,16 +285,9 @@ moe.ouom.wekit/
 │   └── startup/               # 启动流程
 ├── security/                  # 安全模块
 ├── ui/                        # UI 组件
-│   ├── creator/               # UI 创建器
-│   │   └── dialog/            # 对话框
-│   │       ├── item/          # 功能配置对话框（包结构镜像 hooks.item）
-│   │       │   ├── chat/      # 聊天相关配置
-│   │       │   ├── contact/   # 联系人相关配置
-│   │       │   └── ...        # 其他分类
-│   │       └── BaseRikkaDialog.kt  # 对话框基类
-│   ├── theme/                 # 主题
-│   └── widget/                # 自定义控件
-├── util/                      # 工具类
+│   ├── content/               # UI 创建器
+│   ├── utils/                 # 工具
+├── utils/                     # 工具类
 │   ├── common/                # 通用工具
 │   ├── hookstatus/            # Hook 状态
 │   ├── io/                    # IO 工具
@@ -302,13 +300,9 @@ moe.ouom.wekit/
 #### 包命名
 - **核心框架**: `moe.ouom.wekit.core.*`
 - **Hook 功能**: `moe.ouom.wekit.hooks.item.*`
-- **配置对话框**: `moe.ouom.wekit.ui.creator.dialog.item.*` （**必须镜像 Hook 功能的包结构**）
+- **配置对话框**: 使用 Jetpack Compose, 直接写在对应功能的 onClick 函数内部
 - **加载器**: `moe.ouom.wekit.loader.*`
 - **工具类**: `moe.ouom.wekit.util.*`
-
-> **📌 重要规范**：配置对话框的包结构必须与对应的 Hook 项保持一致
-> - Hook: `hooks.item.chat.risk.WeRedPacketAuto`
-> - Dialog: `ui.creator.dialog.item.chat.risk.WeRedPacketConfigDialog`
 
 #### 类命名
 - **基类**: `Base*` (如 `BaseHookItem`)
@@ -319,14 +313,7 @@ moe.ouom.wekit/
 - **实现类**: `*Impl` (如 `MmkvConfigManagerImpl`)
 
 #### 文件命名
-- **普通类**: 正常命名 (如 `HookItemFactory.java`) - 会被加密保护
-- **公开类**: 下划线前缀 (如 `_ExceptionFactory.java`) - 不会被加密，供外部访问
-- **Kotlin 文件**: 使用 PascalCase (如 `DslExtensions.kt`)
-
-> **重要说明**:
-> - 在 `hooks` 包下，以下划线 `_` 开头的类文件会被加入白名单，不会被加密到 Hidden DEX 中
-> - 这些类通常是需要被其他模块或外部访问的公开 API
-> - 普通命名的类会在构建时被加密保护，防止被轻易分析
+- 使用 PascalCase (如 `DslExtensions.kt`)
 
 ---
 
@@ -350,11 +337,11 @@ moe.ouom.wekit/
    ├─ 实现 DEX 查找逻辑
    ├─ 实现 Hook 逻辑
    ├─ 添加配置和 UI
-   └─ ⚠️ 实现版本兼容性逻辑（使用 MMVersion）
+   └─ [可选] 使用 MMVersion, 实现版本兼容性逻辑 (允许忽略和不兼容 <8.0.67 版本)
 
 4. 测试验证
    ├─ 本地测试
-   ├─ ⚠️ 多版本兼容性测试（必须测试多个微信版本）
+   ├─ 版本兼容性测试 (允许忽略和不兼容 <8.0.67 版本)
    ├─ 性能测试
    └─ ⚠️ 确认不破坏原有功能
 
@@ -373,8 +360,7 @@ moe.ouom.wekit/
 **在开发任何新功能或修改现有功能时,必须遵循以下原则:**
 
 1. **不破坏原有功能**: 任何更改都不能导致现有功能失效
-2. **不放弃旧版本适配**: 必须保持对旧版本微信的兼容性
-3. **使用版本分支**: 通过 `MMVersion` 和 `requireMinWeChatVersion` 为不同版本提供不同的实现
+2. **使用版本分支**: 通过 `MMVersion` 和 `requireMinWeChatVersion` 为不同版本提供不同的实现
 
 ### MMVersion 使用指南
 
@@ -508,7 +494,7 @@ import moe.ouom.wekit.host.HostInfo
 import org.luckypray.dexkit.DexKitBridge
 
 @HookItem(
-    path = "聊天与消息/版本兼容示例",
+    path = "聊天/版本兼容示例",
     desc = "展示如何进行版本适配"
 )
 class VersionCompatExample : BaseSwitchFunctionHookItem(), IDexFind {
@@ -657,7 +643,7 @@ override fun entry(classLoader: ClassLoader) {
  * @since 1.0.0
  */
 @HookItem(
-    path = "聊天与消息/防撤回",
+    path = "聊天/防撤回",
     desc = "阻止消息撤回"
 )
 class AntiRevokeMsg : BaseSwitchFunctionHookItem() {
@@ -749,8 +735,8 @@ import org.luckypray.dexkit.DexKitBridge
  * @since 1.0.0
  */
 @HookItem(
-    path = "聊天与消息/阻止消息撤回",  // 功能在设置中的路径
-    desc = "防止对方撤回消息"          // 功能描述
+    path = "聊天/阻止消息撤回",  // 功能在设置中的路径
+    desc = "防止对方撤回消息"    // 功能描述
 )
 class AntiRevokeMsg : BaseSwitchFunctionHookItem(), IDexFind {
 
@@ -874,7 +860,7 @@ class DangerousFeature : BaseSwitchFunctionHookItem(), IDexFind {
 
 **核心问题**：`onBeforeToggle()` 是**同步方法**，必须立即返回 `true` 或 `false`，但对话框是**异步的**，用户点击按钮是在未来某个时刻。
 
-**错误做法(直接返回 true)**:
+**错误做法 (直接返回 true)**:
 ```kotlin
 override fun onBeforeToggle(newState: Boolean, context: Context): Boolean {
     if (newState) {
@@ -901,7 +887,7 @@ override fun onBeforeToggle(newState: Boolean, context: Context): Boolean {
 6. （稍后）用户点击"确定"或"取消" ← 太晚了，开关已经开了
 ```
 
-**正确做法(返回 false + 手动设置)**:
+**正确做法 (返回 false + 手动设置)**:
 ```kotlin
 override fun onBeforeToggle(newState: Boolean, context: Context): Boolean {
     if (newState) {
@@ -923,16 +909,16 @@ override fun onBeforeToggle(newState: Boolean, context: Context): Boolean {
 ```
 1. 用户点击开关
 2. 调用 onBeforeToggle(true)
-3. 显示对话框(异步,立即返回)
+3. 显示对话框 (异步,立即返回)
 4. onBeforeToggle 返回 false
 5. 开关状态被撤回,保持关闭 ← 正确:等待用户确认
-6. (稍后)用户点击"确定"
+6. (稍后) 用户点击"确定"
 7. 执行 applyToggle(true) ← 自动完成: 保存配置 + 更新状态 + 更新UI
 ```
 
 **总结**:
-- **同步确认**(如权限检查):直接返回 `true` 或 `false`
-- **异步确认**(如对话框):返回 `false` + 在回调中调用 `applyToggle(newState)`
+- **同步确认** (如权限检查):直接返回 `true` 或 `false`
+- **异步确认** (如对话框):返回 `false` + 在回调中调用 `applyToggle(newState)`
 - **applyToggle() 方法**:一键完成所有操作(保存配置 + 更新状态 + 更新UI)
 
 </details>
@@ -981,656 +967,33 @@ override fun onBeforeToggle(newState: Boolean, context: Context): Boolean {
 #### 示例 2: 带配置界面的复杂功能
 
 > **📁 重要：配置对话框的包结构规范**
->
-> 配置对话框必须放在 `moe.ouom.wekit.ui.creator.dialog.item` 包下，并且**包结构要与 Hook 项保持一致**。
->
-> **规则**：
-> - Hook 项在：`moe.ouom.wekit.hooks.item.{分类}`
-> - 对话框在：`moe.ouom.wekit.ui.creator.dialog.item.{分类}`
->
-> **示例**：
-> - Hook 项：`moe.ouom.wekit.hooks.item.chat.risk.WeRedPacketAuto`
-> - 对话框：`moe.ouom.wekit.ui.creator.dialog.item.chat.risk.WeRedPacketConfigDialog`
->
-> **命名建议**：对话框类名建议使用 `{功能名}ConfigDialog` 格式
+> 使用 Jetpack Compose, 直接写在对应功能 class 或 onClick 函数内部, **不**放入`moe.ouom.wekit.ui.content.*`
 
 **步骤 1: 创建配置对话框**
 
 ```kotlin
-package moe.ouom.wekit.ui.creator.dialog.item.chat.risk
-
-import android.content.Context
-import android.text.InputType
-import moe.ouom.wekit.ui.creator.dialog.BaseRikkaDialog
-
-class AutoGrabRedPacketConfigDialog(context: Context) : BaseRikkaDialog(context, "自动抢红包") {
-
-    override fun initPreferences() {
-        addCategory("通用设置")
-
-        addSwitchPreference(
-            key = "red_packet_notification",
-            title = "抢到后通知",
-            summary = "在通知栏显示抢到的金额"
-        )
-
-        addCategory("高级选项")
-
-        addSwitchPreference(
-            key = "red_packet_self",
-            title = "抢自己的红包",
-            summary = "默认情况下不抢自己发出的"
-        )
-
-        addSwitchPreference(
-            key = "red_packet_delay_random",
-            title = "随机延时",
-            summary = "模拟人工操作（500ms ~ 3000ms），防止风控"
-        )
-
-        val customDelayView = addEditTextPreference(
-            key = "red_packet_delay_custom",
-            title = "自定义延迟",
-            summary = "延迟时间",
-            defaultValue = "1000",
-            hint = "请输入延迟时间（毫秒）",
-            inputType = InputType.TYPE_CLASS_NUMBER,
-            maxLength = 5,
-            summaryFormatter = { value ->
-                if (value.isEmpty()) "0 ms" else "$value ms"
-            }
-        )
-
-        // 当随机延迟开启时，禁用自定义延迟
-        setDependency(
-            dependentView = customDelayView,
-            dependencyKey = "red_packet_delay_random",
-            enableWhen = false,
-            hideWhenDisabled = false
-        )
-    }
-}
+// 暂时没空写文档, 请参考 (我写的那部分) 代码
 ```
 
 **步骤 2: 实现 Hook 功能**
 
 ```kotlin
-package moe.ouom.wekit.hooks.item.chat.risk
-
-import android.content.Context
-import moe.ouom.wekit.config.WeConfig
-import moe.ouom.wekit.core.model.BaseClickableFunctionHookItem
-import moe.ouom.wekit.dexkit.intf.IDexFind
-import moe.ouom.wekit.hooks.core.annotation.HookItem
-import moe.ouom.wekit.ui.creator.dialog.item.chat.risk.AutoGrabRedPacketConfigDialog
-import org.luckypray.dexkit.DexKitBridge
-import kotlin.random.Random
-
-/**
- * 自动抢红包功能
- *
- * @author Your Name
- * @since 1.0.0
- */
-@HookItem(
-    path = "聊天与消息/自动抢红包",
-    desc = "监听消息并自动拆开红包（点击配置）"
-)
-class AutoGrabRedPacket : BaseClickableFunctionHookItem(), IDexFind {
-
-    // 声明需要 Hook 的方法
-    private val methodReceiveRedPacket by dexMethod()
-
-    override fun dexFind(dexKit: DexKitBridge): Map<String, String> {
-        val descriptors = mutableMapOf<String, String>()
-
-        // 查找接收红包的方法
-        methodReceiveRedPacket.find(dexKit, descriptors = descriptors) {
-            matcher {
-                usingEqStrings("receiveRedPacket")
-            }
-        }
-
-        return descriptors
-    }
-
-    override fun entry(classLoader: ClassLoader) {
-        // Hook 接收红包方法
-        methodReceiveRedPacket.toDexMethod {
-            hook {
-                afterIfEnabled { param ->
-                    // 读取配置
-                    val config = ConfigManager.getDefaultConfig()
-                    val grabSelf = config.getBoolPrek("red_packet_self")
-                    val randomDelay = config.getBoolPrek("red_packet_delay_random")
-                    val customDelay = config.getStringPrek("red_packet_delay_custom", "0")
-                        .toLongOrNull() ?: 0L
-
-                    // 获取红包信息
-                    val redPacketId = param.args[0] as? String ?: return@afterIfEnabled
-                    val isSelf = checkIsSelf(param.args[1])
-
-                    // 判断是否需要抢
-                    if (isSelf && !grabSelf) {
-                        WeLogger.d("AutoGrabRedPacket", "跳过自己的红包: $redPacketId")
-                        return@afterIfEnabled
-                    }
-
-                    // 计算延迟时间
-                    val delayTime = if (randomDelay) {
-                        Random.nextLong(500, 3000)
-                    } else {
-                        customDelay
-                    }
-
-                    // 延迟抢红包
-                    Thread {
-                        try {
-                            if (delayTime > 0) Thread.sleep(delayTime)
-                            openRedPacket(redPacketId)
-                            WeLogger.d("AutoGrabRedPacket", "已抢红包: $redPacketId")
-                        } catch (e: Throwable) {
-                            WeLogger.e("AutoGrabRedPacket", "抢红包失败", e)
-                        }
-                    }.start()
-                }
-            }
-        }
-    }
-
-    /**
-     * 重写 onClick 方法，点击时打开配置对话框
-     */
-    override fun onClick(context: Context) {
-        context?.let { AutoGrabRedPacketConfigDialog(it).show() }
-    }
-
-    private fun checkIsSelf(contact: Any?): Boolean {
-        // 实现判断是否为自己的逻辑
-        return false
-    }
-
-    private fun openRedPacket(redPacketId: String) {
-        // 实现打开红包的逻辑
-    }
-}
+// 同上
 ```
-
-**关键点说明**:
-1. 使用 `BaseClickableFunctionHookItem` 而不是 `BaseSwitchFunctionHookItem`
-2. 创建继承自 `BaseRikkaDialog` 的配置对话框
-3. 重写 `onClick(Context context)` 方法打开配置界面
-4. 在 Hook 中使用 `config.getBoolPrek()` / `getStringPrek()` 读取配置
-5. 配置对话框支持开关、文本输入、依赖关系等
 
 #### 示例 3: 可点击触发的功能
 
 ```kotlin
-package moe.ouom.wekit.hooks.item.dev
-
-import moe.ouom.wekit.core.model.BaseClickableFunctionHookItem
-import moe.ouom.wekit.dexkit.cache.DexCacheManager
-import moe.ouom.wekit.hooks.core.annotation.HookItem
-
-/**
- * DEX 缓存清理器
- *
- * @author Your Name
- * @since 1.0.0
- */
-@HookItem(
-    path = "开发者选项/清理 DEX 缓存",
-    desc = "清理 DexKit 缓存数据"
-)
-class DexCacheCleaner : BaseClickableFunctionHookItem() {
-
-    // 如果重写noSwitchWidget为true时将永远不会调用entry 此时可不重写entry方法来触发功能 通过onClick触发
-    /*
-    override fun entry(classLoader: ClassLoader) {
-        // 可点击功能不需要 Hook，只需实现 onClick
-    }
-    */
-
-    override fun onClick() {
-        // 清理缓存
-        DexCacheManager.clearCache()
-
-        // 显示提示
-        showToast("DEX 缓存已清理")
-
-        WeLogger.i("DexCacheCleaner", "DEX 缓存已清理")
-    }
-
-    override fun noSwitchWidget(): Boolean = true
-}
+// 同上
 ```
 
 ### BaseRikkaDialog 配置对话框详细指南
 
-`BaseRikkaDialog` 是 WeKit 提供的配置对话框基类,采用 DSL 风格的 API 设计,支持多种配置项类型和依赖关系管理。
+`BaseRikkaDialog` 是 WeKit 提供的配置对话框基类, 采用 DSL 风格的 API 设计, 支持多种配置项类型和依赖关系管理。
 
-#### 基本使用流程
-
-1. 创建继承自 `BaseRikkaDialog` 的类
-2. 重写 `initPreferences()` 方法
-3. 在 `initPreferences()` 中使用 `addXXX` 方法添加配置项
-4. 在 Hook 类的 `onClick(Context)` 方法中创建并显示对话框
-
-#### API 方法详解
-
-##### 1. addCategory(title: String)
-
-添加一个设置分类标题,用于将配置项分组显示。
-
-**参数**:
-- `title`: 分类标题文本
-
-**示例**:
-```kotlin
-override fun initPreferences() {
-    addCategory("通用设置")
-    // ... 添加通用设置相关的配置项
-
-    addCategory("高级选项")
-    // ... 添加高级选项相关的配置项
-}
-```
-
-##### 2. addSwitchPreference(...)
-
-添加一个开关选项,用于布尔值配置。
-
-**完整签名**:
-```kotlin
-protected fun addSwitchPreference(
-    key: String,              // 配置存储的 Key
-    title: String,            // 选项显示的标题
-    summary: String,          // 选项显示的摘要/说明
-    iconName: String? = null, // 图标资源名称(可选)
-    useFullKey: Boolean = false // 是否使用完整 Key
-): View // 返回该选项的根 View
-```
-
-**参数说明**:
-- `key`: 配置存储的 Key。如果 `useFullKey = false`,会自动拼接 `Constants.PrekXXX` 前缀
-- `title`: 选项标题,显示在开关左侧
-- `summary`: 选项说明,显示在标题下方
-- `iconName`: 图标资源名称,如 `"ic_notification"`,可选
-- `useFullKey`:
-  - `false`(默认): 自动拼接前缀,实际 Key 为 `"prek_xxx_{key}"`
-  - `true`: 直接使用传入的 key
-
-**返回值**: 返回该选项的根 View,用于后续建立依赖关系
-
-**示例**:
-```kotlin
-addSwitchPreference(
-    key = "red_packet_notification",
-    title = "抢到后通知",
-    summary = "在通知栏显示抢到的金额"
-)
-
-// 带图标的开关
-addSwitchPreference(
-    key = "enable_feature",
-    title = "启用功能",
-    summary = "开启此功能后生效",
-    iconName = "ic_check_circle"
-)
-```
-
-##### 3. addEditTextPreference(...)
-
-添加一个文本输入选项,点击后弹出输入对话框。
-
-**完整签名**:
-```kotlin
-protected fun addEditTextPreference(
-    key: String,
-    title: String,
-    summary: String,
-    defaultValue: String = "",
-    hint: String? = null,
-    inputType: Int = InputType.TYPE_CLASS_TEXT,
-    maxLength: Int = 0,
-    singleLine: Boolean = true,
-    iconName: String? = null,
-    useFullKey: Boolean = false,
-    summaryFormatter: ((String) -> String)? = null
-): View
-```
-
-**参数说明**:
-- `key`: 配置存储的 Key
-- `title`: 选项标题
-- `summary`: 选项摘要
-- `defaultValue`: 默认值(如果未设置过)
-- `hint`: 输入框内的提示文本,可选
-- `inputType`: 输入类型,如:
-  - `InputType.TYPE_CLASS_TEXT`: 普通文本
-  - `InputType.TYPE_CLASS_NUMBER`: 数字
-  - `InputType.TYPE_TEXT_VARIATION_PASSWORD`: 密码
-- `maxLength`: 最大输入长度,0 表示不限制
-- `singleLine`: 是否强制单行输入
-- `iconName`: 图标资源名称,可选
-- `useFullKey`: 是否使用完整 Key
-- `summaryFormatter`: 自定义摘要格式化函数
-  - 参数: 当前值(String)
-  - 返回: 显示的文本(String)
-  - 如果为 `null`,使用默认格式: `"$summary: $value"`
-
-**返回值**: 返回该选项的根 View
-
-**示例**:
-```kotlin
-// 基本文本输入
-addEditTextPreference(
-    key = "user_name",
-    title = "用户名",
-    summary = "设置显示名称",
-    defaultValue = "匿名用户",
-    hint = "请输入用户名"
-)
-
-// 数字输入
-addEditTextPreference(
-    key = "red_packet_delay_custom",
-    title = "自定义延迟",
-    summary = "延迟时间",
-    defaultValue = "1000",
-    hint = "请输入延迟时间(毫秒)",
-    inputType = InputType.TYPE_CLASS_NUMBER,
-    maxLength = 5,
-    summaryFormatter = { value ->
-        if (value.isEmpty()) "0 ms" else "$value ms"
-    }
-)
-
-// 多行文本输入
-addEditTextPreference(
-    key = "custom_message",
-    title = "自定义消息",
-    summary = "输入自定义文本",
-    hint = "支持多行输入",
-    singleLine = false,
-    maxLength = 500
-)
-```
-
-##### 4. addSelectPreference(...)
-
-添加一个下拉选择选项,点击后弹出选择菜单。
-
-**完整签名**:
-```kotlin
-protected fun addSelectPreference(
-    key: String,
-    title: String,
-    summary: String,
-    options: Map<Int, String>,
-    defaultValue: Int,
-    iconName: String? = null,
-    useFullKey: Boolean = false
-): View
-```
-
-**参数说明**:
-- `key`: 配置存储的 Key
-- `title`: 选项标题
-- `summary`: 选项摘要
-- `options`: 选项映射表,格式为 `Int 值 -> 显示文本`
-- `defaultValue`: 默认选中的 Int 值
-- `iconName`: 图标资源名称,可选
-- `useFullKey`: 是否使用完整 Key
-
-**返回值**: 返回该选项的根 View
-
-**示例**:
-```kotlin
-addSelectPreference(
-    key = "message_mode",
-    title = "消息模式",
-    summary = "选择消息处理方式",
-    options = mapOf(
-        0 to "普通模式",
-        1 to "静音模式",
-        2 to "免打扰模式"
-    ),
-    defaultValue = 0
-)
-
-// 带图标的选择器
-addSelectPreference(
-    key = "theme_mode",
-    title = "主题模式",
-    summary = "选择界面主题",
-    options = mapOf(
-        1 to "跟随系统",
-        2 to "浅色主题",
-        3 to "深色主题"
-    ),
-    defaultValue = 1,
-    iconName = "ic_palette"
-)
-```
-
-##### 5. addPreference(...)
-
-添加一个普通点击项,用于打开二级菜单、显示信息、链接跳转等。
-
-**完整签名**:
-```kotlin
-protected fun addPreference(
-    title: String,
-    summary: String? = null,
-    iconName: String? = null,
-    onClick: ((View, TextView?) -> Unit)? = null
-): TextView? // 返回 Summary TextView
-```
-
-**参数说明**:
-- `title`: 选项标题
-- `summary`: 选项摘要,可选
-  - `null`: 不显示摘要区域(GONE)
-  - `""`: 显示空摘要区域(VISIBLE)
-  - 其他: 显示指定文本
-- `iconName`: 图标资源名称,可选
-- `onClick`: 点击回调,可选
-  - 参数1: 点击的条目 View
-  - 参数2: 摘要 TextView(可用于动态更新文本)
-  - 如果为 `null`,该项不可点击
-
-**返回值**: 返回 Summary TextView,用于后续动态更新文本
-
-**示例**:
-```kotlin
-// 基本点击项
-addPreference(
-    title = "关于",
-    summary = "WeKit v1.0.0",
-    onClick = { _, _ ->
-        // 显示关于对话框
-        showAboutDialog()
-    }
-)
-
-// 不可点击的信息项
-addPreference(
-    title = "版本信息",
-    summary = "当前版本: 1.0.0"
-    // 不提供 onClick,该项不可点击
-)
-
-// 动态更新摘要
-val summaryView = addPreference(
-    title = "检查更新",
-    summary = "点击检查最新版本",
-    onClick = { _, summary ->
-        // 检查更新
-        checkUpdate { version ->
-            summary?.text = "最新版本: $version"
-        }
-    }
-)
-```
-
-##### 6. setDependency(...)
-
-设置依赖关系,当依赖项的状态改变时,控制目标 View 的启用/禁用或显示/隐藏状态。
-
-**完整签名**:
-```kotlin
-protected fun setDependency(
-    dependentView: View,
-    dependencyKey: String,
-    enableWhen: Boolean = true,
-    hideWhenDisabled: Boolean = false,
-    useFullKey: Boolean = false
-)
-```
-
-**参数说明**:
-- `dependentView`: 受控制的 View(通常是 `addXXXPreference` 返回的 View)
-- `dependencyKey`: 依赖项的配置 Key(通常是 Switch 的 key)
-- `enableWhen`: 依赖项为何值时启用目标 View
-  - `true`(默认): 依赖项为 `true` 时启用,`false` 时禁用
-  - `false`: 依赖项为 `false` 时启用,`true` 时禁用
-- `hideWhenDisabled`: 禁用时是否隐藏
-  - `false`(默认): 禁用时只是变灰(disabled),仍然可见
-  - `true`: 禁用时完全隐藏(GONE)
-- `useFullKey`: `dependencyKey` 是否为完整 Key
-
-**示例**:
-```kotlin
-// 基本依赖:当"随机延迟"开启时,禁用"自定义延迟"
-val customDelayView = addEditTextPreference(
-    key = "red_packet_delay_custom",
-    title = "自定义延迟",
-    summary = "延迟时间",
-    defaultValue = "1000"
-)
-
-setDependency(
-    dependentView = customDelayView,
-    dependencyKey = "red_packet_delay_random",
-    enableWhen = false  // 当 random 为 false 时启用 custom
-)
-
-// 隐藏式依赖:当"启用高级功能"关闭时,隐藏高级选项
-val advancedOption = addSwitchPreference(
-    key = "advanced_feature_1",
-    title = "高级功能 1",
-    summary = "需要先启用高级功能"
-)
-
-setDependency(
-    dependentView = advancedOption,
-    dependencyKey = "enable_advanced",
-    enableWhen = true,
-    hideWhenDisabled = true  // 禁用时隐藏
-)
-```
-
-#### 完整示例:复杂配置对话框
-
-```kotlin
-package moe.ouom.wekit.ui.creator.dialog.item.chat.risk
-
-import android.content.Context
-import android.text.InputType
-import moe.ouom.wekit.ui.creator.dialog.BaseRikkaDialog
-
-class AutoGrabRedPacketConfigDialog(context: Context) : BaseRikkaDialog(context, "自动抢红包") {
-
-    override fun initPreferences() {
-        // 第一组:通用设置
-        addCategory("通用设置")
-
-        addSwitchPreference(
-            key = "red_packet_notification",
-            title = "抢到后通知",
-            summary = "在通知栏显示抢到的金额",
-            iconName = "ic_notifications"
-        )
-
-        addSwitchPreference(
-            key = "red_packet_vibrate",
-            title = "震动提示",
-            summary = "抢到红包时震动提醒"
-        )
-
-        // 第二组:高级选项
-        addCategory("高级选项")
-
-        addSwitchPreference(
-            key = "red_packet_self",
-            title = "抢自己的红包",
-            summary = "默认情况下不抢自己发出的"
-        )
-
-        val randomDelaySwitch = addSwitchPreference(
-            key = "red_packet_delay_random",
-            title = "随机延时",
-            summary = "模拟人工操作(500ms ~ 3000ms),防止风控"
-        )
-
-        val customDelayView = addEditTextPreference(
-            key = "red_packet_delay_custom",
-            title = "自定义延迟",
-            summary = "延迟时间",
-            defaultValue = "1000",
-            hint = "请输入延迟时间(毫秒)",
-            inputType = InputType.TYPE_CLASS_NUMBER,
-            maxLength = 5,
-            summaryFormatter = { value ->
-                if (value.isEmpty()) "0 ms" else "$value ms"
-            }
-        )
-
-        // 设置依赖:当随机延迟开启时,禁用自定义延迟
-        setDependency(
-            dependentView = customDelayView,
-            dependencyKey = "red_packet_delay_random",
-            enableWhen = false,
-            hideWhenDisabled = false
-        )
-
-        // 第三组:其他
-        addCategory("其他")
-
-        addSelectPreference(
-            key = "red_packet_priority",
-            title = "抢包优先级",
-            summary = "设置抢包优先级",
-            options = mapOf(
-                0 to "普通",
-                1 to "优先",
-                2 to "最高"
-            ),
-            defaultValue = 0
-        )
-
-        addPreference(
-            title = "使用说明",
-            summary = "查看功能使用说明",
-            iconName = "ic_help",
-            onClick = { _, _ ->
-                // 显示使用说明
-            }
-        )
-    }
-}
-```
-
-#### 最佳实践
-
-1. **合理分组**: 使用 `addCategory` 将相关配置项分组,提升用户体验
-2. **清晰命名**: Key 命名要有意义,如 `red_packet_delay_custom` 而不是 `delay1`
-3. **提供说明**: 每个配置项都应该有清晰的 `summary` 说明其作用
-4. **使用依赖**: 通过 `setDependency` 隐藏或禁用不相关的选项,避免混淆
-5. **格式化显示**: 使用 `summaryFormatter` 让数值显示更友好(如 "1000 ms" 而不是 "1000")
-6. **输入验证**: 对于数字输入,使用 `InputType.TYPE_CLASS_NUMBER` 和 `maxLength` 限制
-7. **图标使用**: 适当使用图标可以提升视觉效果,但不要过度使用
+> **📁 重要: 请勿使用此类**
+> 此类存在原因是为了与原始代码保持兼容 (我直接把整个类丢给 AI, 让它保持 Public API 不变的情况下重写)
+> 请**使用 Jetpack Compose**, 把 UI 直接写在对应功能 class 或 onClick 函数内部
 
 ### 功能分类指南
 
@@ -1664,21 +1027,7 @@ class AutoGrabRedPacketConfigDialog(context: Context) : BaseRikkaDialog(context,
 
 ### 功能放置位置
 
-根据功能类型放置到对应的包中：
-
-```
-hooks/items/
-├── chat/                 # 聊天与消息
-│   ├── msg/              # 消息处理（如防撤回）
-│   └── risk/             # 风险功能（如自动抢红包）
-├── contact/              # 联系人相关
-├── moment/               # 朋友圈相关
-├── fix/                  # 优化与修复
-├── dev/                  # 开发者选项
-├── fun/                  # 娱乐功能
-├── script/               # 脚本管理
-└── example/              # 示例代码（不会被编译）
-```
+根据功能类型放置到对应的包中。
 
 **实际分类对应**（在设置界面中显示）:
 - **聊天与消息**: `path = "聊天与消息/功能名"`
@@ -3035,7 +2384,7 @@ close #1
 - [ ] **我确认此更改不会破坏任何原有功能** / I confirm this change does not break any existing features
 - [ ] **我已进行多版本适配（如适用）** / I have used MMVersion for version compatibility (if applicable)
 - [ ] **我已在多个微信版本上测试此更改（如适用）** / I have tested this change on multiple WeChat versions (if applicable)  
-- [ ] **已在 Release 构建中完成测试**（含签名校验与 DEX 加密保护，未经测试请勿勾选；详见 `CONTRIBUTING.md` → 构建和发布 → 构建配置 → Release 构建） / Verified in Release build (with signature verification & DEX encryption protection; check only after testing per `CONTRIBUTING.md` → Build & Release → Build Configuration → Release Build)
+- [ ] **已在 Release 构建中完成测试** / Verified in Release build
 
 ##### 其他信息 / Additional Information
 
@@ -3172,7 +2521,7 @@ A: 可以，但建议每个 PR 专注于单一功能或修复，便于审查和�
 
 **Q: 我的 PR 被拒绝了怎么办？**
 
-A: 不要气馁！查看审查意见，了解拒绝原因。你可以修改后重新提交，或在 Issue 中讨论。
+A: 不要气馁！查看审查意见，了解拒绝原因。你可以修改后重新提交，或在 Issues 中讨论。
 
 
 
@@ -3213,7 +2562,7 @@ A: 持续贡献高质量的代码和文档，积极参与社区讨论，帮助�
 
 * **人是最终负责人**：你应对所有提交的代码、注释及文档负全部责任。请务必对 AI 生成的内容进行严格的代码审查和逻辑验证，严禁直接投喂并提交未经测试的代码。
 * **拒绝“幻觉”逻辑**：特别是在处理 Hook 偏移量和 Dex 结构分析时，AI 极易产生幻觉。请确保每一行 Hook 代码都有实际的 Dex 分析支撑。
-* **协议合规性**：确保 AI 生成的内容不违反 GPL-3.0 开源协议，不包含来自闭源项目或冲突协议的受版权保护的代码片段。
+* **协议合规性**：确保 AI 生成的内容不违反 GPL-3.0 开源协议，不包含来自冲突协议的受版权保护的代码片段。
 * **透明化说明**：如果你的 PR 大部分由 AI 生成，请在描述中注明“Generated with [AI Tool Name]”，这有助于 Reviewer 更有针对性地进行审核。
 
 ---
