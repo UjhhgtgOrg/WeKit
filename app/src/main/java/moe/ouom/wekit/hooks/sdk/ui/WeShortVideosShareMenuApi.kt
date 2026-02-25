@@ -1,8 +1,6 @@
 package moe.ouom.wekit.hooks.sdk.ui
 
 import android.annotation.SuppressLint
-import android.app.Activity
-import android.content.Context
 import android.graphics.drawable.Drawable
 import com.highcapable.kavaref.KavaRef.Companion.asResolver
 import de.robv.android.xposed.XC_MethodHook
@@ -21,7 +19,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 object WeShortVideosShareMenuApi : ApiHookItem(), IDexFind {
 
     interface IMenuItemsProvider {
-        fun getMenuItems(param: XC_MethodHook.MethodHookParam, context: Context): List<MenuItem>
+        fun getMenuItems(param: XC_MethodHook.MethodHookParam): List<MenuItem>
     }
     data class MenuItem(val id: Int,
                         val text: String, val drawable: Drawable,
@@ -53,16 +51,9 @@ object WeShortVideosShareMenuApi : ApiHookItem(), IDexFind {
             hook {
                 beforeIfEnabled { param ->
                     val menu = param.args[0]
-                    val context = findContext(param.thisObject).also {
-                        if (it == null) {
-                            WeLogger.e(TAG, "could not find context, skipping")
-                            return@beforeIfEnabled
-                        }
-                    } as Context
-
                     for (provider in providers) {
                         try {
-                            for (item in provider.getMenuItems(param, context)) {
+                            for (item in provider.getMenuItems(param)) {
                                 menu.asResolver()
                                     .firstMethod {
                                         parameters(Int::class, CharSequence::class, Drawable::class)
@@ -81,13 +72,6 @@ object WeShortVideosShareMenuApi : ApiHookItem(), IDexFind {
         methodSelectMenuItem.toDexMethod {
             hook {
                 beforeIfEnabled { param ->
-                    val activity = findContext(param.thisObject).also {
-                        if (it == null) {
-                            WeLogger.e(TAG, "could not find MMActivity, skipping")
-                            return@beforeIfEnabled
-                        }
-                    } as Activity
-
                     val menuItem = param.args[0] as android.view.MenuItem
                     val itemId = menuItem.itemId
 
@@ -122,7 +106,7 @@ object WeShortVideosShareMenuApi : ApiHookItem(), IDexFind {
 
                     for (provider in providers) {
                         try {
-                            for (item in provider.getMenuItems(param, activity)) {
+                            for (item in provider.getMenuItems(param)) {
                                 if (item.id == itemId) {
                                     item.onClick(param, mediaType, mediaJsonList)
                                     param.result = null
@@ -137,32 +121,6 @@ object WeShortVideosShareMenuApi : ApiHookItem(), IDexFind {
                 }
             }
         }
-    }
-
-    // FIXME: android.view.WindowManager$BadTokenException: Unable to add window -- token null is not valid; is your activity running?
-    private fun findContext(hookInstance: Any): Any? {
-        val clazz = hookInstance.javaClass
-
-        val fields = clazz.declaredFields
-
-        for (field in fields) {
-            field.isAccessible = true
-            val fieldValue = field.get(hookInstance) ?: continue
-
-            val innerFields = fieldValue.javaClass.declaredFields
-            for (innerField in innerFields) {
-                if (innerField.type.name == "com.tencent.mm.plugin.finder.ui.fragment.FinderHomeTabFragment") {
-                    innerField.isAccessible = true
-                    return innerField.get(fieldValue).asResolver()
-                        .firstMethod {
-                            name = "getActivity"
-                            superclass()
-                        }.invoke()
-                }
-            }
-        }
-
-        return null
     }
 
     override fun dexFind(dexKit: DexKitBridge): Map<String, String> {
