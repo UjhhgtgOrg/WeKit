@@ -1,28 +1,16 @@
 package moe.ouom.wekit.hooks.items.shortvideos
 
 import android.annotation.SuppressLint
-import android.app.Activity
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.Text
-import androidx.compose.ui.Modifier
-import com.highcapable.kavaref.KavaRef.Companion.asResolver
 import de.robv.android.xposed.XC_MethodHook
 import moe.ouom.wekit.core.model.BaseSwitchFunctionHookItem
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.hooks.sdk.ui.WeShortVideosShareMenuApi
-import moe.ouom.wekit.ui.utils.showComposeDialog
+import moe.ouom.wekit.host.HostInfo
 import moe.ouom.wekit.utils.common.ModuleRes
 import moe.ouom.wekit.utils.common.ToastUtils
-import moe.ouom.wekit.utils.log.WeLogger
 import java.util.Locale
 import kotlin.math.log10
 import kotlin.math.pow
@@ -32,16 +20,6 @@ import kotlin.math.pow
 object DisplayMediaLinks : BaseSwitchFunctionHookItem(), WeShortVideosShareMenuApi.IMenuItemsProvider {
 
     override fun entry(classLoader: ClassLoader) {
-        Activity::class.asResolver()
-            .firstMethod { name = "onResume" }
-            .hookAfter { param ->
-                val activity = param.thisObject as Activity
-                if (activity.javaClass.name == "com.tencent.mm.plugin.finder.ui.FinderHomeAffinityUI") {
-                    WeLogger.d("found FinderHomeAffinityUI")
-                    context = activity
-                }
-            }
-
         WeShortVideosShareMenuApi.addProvider(this)
     }
 
@@ -60,9 +38,6 @@ object DisplayMediaLinks : BaseSwitchFunctionHookItem(), WeShortVideosShareMenuA
         return "%.2f %s".format(value, units[digitGroups])
     }
 
-    // FIXME: still! doesn't! work!
-    // pls somebody help me fix this
-    private var context: Context? = null
     override fun getMenuItems(
         param: XC_MethodHook.MethodHookParam,
     ): List<WeShortVideosShareMenuApi.MenuItem> {
@@ -74,76 +49,44 @@ object DisplayMediaLinks : BaseSwitchFunctionHookItem(), WeShortVideosShareMenuA
                         json.getString("url") + json.getString("url_token")
                     }
 
-                    showComposeDialog(context!!) { onDismiss ->
-                        AlertDialog(onDismissRequest = onDismiss,
-                            title = { Text("图片链接 (点击复制)") },
-                            text = {
-                                LazyColumn {
-                                    itemsIndexed(imageUrls) { index, url ->
-                                        ListItem(
-                                            modifier = Modifier.clickable {
-                                                val clipboard = context!!.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                                                val clip = ClipData.newPlainText("Url", url)
-                                                clipboard.setPrimaryClip(clip)
-                                                ToastUtils.showToast("已复制")
-                                            },
-                                            headlineContent = { Text("第 ${index + 1} 张") },
-                                            supportingContent = { Text(url) }
-                                        )
-                                    }
-                                }
-                            },
-                            confirmButton = { Button(onClick = onDismiss) { Text("关闭") } })
-                    }
+                    val clipboard = HostInfo.getApplication().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                    val clip = ClipData.newPlainText("Url", imageUrls.joinToString("\n"))
+                    clipboard.setPrimaryClip(clip)
+                    ToastUtils.showToast("已复制")
                     return@MenuItem
                 }
 
                 if (mediaType == 4) {
                     val json = mediaList[0]
 
-                    val displayItems = mutableListOf<Pair<String, String>>()
+                    val clipItems = mutableListOf<Pair<String, String>>()
 
                     val duration = json.getInt("videoDuration")
                     val size = json.getInt("fileSize")
                     val displayDuration = "%02d:%02d:%02d".format(Locale.CHINA,
                         duration / 3600, (duration % 3600) / 60, duration % 60)
                     val displaySize = formatBytesSize(size)
-                    displayItems += "时长" to displayDuration
-                    displayItems += "大小" to displaySize
+                    clipItems += "时长" to displayDuration
+                    clipItems += "大小" to displaySize
 
                     val cdnInfo = json.optJSONObject("media_cdn_info")
                     if (cdnInfo == null || !cdnInfo.has("pcdn_url")) {
                         val url = json.getString("url")
                         val urlToken = json.getString("url_token")
                         val decodeKey = json.getString("decodeKey")
-                        displayItems += "密链" to (url + urlToken)
-                        displayItems += "密钥" to decodeKey
+                        clipItems += "密链" to (url + urlToken)
+                        clipItems += "密钥" to decodeKey
                     }
                     else {
-                        displayItems += "链接" to json.getString("pcdn_url")
+                        clipItems += "链接" to json.getString("pcdn_url")
                     }
 
-                    showComposeDialog { onDismiss ->
-                        AlertDialog(onDismissRequest = onDismiss,
-                            title = { Text("视频链接 (点击复制)") },
-                            text = {
-                                LazyColumn {
-                                    items(displayItems) { (name, content) ->
-                                        ListItem(
-                                            modifier = Modifier.clickable {
-                                                val clipboard = context!!.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                                                val clip = ClipData.newPlainText("Content", content)
-                                                clipboard.setPrimaryClip(clip)
-                                                ToastUtils.showToast("已复制")
-                                            },
-                                            headlineContent = { Text(name) },
-                                            supportingContent = { Text(content) }
-                                        )
-                                    }
-                                }
-                            },
-                            confirmButton = { Button(onClick = onDismiss) { Text("关闭") } })
-                    }
+                    val clipboard = HostInfo.getApplication().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                    val clip = ClipData.newPlainText("Content", clipItems.joinToString("\n") { pair -> "${pair.first}: ${pair.second}" })
+                    clipboard.setPrimaryClip(clip)
+                    ToastUtils.showToast("已复制")
+
+                    return@MenuItem
                 }
 
                 ToastUtils.showToast("未知的媒体类型, 无法复制链接")
