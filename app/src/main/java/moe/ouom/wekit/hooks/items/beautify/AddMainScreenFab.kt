@@ -6,11 +6,16 @@ import android.content.Intent
 import android.os.Process
 import android.view.ViewGroup
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.EaseIn
+import androidx.compose.animation.core.EaseInCubic
+import androidx.compose.animation.core.EaseOut
+import androidx.compose.animation.core.EaseOutCubic
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.expandVertically
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -44,6 +49,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.text.font.FontWeight
@@ -61,9 +67,33 @@ import moe.ouom.wekit.ui.content.MainSettingsDialog
 import moe.ouom.wekit.ui.utils.XposedLifecycleOwner
 import moe.ouom.wekit.utils.common.ToastUtils
 import moe.ouom.wekit.utils.log.WeLogger
+import java.util.concurrent.CopyOnWriteArrayList
 
 @HookItem(path = "美化/主屏幕添加 FAB", desc = "向应用主屏幕添加浮动操作按钮")
 object AddMainScreenFab : BaseSwitchFunctionHookItem() {
+
+    interface IMenuItemsProvider {
+        fun getMenuItems(activity: Activity): List<MenuItem>
+    }
+
+    // TODO: do not force other features to use ImageVector
+    data class MenuItem(val text: String, val icon: ImageVector, val onClick: () -> Unit)
+
+    private val providers = CopyOnWriteArrayList<IMenuItemsProvider>()
+
+    fun addProvider(provider: IMenuItemsProvider) {
+        if (!providers.contains(provider)) {
+            providers.add(provider)
+            WeLogger.i(TAG, "provider added, current provider count: ${providers.size}")
+        } else {
+            WeLogger.w(TAG, "provider already exists, ignored")
+        }
+    }
+
+    fun removeProvider(provider: IMenuItemsProvider) {
+        val removed = providers.remove(provider)
+        WeLogger.i(TAG, "provider remove ${if (removed) "succeeded" else "failed"}, current provider count: ${providers.size}")
+    }
 
     private const val TAG = "AddMainScreenFab"
 
@@ -85,7 +115,7 @@ object AddMainScreenFab : BaseSwitchFunctionHookItem() {
                         }
                         .get()!! as Activity
 
-                    val menuItems = mapOf(
+                    val menuItems = mutableMapOf(
                         "扫一扫" to (Icons.Default.QrCodeScanner to {
                             startActivityByName(activity,
                                 "com.tencent.mm.plugin.scanner.ui.BaseScanUI")
@@ -117,6 +147,17 @@ object AddMainScreenFab : BaseSwitchFunctionHookItem() {
                             ToastUtils.showToast("已将全部未读消息标为已读")
                         }))
 
+                    for (provider in providers) {
+                        try {
+                            for (item in provider.getMenuItems(activity)) {
+                                menuItems[item.text] = item.icon to item.onClick
+                            }
+                        }
+                        catch (ex: Exception) {
+                            WeLogger.e(TAG, "provider ${provider.javaClass.name} threw while providing menu items", ex)
+                        }
+                    }
+
                     val rootView = activity.findViewById<ViewGroup>(android.R.id.content)
 
                     val lifecycleOwner = XposedLifecycleOwner().apply { onCreate(); onResume() }
@@ -144,7 +185,7 @@ object AddMainScreenFab : BaseSwitchFunctionHookItem() {
                                 // or else different color palettes clash and it's hideous
                                 val isDark = isSystemInDarkTheme()
                                 val backgroundColor = if (isDark) Color(0xFF191919) else Color(0xFFF7F7F7)
-                                val activeColor = Color(0xFF07C160)
+                                val activeColor = if (isDark) Color(0xFF06A854) else Color(0xFF09A854)
 
                                 var expanded by remember { mutableStateOf(false) }
 
@@ -161,16 +202,47 @@ object AddMainScreenFab : BaseSwitchFunctionHookItem() {
                                         verticalArrangement = Arrangement.spacedBy(16.dp)
                                     ) {
                                         // 1. Expandable Menu Items
-                                        AnimatedVisibility(
-                                            visible = expanded,
-                                            enter = fadeIn() + expandVertically(),
-                                            exit = fadeOut() + shrinkVertically()
+                                        Column(
+                                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                                            horizontalAlignment = Alignment.End
                                         ) {
-                                            Column(
-                                                verticalArrangement = Arrangement.spacedBy(12.dp),
-                                                horizontalAlignment = Alignment.End
-                                            ) {
-                                                menuItems.forEach { (name, pair) ->
+                                            // 1. Expandable Menu Items (staggered per-item animation)
+                                            menuItems.entries.forEachIndexed { index, (name, pair) ->
+                                                // Stagger: items animate in bottom-to-top, out top-to-bottom
+                                                val itemDelay = index * 35
+                                                val reverseDelay = (menuItems.size - 1 - index) * 35
+
+                                                AnimatedVisibility(
+                                                    visible = expanded,
+                                                    enter = fadeIn(
+                                                        animationSpec = tween(
+                                                            durationMillis = 160,
+                                                            delayMillis = reverseDelay,
+                                                            easing = EaseOut
+                                                        )
+                                                    ) + slideInVertically(
+                                                        animationSpec = tween(
+                                                            durationMillis = 180,
+                                                            delayMillis = reverseDelay,
+                                                            easing = EaseOutCubic
+                                                        ),
+                                                        initialOffsetY = { it / 2 }
+                                                    ),
+                                                    exit = fadeOut(
+                                                        animationSpec = tween(
+                                                            durationMillis = 100,
+                                                            delayMillis = itemDelay,
+                                                            easing = EaseIn
+                                                        )
+                                                    ) + slideOutVertically(
+                                                        animationSpec = tween(
+                                                            durationMillis = 100,
+                                                            delayMillis = itemDelay,
+                                                            easing = EaseInCubic
+                                                        ),
+                                                        targetOffsetY = { it / 2 }
+                                                    )
+                                                ) {
                                                     Row(
                                                         verticalAlignment = Alignment.CenterVertically,
                                                         horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -208,13 +280,13 @@ object AddMainScreenFab : BaseSwitchFunctionHookItem() {
                                             }
                                         }
 
-                                        // 2. Main Toggle FAB (remains the same)
+                                        // 2. Main Toggle FAB
                                         FloatingActionButton(
                                             onClick = { expanded = !expanded },
                                             containerColor = backgroundColor,
                                             shape = CircleShape
                                         ) {
-                                            val rotation by animateFloatAsState(if (expanded) 45f else 0f)
+                                            val rotation by animateFloatAsState(if (expanded) -45f else 0f)
                                             Icon(
                                                 Icons.Filled.Add,
                                                 contentDescription = null,

@@ -547,7 +547,7 @@ private fun SwitchRow(
                     painter = rememberDrawablePainter(drawable),
                     contentDescription = null,
                     modifier = Modifier.size(24.dp),
-                    tint = MaterialTheme.colorScheme.onSurface
+                    tint = MaterialTheme.colorScheme.primary
                 )
                 Spacer(Modifier.width(16.dp))
             }
@@ -608,7 +608,7 @@ private fun SimpleRow(
                     painter = rememberDrawablePainter(drawable),
                     contentDescription = null,
                     modifier = Modifier.size(24.dp),
-                    tint = MaterialTheme.colorScheme.onSurface
+                    tint = MaterialTheme.colorScheme.primary
                 )
                 Spacer(Modifier.width(16.dp))
             }
