@@ -1,6 +1,6 @@
 package moe.ouom.wekit.utils;
 
-import static cn.hutool.core.convert.Convert.hexToBytes;
+import static moe.ouom.wekit.utils.HexUtils.hexToBytes;
 
 import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.CodedOutputStream;
@@ -725,5 +725,4 @@ public class WeProtoData {
         }
         return removed;
     }
-
 }

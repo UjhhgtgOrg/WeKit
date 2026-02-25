@@ -28,9 +28,6 @@
             <option value="$PROJECT_DIR$/libs" />
             <option value="$PROJECT_DIR$/libs/common" />
             <option value="$PROJECT_DIR$/libs/common/annotation-scanner" />
-            <option value="$PROJECT_DIR$/libs/common/libxposed" />
-            <option value="$PROJECT_DIR$/libs/common/libxposed/api" />
-            <option value="$PROJECT_DIR$/libs/common/libxposed/service" />
           </set>
         </option>
       </GradleProjectSettings>

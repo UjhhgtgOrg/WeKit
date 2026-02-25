@@ -29,29 +29,13 @@ dependencyResolutionManagement {
                 includeGroup("de.robv.android.xposed")
             }
         }
-        maven (url = "https://maven.pkg.jetbrains.space/public/p/ktor/eap")
-        mavenLocal {
-            content {
-                includeGroup("io.github.libxposed")
-            }
-        }
+        maven("https://maven.pkg.jetbrains.space/public/p/ktor/eap")
+        mavenCentral()
+        maven("https://raw.githubusercontent.com/HighCapable/maven-repository/main/repository/releases")
+
         versionCatalogs {
             create("libs")
         }
-        mavenCentral()
-        maven("https://raw.githubusercontent.com/HighCapable/maven-repository/main/repository/releases")
-    }
-}
-
-buildscript {
-    repositories {
-        mavenCentral()
-        maven {
-            url = uri("https://storage.googleapis.com/r8-releases/raw")
-        }
-    }
-    dependencies {
-        classpath("com.android.tools:r8:8.13.19")
     }
 }
 
@@ -63,9 +47,4 @@ rootProject.name = "wekit"
 
 includeBuild("build-logic")
 
-include(
-    ":app",
-    ":libs:common:libxposed:api",
-    ":libs:common:libxposed:service",
-    ":libs:common:annotation-scanner",
-)
+include(":app", ":libs:common:annotation-scanner",)

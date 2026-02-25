@@ -1,4 +1,5 @@
-
+import com.android.build.api.dsl.ApplicationExtension
+import com.android.build.gradle.internal.api.ApkVariantOutputImpl
 import org.gradle.internal.extensions.core.serviceOf
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
@@ -10,87 +11,10 @@ import java.util.Locale
 import java.util.UUID
 
 plugins {
-    alias(libs.plugins.protobuf)
-    alias(libs.plugins.serialization)
     alias(libs.plugins.android.application)
     alias(libs.plugins.google.devtools.ksp)
-    alias(libs.plugins.jetbrains.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-}
-
-// 生成方法 hash 的任务
-val generateMethodHashes = tasks.register("generateMethodHashes") {
-    group = "wekit"
-    val sourceDir = file("src/main/java")
-    val outputDir = layout.buildDirectory.dir("generated/source/methodhashes")
-    val outputFile = outputDir.get().file("moe/ouom/wekit/dexkit/cache/GeneratedMethodHashes.kt").asFile
-
-    inputs.dir(sourceDir)
-    outputs.dir(outputDir)
-
-    doLast {
-        val hashMap = mutableMapOf<String, String>()
-        sourceDir.walk().filter { it.isFile && it.extension == "kt" && it.readText().contains("IDexFind") }.forEach { file ->
-            val content = file.readText()
-            val packageName = Regex("""package\s+([\w.]+)""").find(content)?.groupValues?.get(1)
-            val className = Regex("""(?:class|object)\s+(\w+)""").find(content)?.groupValues?.get(1) ?: return@forEach
-            val fullClassName = if (packageName != null) "$packageName.$className" else className
-            val dexFindMatch = Regex("""override\s+fun\s+dexFind\s*\(""").find(content)
-            if (dexFindMatch != null) {
-                val start = content.indexOf('{', dexFindMatch.range.last)
-                if (start != -1) {
-                    var count = 0
-                    for (i in start until content.length) {
-                        if (content[i] == '{') count++ else if (content[i] == '}') count--
-                        if (count == 0) {
-                            val body = content.substring(start, i + 1)
-                            val hash = MessageDigest.getInstance("MD5").digest(body.toByteArray()).joinToString("") { "%02x".format(it) }
-                            hashMap[fullClassName] = hash
-                            break
-                        }
-                    }
-                }
-            }
-        }
-        outputFile.parentFile.mkdirs()
-        outputFile.writeText("""
-            package moe.ouom.wekit.dexkit.cache
-            object GeneratedMethodHashes {
-                private val hashes = mapOf(${hashMap.entries.sortedBy { it.key }.joinToString(",") { "\"${it.key}\" to \"${it.value}\"" }})
-                fun getHash(className: String) = hashes[className] ?: ""
-            }
-        """.trimIndent())
-    }
-}
-
-val embedBuiltinJavaScript = tasks.register("embedBuiltinJavaScript") {
-    val sourceFile = file("src/main/java/moe/ouom/wekit/hooks/items/automation/script.js")
-    val outputDir = layout.buildDirectory.dir("generated/sources/embeddedJs/kotlin")
-    val outputFile = outputDir.map { it.file("moe/ouom/wekit/hooks/items/automation/BuiltinJs.kt") }
-
-    inputs.file(sourceFile)
-    outputs.file(outputFile)
-
-    doLast {
-        val jsContent = sourceFile.readText()
-
-        val ktCode = """
-            package moe.ouom.wekit.hooks.item.automation
-
-            object EmbeddedBuiltinJs {
-                const val SCRIPT: String = """ + "\"\"\"\n" + jsContent + "\n\"\"\"" + """
-            }
-        """
-
-        outputFile.get().asFile.apply {
-            parentFile.mkdirs()
-            writeText(ktCode)
-        }
-    }
-}
-
-kotlin.sourceSets.main {
-    kotlin.srcDir(layout.buildDirectory.dir("generated/sources/embeddedJs/kotlin"))
+    alias(libs.plugins.kotlin.serialization)
 }
 
 private fun getBuildVersionCode(): Int {
@@ -125,7 +49,7 @@ private fun getBuildVersionName(): String {
     return "${getShortGitRevision()}.${getCurrentDate()}"
 }
 
-android {
+configure<ApplicationExtension> {
     namespace = libs.versions.namespace.get()
     compileSdk = libs.versions.targetSdk.get().toInt()
 
@@ -138,7 +62,7 @@ android {
            \ V  V /   | |___  | . \   | |    | |  
             \_/\_/    |_____| |_|\_\ |___|   |_|  
                                               
-                        [WECHAT KIT] WeChat, now with superpowers
+            [WEKIT] WeChat, now with superpowers
         """
     )
 
@@ -154,6 +78,7 @@ android {
         buildConfigField("String", "BUILD_UUID", "\"${buildUuid}\"")
         buildConfigField("String", "TAG", "\"WeKit\"")
         buildConfigField("long", "BUILD_TIMESTAMP", "${System.currentTimeMillis()}L")
+
         // noinspection ChromeOsAbiSupport
         ndk {
             abiFilters += "arm64-v8a"
@@ -173,14 +98,6 @@ android {
         }
     }
 
-    sourceSets {
-        getByName("main") {
-            kotlin.srcDir(generateMethodHashes)
-            val generatedJsDir = layout.buildDirectory.dir("generated/sources/embeddedJs/kotlin")
-            kotlin.srcDir(generatedJsDir)
-        }
-    }
-
     externalNativeBuild {
         cmake {
             path = file("src/main/cpp/CMakeLists.txt")
@@ -192,13 +109,8 @@ android {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
-
             signingConfig = signingConfigs.getByName("debug")
-
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
 
@@ -207,40 +119,96 @@ android {
         targetCompatibility = JavaVersion.toVersion(libs.versions.jdk.get().toInt())
     }
 
-    kotlin {
-        compilerOptions {
-            jvmTarget.set(JvmTarget.fromTarget(libs.versions.jdk.get()))
-        }
-        jvmToolchain(libs.versions.jdk.get().toInt())
-    }
-
     packaging {
         resources.excludes += listOf(
             "kotlin/**",
             "**.bin",
             "kotlin-tooling-metadata.json"
         )
-        resources {
-            merges += "META-INF/xposed/*"
-            merges += "org/mozilla/javascript/**"  // 合并 Mozilla Rhino 所有资源
-            excludes += "**"
-        }
+        resources.merges += listOf(
+            "META-INF/xposed/*",
+            "org/mozilla/javascript/**"
+        )
     }
 
     @Suppress("UnstableApiUsage")
     androidResources {
-        localeFilters.clear()
         localeFilters += setOf("zh", "en")
-
-        additionalParameters += listOf(
-            "--allow-reserved-package-id",
-            "--package-id", "0x69"
-        )
+        additionalParameters += listOf("--allow-reserved-package-id", "--package-id", "0x69")
     }
 
     buildFeatures {
+        resValues = true
         compose = true
         buildConfig = true
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.fromTarget(libs.versions.jdk.get()))
+    }
+    jvmToolchain(libs.versions.jdk.get().toInt())
+}
+
+val adbProvider = androidComponents.sdkComponents.adb
+
+androidComponents {
+    onVariants { variant ->
+        val kotlinSources = variant.sources.kotlin ?: return@onVariants
+
+        kotlinSources.addGeneratedSourceDirectory(
+            generateMethodHashes,
+            GenerateMethodHashesTask::outputDir
+        )
+
+        kotlinSources.addGeneratedSourceDirectory(
+            embedBuiltinJavaScript,
+            EmbedJsTask::outputDir
+        )
+    }
+
+    onVariants { variant ->
+        if (!variant.debuggable) return@onVariants
+
+        val vName = variant.name
+        val vCap = vName.capitalizeUS()
+        val installTaskName = "install$vCap"
+
+        val installAndRestart = tasks.register("install${vCap}AndRestartWeChat") {
+            group = "wekit"
+            description = "Installs ${variant.name} and force-stops WeChat"
+
+            dependsOn(installTaskName)
+            finalizedBy(killWeChat)
+
+            onlyIf { hasConnectedDevice() }
+        }
+
+        tasks.matching { it.name == "assemble$vCap" }.configureEach {
+            finalizedBy(installAndRestart)
+        }
+
+        tasks.matching { it.name == installTaskName }.configureEach {
+            onlyIf { hasConnectedDevice() }
+        }
+    }
+
+    onVariants { variant ->
+        val buildTypeName = variant.buildType?.uppercase()
+        variant.outputs.forEach { output ->
+            if (this is ApkVariantOutputImpl) {
+                val config = project.android.defaultConfig
+                val versionName = config.versionName
+                (output as ApkVariantOutputImpl).outputFileName = "WeKit-${buildTypeName}-${versionName}.apk"
+            }
+        }
+    }
+}
+
+gradle.taskGraph.whenReady {
+    if (!hasConnectedDevice()) {
+        println("⚠️ No device detected — all install tasks will be skipped")
     }
 }
 
@@ -266,9 +234,6 @@ tasks.withType<JavaCompile>().configureEach {
     }
 }
 
-fun String.capitalizeUS() = replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.US) else it.toString() }
-
-val adbProvider = androidComponents.sdkComponents.adb
 fun hasConnectedDevice(): Boolean {
     val adbPath = adbProvider.orNull?.asFile?.absolutePath ?: return false
     return runCatching {
@@ -278,8 +243,7 @@ fun hasConnectedDevice(): Boolean {
     }.getOrElse { false }
 }
 
-val packageName = "com.tencent.mm"
-val killWeChat = tasks.register("killWeChat") {
+val killWeChat: TaskProvider<Task> = tasks.register("killWeChat") {
     group = "wekit"
     description = "Force-stop WeChat on a connected device; skips gracefully if none."
     onlyIf { hasConnectedDevice() }
@@ -287,7 +251,7 @@ val killWeChat = tasks.register("killWeChat") {
     doLast {
         val adbFile = adbProvider.orNull?.asFile ?: return@doLast
         execOperations.exec {
-            commandLine(adbFile, "shell", "am", "force-stop", packageName)
+            commandLine(adbFile, "shell", "am", "force-stop", "com.tencent.mm")
             isIgnoreExitValue = true
             standardOutput = ByteArrayOutputStream(); errorOutput = ByteArrayOutputStream()
         }
@@ -296,82 +260,108 @@ val killWeChat = tasks.register("killWeChat") {
     }
 }
 
-androidComponents.onVariants { variant ->
-    if (!variant.debuggable) return@onVariants
+fun String.capitalizeUS() = replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.US) else it.toString() }
 
-    val vCap = variant.name.capitalizeUS()
-    val installTaskName = "install${vCap}"
+// --- tasks ---
 
-    val installAndRestart = tasks.register("install${vCap}AndRestartWeChat") {
-        group = "wekit"
-        dependsOn(installTaskName)
-        finalizedBy(killWeChat)
-        onlyIf { hasConnectedDevice() }
-    }
+abstract class GenerateMethodHashesTask : DefaultTask() {
+    @get:InputDirectory
+    abstract val sourceDir: DirectoryProperty
 
-    afterEvaluate { tasks.findByName("assemble${vCap}")?.finalizedBy(installAndRestart) }
-}
+    @get:OutputDirectory
+    abstract val outputDir: DirectoryProperty
 
-afterEvaluate {
-    tasks.matching { it.name.startsWith("install") }.configureEach { onlyIf { hasConnectedDevice() } }
-    if (!hasConnectedDevice()) logger.lifecycle("⚠️ No device detected — all install tasks skipped")
-}
+    @TaskAction
+    fun generate() {
+        val srcDir = sourceDir.get().asFile
+        val outDir = outputDir.get().asFile
+        val outputFile = outDir.resolve("moe/ouom/wekit/dexkit/cache/GeneratedMethodHashes.kt")
 
-android.applicationVariants.all {
-    val variant = this
-    val buildTypeName = variant.buildType.name.uppercase()
+        val hashMap = mutableMapOf<String, String>()
+        srcDir.walk().filter { it.isFile && it.extension == "kt" && it.readText().contains("IDexFind") }.forEach { file ->
+            val content = file.readText()
+            val packageName = Regex("""package\s+([\w.]+)""").find(content)?.groupValues?.get(1)
+            val className = Regex("""(?:class|object)\s+(\w+)""").find(content)?.groupValues?.get(1) ?: return@forEach
+            val fullClassName = if (packageName != null) "$packageName.$className" else className
 
-    outputs.all {
-        if (this is com.android.build.gradle.internal.api.ApkVariantOutputImpl) {
-            val config = project.android.defaultConfig
-            val versionName = config.versionName
-            this.outputFileName = "WeKit-${buildTypeName}-${versionName}.apk"
+            // 你的逻辑保持不变...
+            val dexFindMatch = Regex("""override\s+fun\s+dexFind\s*\(""").find(content)
+            if (dexFindMatch != null) {
+                val start = content.indexOf('{', dexFindMatch.range.last)
+                if (start != -1) {
+                    var count = 0
+                    for (i in start until content.length) {
+                        if (content[i] == '{') count++ else if (content[i] == '}') count--
+                        if (count == 0) {
+                            val body = content.substring(start, i + 1)
+                            val hash = MessageDigest.getInstance("MD5").digest(body.toByteArray()).joinToString("") { "%02x".format(it) }
+                            hashMap[fullClassName] = hash
+                            break
+                        }
+                    }
+                }
+            }
         }
+
+        outputFile.parentFile.mkdirs()
+        outputFile.writeText("""
+            package moe.ouom.wekit.dexkit.cache
+            object GeneratedMethodHashes {
+                private val hashes = mapOf(${hashMap.entries.sortedBy { it.key }.joinToString(",") { "\"${it.key}\" to \"${it.value}\"" }})
+                fun getHash(className: String) = hashes[className] ?: ""
+            }
+        """.trimIndent())
     }
 }
 
-// =========================================================================
-
-tasks.withType<KotlinCompile>().configureEach {
-    dependsOn(generateMethodHashes)
+val generateMethodHashes = tasks.register<GenerateMethodHashesTask>("generateMethodHashes") {
+    group = "wekit"
+    sourceDir.set(file("src/main/java"))
+    outputDir.set(layout.buildDirectory.dir("generated/source/methodhashes"))
 }
 
-tasks.matching { it.name.startsWith("ksp") && it.name.contains("Kotlin") }.configureEach {
-    dependsOn(generateMethodHashes)
-}
+abstract class EmbedJsTask : DefaultTask() {
+    @get:InputFile
+    abstract val sourceJsFile: RegularFileProperty
 
-tasks.withType<KotlinCompile>().configureEach {
-    dependsOn(embedBuiltinJavaScript)
-}
+    @get:OutputDirectory
+    abstract val outputDir: DirectoryProperty
 
-tasks.matching { it.name.contains("ksp", ignoreCase = true) }.configureEach {
-    dependsOn(embedBuiltinJavaScript)
-}
+    @TaskAction
+    fun generate() {
+        val jsContent = sourceJsFile.get().asFile.readText()
+        val outDir = outputDir.get().asFile
+        val outputFile = outDir.resolve("moe/ouom/wekit/hooks/items/automation/BuiltinJs.kt")
 
-// =========================================================================
+        val ktCode = """
+            package moe.ouom.wekit.hooks.item.automation
 
-kotlin {
-    jvmToolchain(libs.versions.jdk.get().toInt())
-    sourceSets.configureEach {
-        kotlin.srcDir(layout.buildDirectory.dir("generated/ksp/$name/kotlin/"))
-        // 添加生成的方法hash文件目录
-        kotlin.srcDir(layout.buildDirectory.dir("generated/source/methodhashes"))
+            object EmbeddedBuiltinJs {
+                const val SCRIPT: String = ""${'"'}
+$jsContent
+""${'"'}
+            }
+        """.trimIndent()
+
+        outputFile.parentFile.mkdirs()
+        outputFile.writeText(ktCode)
     }
 }
 
-protobuf {
-    protoc { artifact = libs.google.protobuf.protoc.get().toString() }
-    generateProtoTasks { all().forEach { it.builtins { create("java") { option("lite") } } } }
+val embedBuiltinJavaScript = tasks.register<EmbedJsTask>("embedBuiltinJavaScript") {
+    group = "wekit"
+    sourceJsFile.set(file("src/main/java/moe/ouom/wekit/hooks/items/automation/script.js"))
+    outputDir.set(layout.buildDirectory.dir("generated/sources/embeddedJs/kotlin"))
 }
 
-configurations.configureEach { exclude(group = "androidx.appcompat", module = "appcompat") }
+// --- end tasks ---
 
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.android.material)
     implementation(libs.androidx.activity)
-    implementation(libs.androidx.constraintLayout) { exclude("androidx.appcompat", "appcompat") }
+    implementation(libs.androidx.constraintlayout)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.foundation)
@@ -382,43 +372,42 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.recyclerview)
     implementation(libs.androidx.compose.runtime)
+    implementation(libs.androidx.preference)
     implementation(libs.accompanist.drawablepainter)
 
     implementation(libs.kotlinx.io.jvm)
     implementation(libs.gson)
-    implementation(libs.grpc.protobuf)
     implementation(libs.google.guava)
     implementation(libs.google.protobuf.java)
     implementation(libs.kotlinx.serialization.protobuf)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.mmkv)
+    implementation(libs.fastjson2)
 
-    compileOnly(libs.xposed.api)
-    compileOnly(projects.libs.common.libxposed.api)
-    implementation(projects.libs.common.libxposed.service)
+    compileOnly(libs.derobv.xposed.api)
+    compileOnly(libs.libxposed.api)
+    // 哪个智障发明的 Gradle
+    // 不是他 libxposed AndroidManifest package 定义冲突就冲突关你屁事啊
+    // 要你管吗
+    // FIXME: change this when libxposed is publishes to maven
+    implementation(files("../files/libxposed-service-interfaces-classes.jar"))
+    implementation(libs.libxposed.service) {
+        exclude(group = "com.github.libxposed.service", module = "interface")
+    }
     implementation(libs.dexlib2)
     implementation(libs.dexkit)
     implementation(libs.hiddenApiBypass)
     implementation(libs.kavaref.core)
     implementation(libs.kavaref.extension)
     implementation(libs.libsu.core)
-
     implementation(projects.libs.common.annotationScanner)
     ksp(projects.libs.common.annotationScanner)
 
-    implementation(libs.rikka.rikkax.material.preference)
-    implementation(libs.rikka.rikkax.appcompat)
-
-
     implementation(libs.material.dialogs.core)
     implementation(libs.material.dialogs.input)
-    implementation(libs.androidx.preference)
-    implementation(libs.fastjson2)
 
     implementation(libs.dalvik.dx)
     implementation(libs.okhttp3.okhttp)
-    implementation(libs.markwon.core)
-    implementation(libs.hutool.core)
 
     implementation(libs.rhino.android)
 

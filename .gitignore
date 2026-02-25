@@ -15,12 +15,6 @@
 local.properties
 
 # Project exclude paths
-/libs/common/libxposed/api/build/
-/libs/common/libxposed/api/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/
-/libs/common/libxposed/service/build/
-/libs/common/libxposed/service/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/
-/libs/ui/xView/build/
-/libs/ui/xView/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/
 /.spec-workflow/
 /app/release/
 /.idea/inspectionProfiles/Project_Default.xml
