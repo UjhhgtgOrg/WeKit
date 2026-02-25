@@ -13,8 +13,8 @@ import moe.ouom.wekit.utils.log.WeLogger
 import org.json.JSONArray
 import org.json.JSONObject
 
-@HookItem(path = "聊天与消息/修改转账时的余额", desc = "点击配置")
-object HookQueryCashierPkg : BaseClickableFunctionHookItem(), IWePkgInterceptor {
+@HookItem(path = "红包与支付/修改转账时显示的余额", desc = "点击配置")
+object ModifyCashTransferAmountDisplay : BaseClickableFunctionHookItem(), IWePkgInterceptor {
     
     private const val KEY_CFT_BALANCE = "cashier_cft_balance"
     private const val KEY_LQT_BALANCE = "cashier_lqt_balance"

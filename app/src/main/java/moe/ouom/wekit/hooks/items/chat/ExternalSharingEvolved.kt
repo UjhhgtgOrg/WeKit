@@ -3,7 +3,7 @@ package moe.ouom.wekit.hooks.items.chat
 import moe.ouom.wekit.core.model.BaseSwitchFunctionHookItem
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 
-@HookItem(path = "聊天与消息/分享进化", desc = "让应用的系统分享菜单更易用 (没写完)")
+@HookItem(path = "聊天增强/分享进化", desc = "让应用的系统分享菜单更易用 (没写完)")
 object ExternalSharingEvolved : BaseSwitchFunctionHookItem() {
 
     override fun entry(classLoader: ClassLoader) {

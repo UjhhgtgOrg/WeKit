@@ -12,7 +12,7 @@ import kotlin.io.path.Path
 import kotlin.io.path.deleteRecursively
 import kotlin.io.path.exists
 
-@HookItem(path = "优化与修复/禁用应用热更新", desc = "禁止应用热更新, 避免被强制更新到不兼容版本")
+@HookItem(path = "系统与隐私/禁用应用热更新", desc = "禁止应用热更新, 避免被强制更新到不兼容版本")
 object DisableAppHotUpdates : BaseSwitchFunctionHookItem() {
 
     @SuppressLint("SdCardPath")

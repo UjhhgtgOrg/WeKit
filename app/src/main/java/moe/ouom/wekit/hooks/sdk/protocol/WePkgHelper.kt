@@ -23,7 +23,7 @@ import java.lang.reflect.Method
 import java.lang.reflect.Modifier
 import java.lang.reflect.Proxy
 
-@HookItem(path = "protocol/通用发包服务")
+@HookItem(path = "API/网络数据包服务")
 object WePkgHelper : ApiHookItem(), IDexFind {
 
     // 核心 Protobuf 类

@@ -44,7 +44,7 @@ import org.luckypray.dexkit.DexKitBridge
 import org.luckypray.dexkit.query.enums.MatchType
 import kotlin.random.Random
 
-@HookItem(path = "聊天与消息/表情游戏控制", desc = "自定义猜拳和骰子的结果")
+@HookItem(path = "聊天增强/表情游戏控制", desc = "自定义猜拳和骰子的结果")
 object EmojiGameControl : BaseSwitchFunctionHookItem(), IDexFind {
 
     private const val MD5_MORRA = "9bd1281af3a31710a45b84d736363691"

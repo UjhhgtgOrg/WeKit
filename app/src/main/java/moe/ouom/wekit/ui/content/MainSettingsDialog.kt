@@ -19,15 +19,16 @@ class MainSettingsDialog(context: Context) : BaseRikkaDialog(context, "WeKit") {
     override fun initPreferences() {
         addCategory("功能")
         val categories = listOf(
-            "聊天与消息" to "chat_24px",
-            "联系人" to "contacts_24px",
+            "聊天增强" to "chat_24px",
+            "联系人与群组" to "contacts_24px",
+            "红包与支付" to "payments_24px",
             "朋友圈" to "camera_24px",
+            "系统与隐私" to "wand_stars_24px",
+            "界面美化" to "imagesearch_roller_24px",
             "小程序" to "package_2_24px",
-            "优化与修复" to "wand_stars_24px",
-            "美化" to "imagesearch_roller_24px",
             "视频号" to "movie_24px",
+            "个人资料" to "account_circle_24px",
             "调试" to "bug_report_24px",
-            "娱乐" to "comedy_mask_24px",
             "自动化" to "terminal_24px",
         )
         categories.forEach { (name, iconName) ->

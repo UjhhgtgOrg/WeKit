@@ -34,8 +34,8 @@ object WeMessageApi : ApiHookItem(), IDexFind {
     // 基础消息类
     // -------------------------------------------------------------------------------------
     private val classNetSceneSendMsg by dexClass()
-    private val dexClassNetSceneQueue by dexClass()
-    val dexClassNetSceneBase by dexClass()
+    private val classNetSceneQueue by dexClass()
+    val classNetSceneBase by dexClass()
     private val classNetSceneObserverOwner by dexClass()
     private val methodGetSendMsgObject by dexMethod()
     private val methodPostToQueue by dexMethod()
@@ -45,6 +45,7 @@ object WeMessageApi : ApiHookItem(), IDexFind {
     val methodMsgInfoStorageInsertMessage by dexMethod()
     val classChattingContext by dexClass()
     val classChattingDataAdapter by dexClass()
+    val classTransformChattingComponent by dexClass()
 
     // -------------------------------------------------------------------------------------
     // 图片发送组件
@@ -171,7 +172,7 @@ object WeMessageApi : ApiHookItem(), IDexFind {
                 }
             }
 
-            dexClassNetSceneQueue.find(dexKit, descriptors = descriptors) {
+            classNetSceneQueue.find(dexKit, descriptors = descriptors) {
                 searchPackages("com.tencent.mm.modelbase")
                 matcher {
                     methods {
@@ -183,7 +184,7 @@ object WeMessageApi : ApiHookItem(), IDexFind {
                 }
             }
 
-            dexClassNetSceneBase.find(dexKit, descriptors = descriptors) {
+            classNetSceneBase.find(dexKit, descriptors = descriptors) {
                 matcher {
                     methods {
                         add {
@@ -204,8 +205,8 @@ object WeMessageApi : ApiHookItem(), IDexFind {
             methodPostToQueue.find(dexKit, descriptors, true) {
                 searchPackages("com.tencent.mm.modelbase")
                 matcher {
-                    declaredClass = dexClassNetSceneQueue.getDescriptorString() ?: ""
-                    paramTypes(dexClassNetSceneBase.getDescriptorString() ?: "")
+                    declaredClass = classNetSceneQueue.getDescriptorString() ?: ""
+                    paramTypes(classNetSceneBase.getDescriptorString() ?: "")
                     returnType = "boolean"
                     usingNumbers(0)
                 }
@@ -243,6 +244,13 @@ object WeMessageApi : ApiHookItem(), IDexFind {
                 matcher {
                     declaredClass(classMsgInfoStorage.clazz)
                     usingEqStrings("MsgInfo processAddMsg insert db error")
+                }
+            }
+
+            classTransformChattingComponent.find(dexKit, descriptors) {
+                searchPackages("com.tencent.mm.ui.chatting.component")
+                matcher {
+                    usingEqStrings("MicroMsg.TransformComponent", "[onChattingPause]")
                 }
             }
 

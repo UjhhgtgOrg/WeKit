@@ -7,8 +7,9 @@ import moe.ouom.wekit.dexkit.intf.IDexFind
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 import org.luckypray.dexkit.DexKitBridge
 
-@HookItem(path = "优化与修复/移除分享签名校验", desc = "移除第三方应用分享到微信的签名校验")
+@HookItem(path = "系统与隐私/移除分享签名校验", desc = "移除第三方应用分享到微信的签名校验")
 object RemoveExternalAppSharingSignatureVerify : BaseSwitchFunctionHookItem(), IDexFind {
+
     private val methodSignCheck by dexMethod()
 
     override fun dexFind(dexKit: DexKitBridge): Map<String, String> {

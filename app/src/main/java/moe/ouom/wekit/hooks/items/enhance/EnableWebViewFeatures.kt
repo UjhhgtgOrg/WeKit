@@ -10,7 +10,7 @@ import moe.ouom.wekit.dexkit.intf.IDexFind
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 import org.luckypray.dexkit.DexKitBridge
 
-@HookItem(path = "优化与修复/强制启用 WebView 菜单", desc = "强制显示 WebView 页面右上角菜单按钮")
+@HookItem(path = "系统与隐私/强制启用 WebView 菜单", desc = "强制显示 WebView 页面右上角菜单按钮")
 object EnableWebViewFeatures : BaseSwitchFunctionHookItem(), IDexFind {
     private const val WEBVIEW_UI_CLASS_NAME = "com.tencent.mm.plugin.webview.ui.tools.WebViewUI"
 

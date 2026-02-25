@@ -47,7 +47,7 @@ import moe.ouom.wekit.ui.utils.showComposeDialog
 import moe.ouom.wekit.utils.common.ToastUtils
 import moe.ouom.wekit.utils.log.WeLogger
 
-@HookItem(path = "聊天与消息/链接跳转系统打开方式", desc = "打开链接或卡片链接时显示对话框, 可直接使用系统打开方式打开\n若要跳转到第三方应用, 需先在对应应用设置中启用 '在此应用中打开支持的网页链接'")
+@HookItem(path = "聊天增强/链接跳转系统打开方式", desc = "打开链接或卡片链接时显示对话框, 可直接使用系统打开方式打开\n若要跳转到第三方应用, 需先在对应应用设置中启用 '在此应用中打开支持的网页链接'")
 object LinkExternalAppJump : BaseSwitchFunctionHookItem(), WeStartActivityListenerApi.IStartActivityListener {
 
     private const val TAG = "ExternalBrowsableAppJump"

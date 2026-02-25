@@ -8,7 +8,7 @@ import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.utils.log.WeLogger
 import org.luckypray.dexkit.DexKitBridge
 
-@HookItem(path = "娱乐/上传透明头像", desc = "头像上传时使用 PNG 格式保持透明")
+@HookItem(path = "个人资料/上传透明头像", desc = "头像上传时使用 PNG 格式保持透明")
 object UploadTransparentAvatars : BaseSwitchFunctionHookItem(), IDexFind {
 
     private val methodSaveBitmap by dexMethod()

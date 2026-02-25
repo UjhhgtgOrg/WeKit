@@ -10,8 +10,9 @@ import moe.ouom.wekit.hooks.sdk.protocol.WePkgHelper
 import moe.ouom.wekit.ui.utils.showComposeDialog
 import moe.ouom.wekit.utils.log.WeLogger
 
-@HookItem(path = "娱乐/清空资料信息", desc = "清空当前用户的地区与性别等资料信息")
+@HookItem(path = "个人资料/清空资料信息", desc = "清空当前用户的地区与性别等资料信息")
 object ClearProfileDetails : BaseClickableFunctionHookItem() {
+
     override fun onClick(context: Context) {
         showComposeDialog(context) { onDismiss ->
             AlertDialog(

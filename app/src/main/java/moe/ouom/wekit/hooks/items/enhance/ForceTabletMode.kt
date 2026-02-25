@@ -6,7 +6,7 @@ import moe.ouom.wekit.dexkit.intf.IDexFind
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 import org.luckypray.dexkit.DexKitBridge
 
-@HookItem(path = "优化与修复/强制平板模式", desc = "让应用将当前设备识别为平板")
+@HookItem(path = "系统与隐私/强制平板模式", desc = "让应用将当前设备识别为平板")
 object ForceTabletMode : BaseSwitchFunctionHookItem(), IDexFind {
     private val methodIsTablet by dexMethod()
 

@@ -9,7 +9,7 @@ import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.hooks.sdk.base.WeMessageApi
 import org.luckypray.dexkit.DexKitBridge
 
-@HookItem(path = "聊天与消息/引用消息直达", desc = "点击被引用消息时直接跳转至对应消息")
+@HookItem(path = "聊天增强/引用消息直达", desc = "点击被引用消息时直接跳转至对应消息")
 object QuotedMessageDirectJump : BaseSwitchFunctionHookItem(), IDexFind {
 
     private val methodClickEvent by dexMethod()

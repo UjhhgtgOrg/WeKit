@@ -51,7 +51,7 @@ import moe.ouom.wekit.utils.common.ToastUtils
 import moe.ouom.wekit.utils.log.WeLogger
 import org.luckypray.dexkit.DexKitBridge
 
-@HookItem(path = "娱乐/灰度测试管理器", desc = "覆盖应用灰度测试 (Feature Flag) 的值")
+@HookItem(path = "系统与隐私/灰度测试管理器", desc = "覆盖应用灰度测试 (Feature Flag) 的值")
 object FeatureFlagManager : BaseClickableFunctionHookItem(), IDexFind {
 
     private const val TAG = "FeatureFlagManager"

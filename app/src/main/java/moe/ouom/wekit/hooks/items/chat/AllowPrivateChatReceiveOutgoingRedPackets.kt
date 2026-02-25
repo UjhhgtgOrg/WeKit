@@ -7,7 +7,7 @@ import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.hooks.sdk.ui.WeStartActivityListenerApi
 import moe.ouom.wekit.utils.log.WeLogger
 
-@HookItem(path = "聊天与消息/红包私聊领取", desc = "允许打开私聊中自己发出的红包")
+@HookItem(path = "红包与支付/允许领取私聊红包", desc = "允许打开私聊中自己发出的红包")
 object AllowPrivateChatReceiveOutgoingRedPackets : BaseSwitchFunctionHookItem(), WeStartActivityListenerApi.IStartActivityListener {
     private const val TAG = "AllowPrivateChatReceiveOutgoingRedPackets"
 

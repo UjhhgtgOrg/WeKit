@@ -11,7 +11,7 @@ import moe.ouom.wekit.hooks.sdk.base.model.MessageInfo
 import moe.ouom.wekit.hooks.sdk.ui.WeChatItemCreateViewListenerApi
 import org.luckypray.dexkit.DexKitBridge
 
-@HookItem(path = "联系人/显示群成员身份", desc = "在群聊中显示群成员的身份: 群主, 管理员, 成员 (没写完)")
+@HookItem(path = "联系人与群组/显示群成员身份", desc = "在群聊中显示群成员的身份: 群主, 管理员, 成员 (没写完)")
 object DisplayGroupMemberRoles : BaseSwitchFunctionHookItem(), IDexFind,
     WeChatItemCreateViewListenerApi.ICreateViewListener {
 

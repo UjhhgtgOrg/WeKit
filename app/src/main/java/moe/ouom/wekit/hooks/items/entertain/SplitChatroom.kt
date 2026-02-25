@@ -40,13 +40,13 @@ import moe.ouom.wekit.core.model.BaseClickableFunctionHookItem
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.hooks.sdk.base.WeDatabaseApi
 import moe.ouom.wekit.hooks.sdk.base.model.WeGroup
-import moe.ouom.wekit.ui.utils.showComposeDialog
 import moe.ouom.wekit.ui.content.BaseHooksSettingsDialogContent
+import moe.ouom.wekit.ui.utils.showComposeDialog
 import moe.ouom.wekit.utils.Initiator.loadClass
 import moe.ouom.wekit.utils.common.ToastUtils
 import moe.ouom.wekit.utils.log.WeLogger
 
-@HookItem(path = "娱乐/分裂群组", desc = "让群聊一分为二")
+@HookItem(path = "联系人与群组/分裂群组", desc = "让群聊一分为二")
 object SplitChatroom : BaseClickableFunctionHookItem() {
 
     override fun onClick(context: Context) {

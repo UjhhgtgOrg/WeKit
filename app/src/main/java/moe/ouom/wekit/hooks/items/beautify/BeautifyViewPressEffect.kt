@@ -8,7 +8,7 @@ import com.highcapable.kavaref.KavaRef.Companion.asResolver
 import moe.ouom.wekit.core.model.BaseSwitchFunctionHookItem
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 
-@HookItem(path = "美化/美化组件按下效果", desc = "将 View 的背景替换为 RippleDrawable")
+@HookItem(path = "界面美化/美化组件按下效果", desc = "将 View 的背景替换为 RippleDrawable")
 object BeautifyViewPressEffect : BaseSwitchFunctionHookItem() {
     override fun entry(classLoader: ClassLoader) {
         View::class.asResolver()

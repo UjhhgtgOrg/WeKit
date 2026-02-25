@@ -10,7 +10,7 @@ import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.ui.utils.showComposeDialog
 
 @SuppressLint("DiscouragedApi")
-@HookItem(path = "聊天与消息/发送卡片消息", desc = "长按 '发送' 按钮, 发送 XML 卡片消息")
+@HookItem(path = "聊天增强/发送卡片消息", desc = "长按 '发送' 按钮, 发送 XML 卡片消息")
 object SendCustomAppMessage : BaseSwitchFunctionHookItem() {
     // 实现逻辑在 WeChatFooterApi
 

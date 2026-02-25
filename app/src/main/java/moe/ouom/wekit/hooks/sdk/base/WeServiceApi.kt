@@ -16,6 +16,7 @@ object WeServiceApi : ApiHookItem(), IDexFind {
     private val classContactStorage by dexClass()
     private val classConversationStorage by dexClass()
     private val classStorageFeatureService by dexClass()
+    val methodApiManagerGetApi by dexMethod()
 
     val emojiFeatureService by lazy {
         getServiceByClass(classEmojiFeatureService.clazz)
@@ -77,6 +78,13 @@ object WeServiceApi : ApiHookItem(), IDexFind {
                 addMethod {
                     returnType(classConversationStorage.clazz)
                 }
+            }
+        }
+
+        methodApiManagerGetApi.find(dexKit, descriptors) {
+            searchPackages("com.tencent.mm.ui.chatting.manager")
+            matcher {
+                usingEqStrings("[get] ", " is not a interface!")
             }
         }
 

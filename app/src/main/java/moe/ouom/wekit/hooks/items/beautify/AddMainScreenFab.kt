@@ -69,7 +69,7 @@ import moe.ouom.wekit.utils.common.ToastUtils
 import moe.ouom.wekit.utils.log.WeLogger
 import java.util.concurrent.CopyOnWriteArrayList
 
-@HookItem(path = "美化/主屏幕添加 FAB", desc = "向应用主屏幕添加浮动操作按钮")
+@HookItem(path = "界面美化/主屏幕添加 FAB", desc = "向应用主屏幕添加浮动操作按钮")
 object AddMainScreenFab : BaseSwitchFunctionHookItem() {
 
     interface IMenuItemsProvider {

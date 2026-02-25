@@ -6,7 +6,7 @@ import com.highcapable.kavaref.extension.toClass
 import moe.ouom.wekit.core.model.BaseSwitchFunctionHookItem
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 
-@HookItem(path = "优化与修复/禁止屏幕高亮度", desc = "禁止应用将屏幕亮度设置得过高")
+@HookItem(path = "系统与隐私/禁止屏幕高亮度", desc = "禁止应用将屏幕亮度设置得过高")
 object DisableHighBrightness : BaseSwitchFunctionHookItem() {
 
     override fun entry(classLoader: ClassLoader) {

@@ -11,6 +11,7 @@ import moe.ouom.wekit.core.model.ApiHookItem
 import moe.ouom.wekit.dexkit.intf.IDexFind
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.hooks.sdk.base.WeMessageApi
+import moe.ouom.wekit.hooks.sdk.base.WeServiceApi
 import moe.ouom.wekit.hooks.sdk.base.model.MessageInfo
 import moe.ouom.wekit.utils.log.WeLogger
 import org.luckypray.dexkit.DexKitBridge
@@ -45,7 +46,6 @@ object WeChatMessageContextMenuApi : ApiHookItem(), IDexFind {
         WeLogger.i(TAG, "provider remove ${if (removed) "succeeded" else "failed"}, current provider count: ${providers.size}")
     }
 
-    private val methodApiManagerGetApi by dexMethod()
     private val methodCreateMenu by dexMethod()
     private val methodSelectMenuItem by dexMethod()
     private val classChattingMessBox by dexClass()
@@ -106,10 +106,10 @@ object WeChatMessageContextMenuApi : ApiHookItem(), IDexFind {
                         .get()!!
                     val apiManager = chattingContext.asResolver()
                         .firstField {
-                            type = methodApiManagerGetApi.method.declaringClass
+                            type = WeServiceApi.methodApiManagerGetApi.method.declaringClass
                         }
                         .get()!!
-                    val api = methodApiManagerGetApi.method.invoke(
+                    val api = WeServiceApi.methodApiManagerGetApi.method.invoke(
                         apiManager,
                         classChattingMessBox.clazz.interfaces[0]
                     )
@@ -121,10 +121,10 @@ object WeChatMessageContextMenuApi : ApiHookItem(), IDexFind {
                         .get()!!
                     val apiManager2 = chattingContext2.asResolver()
                         .firstField {
-                            type = methodApiManagerGetApi.method.declaringClass
+                            type = WeServiceApi.methodApiManagerGetApi.method.declaringClass
                         }
                         .get()!!
-                    val api2 = methodApiManagerGetApi.method.invoke(
+                    val api2 = WeServiceApi.methodApiManagerGetApi.method.invoke(
                         apiManager2,
                         WeMessageApi.classChattingDataAdapter.clazz.interfaces[0]
                     )
@@ -160,13 +160,6 @@ object WeChatMessageContextMenuApi : ApiHookItem(), IDexFind {
 
     override fun dexFind(dexKit: DexKitBridge): Map<String, String> {
         val descriptors = mutableMapOf<String, String>()
-
-        methodApiManagerGetApi.find(dexKit, descriptors) {
-            searchPackages("com.tencent.mm.ui.chatting.manager")
-            matcher {
-                usingEqStrings("[get] ", " is not a interface!")
-            }
-        }
 
         methodCreateMenu.find(dexKit, descriptors) {
             searchPackages("com.tencent.mm.ui.chatting.viewitems")

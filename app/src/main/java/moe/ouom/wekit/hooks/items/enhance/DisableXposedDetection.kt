@@ -7,7 +7,7 @@ import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.utils.log.WeLogger
 import org.luckypray.dexkit.DexKitBridge
 
-@HookItem(path = "优化与修复/禁止应用检测 Xposed", desc = "防止应用检测 Xposed 框架是否存在")
+@HookItem(path = "系统与隐私/禁止应用检测 Xposed", desc = "防止应用检测 Xposed 框架是否存在")
 object DisableXposedDetection : BaseSwitchFunctionHookItem(), IDexFind {
 
     private const val TAG = "DisableXposedDetection"

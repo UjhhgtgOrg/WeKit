@@ -7,7 +7,7 @@ import moe.ouom.wekit.core.model.BaseSwitchFunctionHookItem
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.utils.log.WeLogger
 
-@HookItem(path = "优化与修复/自动批准设备登录", desc = "其他设备请求登录时自动勾选选项并点击按钮")
+@HookItem(path = "系统与隐私/自动批准设备登录", desc = "其他设备请求登录时自动勾选选项并点击按钮")
 object AutoApproveDeviceLogin : BaseSwitchFunctionHookItem() {
     private const val AUTO_SYNC_MESSAGES = 0x1
     private const val SHOW_LOGIN_DEVICE = 0x2

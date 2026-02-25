@@ -5,7 +5,7 @@ import com.google.gson.JsonElement
 import com.highcapable.kavaref.KavaRef.Companion.asResolver
 import moe.ouom.wekit.utils.getByPath
 
-class MessageInfo(instance: Any) {
+class MessageInfo(val instance: Any) {
 
     @Suppress("UNCHECKED_CAST")
     private fun <T> getFieldByName(instance: Any, name: String): T {

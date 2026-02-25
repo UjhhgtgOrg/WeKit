@@ -15,7 +15,7 @@ import moe.ouom.wekit.hooks.sdk.protocol.WePkgHelper
 import moe.ouom.wekit.ui.utils.showComposeDialog
 import moe.ouom.wekit.utils.log.WeLogger
 
-@HookItem(path = "娱乐/设置微信昵称", desc = "通过发包来更灵活的设置微信昵称")
+@HookItem(path = "个人资料/设置微信昵称", desc = "通过发包来更灵活的设置微信昵称")
 object SetProfileNickname : BaseClickableFunctionHookItem() {
 
     override fun onClick(context: Context) {

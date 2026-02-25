@@ -12,7 +12,7 @@ import moe.ouom.wekit.hooks.sdk.ui.WeChatContactInfoAdapterItemHook.ContactInfoI
 import moe.ouom.wekit.utils.log.WeLogger
 
 @HookItem(
-    path = "联系人/显示微信 ID",
+    path = "联系人与群组/显示微信 ID",
     desc = "在联系人详情页面显示微信 ID"
 )
 object ShowWxIdInContactDetails : BaseSwitchFunctionHookItem() {

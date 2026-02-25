@@ -18,10 +18,10 @@ import moe.ouom.wekit.ui.utils.showComposeDialog
 import moe.ouom.wekit.utils.common.ModuleRes
 
 @HookItem(
-    path = "聊天与消息/修改消息显示",
+    path = "聊天增强/修改文本消息显示",
     desc = "向消息长按菜单添加菜单项, 可修改本地消息显示内容"
 )
-object ModifyMessageDisplayHook : BaseSwitchFunctionHookItem(),
+object ModifyTextMessageDisplay : BaseSwitchFunctionHookItem(),
     WeChatMessageContextMenuApi.IMenuItemsProvider {
 
     override fun entry(classLoader: ClassLoader) {

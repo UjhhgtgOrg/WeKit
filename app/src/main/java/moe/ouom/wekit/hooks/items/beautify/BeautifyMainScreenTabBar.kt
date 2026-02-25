@@ -33,7 +33,7 @@ import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.ui.utils.XposedLifecycleOwner
 import moe.ouom.wekit.utils.log.WeLogger
 
-@HookItem(path = "美化/美化首页底部导航栏", desc = "将首页底部导航栏替换为 Jetpack Compose 组件")
+@HookItem(path = "界面美化/美化首页底部导航栏", desc = "将首页底部导航栏替换为 Jetpack Compose 组件")
 object BeautifyMainScreenTabBar : BaseSwitchFunctionHookItem() {
 
     private const val TAG = "BeautifyMainScreenTabBar"
