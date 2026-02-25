@@ -9,6 +9,7 @@
 - 移植绝大部分 UI 至 Jetpack Compose
 - 添加, 修复, 增强 WAuxiliary 部分闭源功能
 - 一些功能
+- AGP 升级至 9.X
 
 ## 推荐版本
 
