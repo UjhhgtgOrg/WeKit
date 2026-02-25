@@ -63,6 +63,7 @@ import moe.ouom.wekit.constants.PackageConstants
 import moe.ouom.wekit.core.model.BaseSwitchFunctionHookItem
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.hooks.sdk.base.WeConversationApi
+import moe.ouom.wekit.hooks.sdk.ui.WeMainActivityBeautifyApi
 import moe.ouom.wekit.ui.content.MainSettingsDialog
 import moe.ouom.wekit.ui.utils.XposedLifecycleOwner
 import moe.ouom.wekit.utils.common.ToastUtils

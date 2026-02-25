@@ -11,7 +11,7 @@ import moe.ouom.wekit.hooks.sdk.base.model.MessageInfo
 import moe.ouom.wekit.hooks.sdk.ui.WeChatItemCreateViewListenerApi
 import moe.ouom.wekit.utils.common.SimpleLruCache
 
-@HookItem(path = "聊天增强/自动语音转文字", desc = "自动将语音消息转为文字")
+@HookItem(path = "聊天/自动语音转文字", desc = "自动将语音消息转为文字")
 object AutoSpeechToText : BaseSwitchFunctionHookItem(), WeChatItemCreateViewListenerApi.ICreateViewListener {
 
     private val cache = SimpleLruCache<Long, Boolean>(100)

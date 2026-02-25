@@ -1,4 +1,4 @@
-package moe.ouom.wekit.hooks.items.entertain
+package moe.ouom.wekit.hooks.items.contacts
 
 import android.content.Context
 import android.content.Intent
@@ -50,8 +50,6 @@ import moe.ouom.wekit.utils.log.WeLogger
 object SplitChatroom : BaseClickableFunctionHookItem() {
 
     override fun onClick(context: Context) {
-        context ?: return
-
         val groups = try {
             WeDatabaseApi.getGroups()
         } catch (e: Exception) {

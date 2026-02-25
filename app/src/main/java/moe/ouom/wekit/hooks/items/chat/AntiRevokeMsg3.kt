@@ -15,7 +15,7 @@ import org.luckypray.dexkit.DexKitBridge
 import java.util.regex.Pattern
 import kotlin.random.Random
 
-@HookItem(path = "聊天增强/阻止消息撤回 3", desc = "有撤回提示")
+@HookItem(path = "聊天/阻止消息撤回 3", desc = "有撤回提示")
 object AntiRevokeMsg3 : BaseSwitchFunctionHookItem(), IDexFind {
 
     private const val TAG = "AntiRevokeMsg3"

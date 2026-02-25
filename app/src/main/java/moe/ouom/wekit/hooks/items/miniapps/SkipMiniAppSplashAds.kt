@@ -8,6 +8,7 @@ import org.luckypray.dexkit.DexKitBridge
 
 @HookItem(path = "小程序/跳过开屏广告", desc = "跳过小程序开屏广告")
 object SkipMiniAppSplashAds : BaseSwitchFunctionHookItem(), IDexFind {
+
     private val methodAdDataCallback by dexMethod()
 
     override fun entry(classLoader: ClassLoader) {

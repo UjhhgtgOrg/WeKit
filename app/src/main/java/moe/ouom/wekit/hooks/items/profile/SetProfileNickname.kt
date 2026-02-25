@@ -1,29 +1,42 @@
-package moe.ouom.wekit.hooks.items.entertain
+package moe.ouom.wekit.hooks.items.profile
 
 import android.content.Context
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import moe.ouom.wekit.core.model.BaseClickableFunctionHookItem
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.hooks.sdk.protocol.WePkgHelper
 import moe.ouom.wekit.ui.utils.showComposeDialog
 import moe.ouom.wekit.utils.log.WeLogger
 
-@HookItem(path = "个人资料/清空资料信息", desc = "清空当前用户的地区与性别等资料信息")
-object ClearProfileDetails : BaseClickableFunctionHookItem() {
+@HookItem(path = "个人资料/设置微信昵称", desc = "通过发包来更灵活的设置微信昵称")
+object SetProfileNickname : BaseClickableFunctionHookItem() {
 
     override fun onClick(context: Context) {
         showComposeDialog(context) { onDismiss ->
+            var nickname by remember { mutableStateOf("") }
+
             AlertDialog(
                 onDismissRequest = onDismiss,
-                title = { Text("清空资料信息") },
-                text = { Text("确定清空吗？清空后你仍然可以重新选择资料信息") },
+                title = { Text("设置微信昵称") },
+                text = {
+                    TextField(
+                        label = { Text("新的昵称") },
+                        value = nickname, onValueChange = { nickname = it }, singleLine = false
+                    )
+                },
                 dismissButton = { TextButton(onClick = onDismiss) { Text("取消") } },
                 confirmButton = {
                     TextButton(onClick = {
-                        val payload =
-                            """{"1":{"1":1,"2":{"1":1,"2":{"1":91,"2":{"1":128,"2":{"1":""},"3":{"1":""},"4":0,"5":{"1":""},"6":{"1":""},"7":0,"8":0,"9":"","10":0,"11":"","12":"","13":"","14":1,"16":0,"17":0,"19":0,"20":0,"21":0,"22":0,"23":0,"24":"","25":0,"27":"","28":"","29":0,"30":0,"31":0,"33":0,"34":0,"36":0,"38":""}}}}}"""
+                        val payload = """{"1":{"1":1,"2":{"1":64,"2":{"1":16,"2":{"1":1,"2":"${
+                            escapeJsonString(nickname)
+                        }"}}}}}"""
 
                         WePkgHelper.sendCgi(
                             "/cgi-bin/micromsg-bin/oplog",
@@ -31,7 +44,7 @@ object ClearProfileDetails : BaseClickableFunctionHookItem() {
                             jsonPayload = payload
                         ) {
                             onSuccess { json, _ ->
-                                WeLogger.i("WeProfileCleaner", "成功，回包: $json")
+                                WeLogger.i("WeProfileNameSetter", "成功，回包: $json")
                                 showComposeDialog(context) { onDismiss ->
                                     AlertDialog(
                                         onDismissRequest = onDismiss,
@@ -61,6 +74,10 @@ object ClearProfileDetails : BaseClickableFunctionHookItem() {
                     }) { Text("确定") }
                 })
         }
+    }
+
+    private fun escapeJsonString(input: String): String {
+        return input.replace("\"", "\\\"")
     }
 
     override fun noSwitchWidget(): Boolean = true

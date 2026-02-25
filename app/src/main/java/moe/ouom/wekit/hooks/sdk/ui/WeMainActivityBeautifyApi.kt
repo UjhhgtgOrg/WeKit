@@ -1,4 +1,4 @@
-package moe.ouom.wekit.hooks.items.beautify
+package moe.ouom.wekit.hooks.sdk.ui
 
 import moe.ouom.wekit.core.dsl.dexMethod
 import moe.ouom.wekit.core.model.ApiHookItem

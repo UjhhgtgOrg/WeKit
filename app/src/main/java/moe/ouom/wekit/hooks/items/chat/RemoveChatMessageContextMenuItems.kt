@@ -20,7 +20,7 @@ import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.ui.utils.showComposeDialog
 import org.luckypray.dexkit.DexKitBridge
 
-@HookItem(path = "聊天增强/移除消息菜单项", desc = "从消息的长按菜单中移除指定名称的菜单项")
+@HookItem(path = "聊天/移除消息菜单项", desc = "从消息的长按菜单中移除指定名称的菜单项")
 object RemoveChatMessageContextMenuItems : BaseClickableFunctionHookItem(), IDexFind {
 
     // although there are multiple addMenuItem() methods, i only found the usage of those two in the context menu of chat messages

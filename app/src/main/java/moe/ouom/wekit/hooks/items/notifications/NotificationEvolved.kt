@@ -1,5 +1,6 @@
-package moe.ouom.wekit.hooks.items.chat
+package moe.ouom.wekit.hooks.items.notifications
 
+import android.R
 import android.app.Notification
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -26,8 +27,9 @@ import moe.ouom.wekit.hooks.sdk.protocol.WeApi
 import moe.ouom.wekit.host.HostInfo
 import moe.ouom.wekit.utils.log.WeLogger
 import java.net.HttpURLConnection
+import java.net.URL
 
-@HookItem(path = "聊天与消息/通知进化", desc = "让应用的新消息通知更易用\n1. '快速回复' 按钮\n2. '标记为已读' 按钮\n3. 使用原生对话样式 (MessagingStyle)")
+@HookItem(path = "通知/通知进化", desc = "让应用的新消息通知更易用\n1. '快速回复' 按钮\n2. '标记为已读' 按钮\n3. 使用原生对话样式 (MessagingStyle)")
 object NotificationEvolved : BaseSwitchFunctionHookItem() {
 
     private const val TAG = "NotificationEvolved"
@@ -89,7 +91,7 @@ object NotificationEvolved : BaseSwitchFunctionHookItem() {
                     CoroutineScope(Dispatchers.IO).launch {
                         meAvatarIcon = runCatching {
                             val urlString = WeDatabaseApi.getAvatarUrl(WeApi.selfWxId)
-                            val connection = java.net.URL(urlString).openConnection() as HttpURLConnection
+                            val connection = URL(urlString).openConnection() as HttpURLConnection
                             connection.doInput = true
 
                             connection.inputStream.use { input ->
@@ -169,7 +171,7 @@ object NotificationEvolved : BaseSwitchFunctionHookItem() {
                     )
 
                     val replyAction = Notification.Action.Builder(
-                        Icon.createWithResource(context, android.R.drawable.ic_menu_send),
+                        Icon.createWithResource(context, R.drawable.ic_menu_send),
                         "宣旨", replyPendingIntent
                     ).addRemoteInput(remoteInput).build()
 
@@ -183,7 +185,7 @@ object NotificationEvolved : BaseSwitchFunctionHookItem() {
                         PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
                     )
                     val readAction = Notification.Action.Builder(
-                        Icon.createWithResource(context, android.R.drawable.ic_menu_view),
+                        Icon.createWithResource(context, R.drawable.ic_menu_view),
                         "朕已阅", readPendingIntent
                     ).build()
 

@@ -19,7 +19,7 @@ import moe.ouom.wekit.utils.common.ToastUtils
 import moe.ouom.wekit.utils.log.WeLogger
 import org.luckypray.dexkit.DexKitBridge
 
-@HookItem(path = "聊天增强/贴纸保存到本地", desc = "在贴纸消息菜单添加保存按钮, 允许将表情包保存到本地")
+@HookItem(path = "聊天/贴纸保存到本地", desc = "在贴纸消息菜单添加保存按钮, 允许将表情包保存到本地")
 object SaveStickersToLocalStorage : BaseSwitchFunctionHookItem(), IDexFind, WeChatMessageContextMenuApi.IMenuItemsProvider {
 
     private const val TAG = "SaveStickersToLocalStorage"

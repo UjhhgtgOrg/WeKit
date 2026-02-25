@@ -1,4 +1,4 @@
-package moe.ouom.wekit.hooks.items.enhance
+package moe.ouom.wekit.hooks.items.system
 
 import android.annotation.SuppressLint
 import com.highcapable.kavaref.KavaRef.Companion.asResolver

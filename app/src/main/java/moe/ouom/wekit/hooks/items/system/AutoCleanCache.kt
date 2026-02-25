@@ -1,4 +1,4 @@
-package moe.ouom.wekit.hooks.items.enhance
+package moe.ouom.wekit.hooks.items.system
 
 import android.content.Context
 import moe.ouom.wekit.core.model.BaseClickableFunctionHookItem

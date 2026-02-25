@@ -7,6 +7,7 @@ import org.json.JSONObject
 
 @HookItem(path = "小程序/跳过视频广告", desc = "跳过小程序视频广告")
 object SkipMiniAppVideoAds : BaseSwitchFunctionHookItem() {
+
     override fun entry(classLoader: ClassLoader) {
         "com.tencent.mm.appbrand.commonjni.AppBrandJsBridgeBinding".toClass(classLoader)
             .hookBefore("subscribeHandler") { param ->

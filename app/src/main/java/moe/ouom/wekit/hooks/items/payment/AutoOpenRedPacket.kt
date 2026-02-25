@@ -1,4 +1,4 @@
-package moe.ouom.wekit.hooks.items.chat
+package moe.ouom.wekit.hooks.items.payment
 
 import android.annotation.SuppressLint
 import android.content.ContentValues

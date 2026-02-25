@@ -6,10 +6,9 @@ import moe.ouom.wekit.dexkit.intf.IDexFind
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 import org.luckypray.dexkit.DexKitBridge
 
-@HookItem(path = "聊天增强/禁用消息折叠", desc = "阻止聊天消息被折叠")
+@HookItem(path = "聊天/禁用消息折叠", desc = "阻止聊天消息被折叠")
 object DisableMessageCollapsing : BaseSwitchFunctionHookItem(), IDexFind {
 
-    private const val TAG = "DisableMessageCollapsing"
     private val methodFoldMsg by dexMethod()
 
     override fun dexFind(dexKit: DexKitBridge): Map<String, String> {

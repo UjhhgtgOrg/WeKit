@@ -17,7 +17,7 @@ import moe.ouom.wekit.utils.log.WeLogger
 )
 object ShowWxIdInContactDetails : BaseSwitchFunctionHookItem() {
 
-    private const val TAG = "ShowWeChatIdHook"
+    private const val TAG = "ShowWxIdInContactDetails"
     private const val PREF_KEY = "wechat_id_display"
 
     private val initCallback = WeChatContactInfoAdapterItemHook.InitContactInfoViewCallback { activity ->

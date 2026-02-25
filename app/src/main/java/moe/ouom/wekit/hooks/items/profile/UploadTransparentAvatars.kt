@@ -1,4 +1,4 @@
-package moe.ouom.wekit.hooks.items.entertain
+package moe.ouom.wekit.hooks.items.profile
 
 import android.graphics.Bitmap
 import moe.ouom.wekit.core.dsl.dexMethod

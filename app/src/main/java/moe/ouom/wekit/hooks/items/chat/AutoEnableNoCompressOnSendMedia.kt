@@ -1,11 +1,11 @@
-package moe.ouom.wekit.hooks.items.enhance
+package moe.ouom.wekit.hooks.items.chat
 
 import android.app.Activity
 import com.highcapable.kavaref.extension.toClass
 import moe.ouom.wekit.core.model.BaseSwitchFunctionHookItem
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 
-@HookItem(path = "聊天增强/自动启用发送原图", desc = "发送媒体时自动勾选发送原图选项")
+@HookItem(path = "聊天/自动启用发送原图", desc = "发送媒体时自动勾选发送原图选项")
 object AutoEnableNoCompressOnSendMedia : BaseSwitchFunctionHookItem() {
 
     override fun entry(classLoader: ClassLoader) {

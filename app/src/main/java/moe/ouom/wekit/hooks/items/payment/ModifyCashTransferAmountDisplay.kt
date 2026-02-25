@@ -1,4 +1,4 @@
-package moe.ouom.wekit.hooks.items.chat
+package moe.ouom.wekit.hooks.items.payment
 
 import android.content.Context
 import android.text.InputType

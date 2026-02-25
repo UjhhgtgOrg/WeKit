@@ -30,6 +30,7 @@ import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.highcapable.kavaref.KavaRef.Companion.asResolver
 import moe.ouom.wekit.core.model.BaseSwitchFunctionHookItem
 import moe.ouom.wekit.hooks.core.annotation.HookItem
+import moe.ouom.wekit.hooks.sdk.ui.WeMainActivityBeautifyApi
 import moe.ouom.wekit.ui.utils.XposedLifecycleOwner
 import moe.ouom.wekit.utils.log.WeLogger
 

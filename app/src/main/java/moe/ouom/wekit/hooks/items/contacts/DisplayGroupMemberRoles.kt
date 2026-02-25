@@ -1,4 +1,4 @@
-package moe.ouom.wekit.hooks.items.chat
+package moe.ouom.wekit.hooks.items.contacts
 
 import android.view.View
 import de.robv.android.xposed.XC_MethodHook

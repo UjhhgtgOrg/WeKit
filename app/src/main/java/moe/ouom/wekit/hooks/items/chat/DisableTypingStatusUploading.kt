@@ -8,7 +8,7 @@ import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.utils.log.WeLogger
 import org.luckypray.dexkit.DexKitBridge
 
-@HookItem(path = "聊天增强/禁止上传正在输入状态", desc = "禁止应用上传 '正在输入...' 状态")
+@HookItem(path = "聊天/禁止上传正在输入状态", desc = "禁止应用上传 '正在输入...' 状态")
 object DisableTypingStatusUploading : BaseSwitchFunctionHookItem(), IDexFind {
 
     private const val TAG = "DisableTypingStatusUploading"

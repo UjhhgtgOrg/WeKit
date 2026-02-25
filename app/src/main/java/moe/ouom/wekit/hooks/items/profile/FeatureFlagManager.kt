@@ -1,4 +1,4 @@
-package moe.ouom.wekit.hooks.items.entertain
+package moe.ouom.wekit.hooks.items.profile
 
 import android.content.ClipData
 import android.content.ClipboardManager

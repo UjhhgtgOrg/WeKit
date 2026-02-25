@@ -1,4 +1,4 @@
-package moe.ouom.wekit.hooks.items.enhance
+package moe.ouom.wekit.hooks.items.system
 
 import moe.ouom.wekit.core.model.BaseSwitchFunctionHookItem
 import moe.ouom.wekit.hooks.core.annotation.HookItem
