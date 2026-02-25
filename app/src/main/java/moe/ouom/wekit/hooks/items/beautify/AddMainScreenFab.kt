@@ -8,6 +8,8 @@ import android.view.ViewGroup
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
@@ -22,6 +24,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Camera
 import androidx.compose.material.icons.filled.Cancel
+import androidx.compose.material.icons.filled.Extension
 import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.Settings
@@ -54,6 +57,7 @@ import moe.ouom.wekit.constants.PackageConstants
 import moe.ouom.wekit.core.model.BaseSwitchFunctionHookItem
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.hooks.sdk.base.WeConversationApi
+import moe.ouom.wekit.ui.content.MainSettingsDialog
 import moe.ouom.wekit.ui.utils.XposedLifecycleOwner
 import moe.ouom.wekit.utils.common.ToastUtils
 import moe.ouom.wekit.utils.log.WeLogger
@@ -82,10 +86,6 @@ object AddMainScreenFab : BaseSwitchFunctionHookItem() {
                         .get()!! as Activity
 
                     val menuItems = mapOf(
-                        "视频号" to (Icons.Default.Movie to {
-                            startActivityByName(activity,
-                                "com.tencent.mm.plugin.finder.ui.FinderHomeAffinityUI")
-                        }),
                         "扫一扫" to (Icons.Default.QrCodeScanner to {
                             startActivityByName(activity,
                                 "com.tencent.mm.plugin.scanner.ui.BaseScanUI")
@@ -98,15 +98,22 @@ object AddMainScreenFab : BaseSwitchFunctionHookItem() {
                             startActivityByName(activity,
                                 "com.tencent.mm.plugin.mall.ui.MallIndexUIv2")
                         }),
+                        "视频号" to (Icons.Default.Movie to {
+                            startActivityByName(activity,
+                                "com.tencent.mm.plugin.finder.ui.FinderHomeAffinityUI")
+                        }),
                         "设置" to (Icons.Default.Settings to {
                             startActivityByName(activity,
                                 "com.tencent.mm.plugin.setting.ui.setting_new.MainSettingsUI")
+                        }),
+                        "模块设置" to (Icons.Default.Extension to {
+                            MainSettingsDialog(activity).show()
                         }),
                         "强制停止" to (Icons.Default.Cancel to {
                             Process.killProcess(Process.myPid())
                         }),
                         "全部已读" to (Icons.Default.Update to {
-                            WeConversationApi.clearUnreadCounts()
+                            WeConversationApi.markAllAsRead()
                             ToastUtils.showToast("已将全部未读消息标为已读")
                         }))
 
@@ -156,8 +163,8 @@ object AddMainScreenFab : BaseSwitchFunctionHookItem() {
                                         // 1. Expandable Menu Items
                                         AnimatedVisibility(
                                             visible = expanded,
-                                            enter = expandVertically(),
-                                            exit = shrinkVertically()
+                                            enter = fadeIn() + expandVertically(),
+                                            exit = fadeOut() + shrinkVertically()
                                         ) {
                                             Column(
                                                 verticalArrangement = Arrangement.spacedBy(12.dp),

@@ -27,19 +27,30 @@ object WeConversationApi : ApiHookItem(), IDexFind {
             .invoke()!!
     }
 
-    fun clearUnreadCounts() {
+    fun markAllAsRead() {
         val cursor = WeDatabaseApi.execQueryMethod!!.invoke(WeDatabaseApi.dbInstance,
             "SELECT username FROM rconversation WHERE unReadCount>0 OR unReadMuteCount>0", arrayOf<String>()) as Cursor
         while (cursor.moveToNext()) {
             val talker = cursor.getString(0)
             try {
                 methodUpdateUnreadByTalker.method.invoke(getConversationStorage(), talker)
+                WeLogger.d(TAG, "marked $talker as read")
             }
             catch (ex: Exception) {
                 WeLogger.w(TAG, "exception while updating unread count for $talker", ex)
             }
         }
         cursor.close()
+    }
+
+    fun markAsRead(talker: String) {
+        try {
+            methodUpdateUnreadByTalker.method.invoke(getConversationStorage(), talker)
+            WeLogger.d(TAG, "marked $talker as read")
+        }
+        catch (ex: Exception) {
+            WeLogger.w(TAG, "exception while updating unread count for $talker", ex)
+        }
     }
 
     override fun dexFind(dexKit: DexKitBridge): Map<String, String> {

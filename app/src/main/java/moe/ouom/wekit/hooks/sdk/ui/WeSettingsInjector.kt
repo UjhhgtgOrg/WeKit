@@ -15,8 +15,8 @@ import moe.ouom.wekit.core.model.ApiHookItem
 import moe.ouom.wekit.dexkit.DexMethodDescriptor
 import moe.ouom.wekit.dexkit.intf.IDexFind
 import moe.ouom.wekit.hooks.core.annotation.HookItem
-import moe.ouom.wekit.ui.utils.CommonContextWrapper
 import moe.ouom.wekit.ui.content.MainSettingsDialog
+import moe.ouom.wekit.ui.utils.CommonContextWrapper
 import moe.ouom.wekit.utils.log.WeLogger
 import org.luckypray.dexkit.DexKitBridge
 import java.lang.reflect.Modifier
@@ -234,7 +234,7 @@ object WeSettingsInjector : ApiHookItem(), IDexFind {
                         parameters(Int::class, String::class, MenuItem.OnMenuItemClickListener::class)
                         superclass()
                     }
-                    .invoke(0, "WeKit", OnSettingsInjectedMenuItemClickListener(activity))
+                    .invoke(0, "WeKit", SettingsMenuItemClickListener(activity))
             }
         }
     }
@@ -249,7 +249,7 @@ object WeSettingsInjector : ApiHookItem(), IDexFind {
 
     override fun unload(classLoader: ClassLoader) {}
 
-    private class OnSettingsInjectedMenuItemClickListener(val activity: Activity) : MenuItem.OnMenuItemClickListener {
+    private class SettingsMenuItemClickListener(val activity: Activity) : MenuItem.OnMenuItemClickListener {
         override fun onMenuItemClick(p0: MenuItem): Boolean {
             try {
                 MainSettingsDialog(activity).show()

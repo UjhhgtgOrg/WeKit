@@ -19,6 +19,7 @@ import kotlinx.coroutines.launch
 import moe.ouom.wekit.constants.PackageConstants
 import moe.ouom.wekit.core.model.BaseSwitchFunctionHookItem
 import moe.ouom.wekit.hooks.core.annotation.HookItem
+import moe.ouom.wekit.hooks.sdk.base.WeConversationApi
 import moe.ouom.wekit.hooks.sdk.base.WeDatabaseApi
 import moe.ouom.wekit.hooks.sdk.base.WeMessageApi
 import moe.ouom.wekit.hooks.sdk.protocol.WeApi
@@ -41,7 +42,7 @@ object NotificationEvolved : BaseSwitchFunctionHookItem() {
 
     val notificationReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
-            val targetWxid = intent.getStringExtra("extra_target_wxid") ?: return
+            val targetWxId = intent.getStringExtra("extra_target_wxid") ?: return
             val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
             when (intent.action) {
@@ -49,16 +50,19 @@ object NotificationEvolved : BaseSwitchFunctionHookItem() {
                     val results = RemoteInput.getResultsFromIntent(intent) ?: return
                     val replyContent = results.getCharSequence("key_reply_content")?.toString()
 
-                    if (!replyContent.isNullOrEmpty()) {
-                        WeLogger.i(TAG, "Quick replying '$replyContent' to $targetWxid")
-                        WeMessageApi.sendText(targetWxid, replyContent)
-                        notificationManager.cancel(targetWxid.hashCode())
-                    }
+                    if (replyContent.isNullOrEmpty())
+                        return
+
+                    WeLogger.i(TAG, "Quick replying '$replyContent' to $targetWxId")
+                    WeMessageApi.sendText(targetWxId, replyContent)
+                    WeConversationApi.markAsRead(targetWxId)
+                    notificationManager.cancel(targetWxId.hashCode())
                 }
+
                 ACTION_MARK_READ -> {
-                    WeLogger.i(TAG, "Marking chat as read for $targetWxid")
-                    // TODO: Implement your WeDatabaseApi.markAsRead(targetWxid) logic here
-                    notificationManager.cancel(targetWxid.hashCode())
+                    WeLogger.i(TAG, "Marking chat as read for $targetWxId")
+                    WeConversationApi.markAsRead(targetWxId)
+                    notificationManager.cancel(targetWxId.hashCode())
                 }
             }
         }
@@ -117,7 +121,6 @@ object NotificationEvolved : BaseSwitchFunctionHookItem() {
 
                     cleanText = cleanText.replace("[图片]", "\uD83D\uDDBC\uFE0F")
                         .replace("[视频]", "\uD83C\uDFA5")
-//                        .replace("[动画表情]", "\uD83D\uDE00")
                         .replace("[文件]", "\uD83D\uDCC1")
                         .replace("[语音]", "\uD83D\uDDE3\uFE0F")
                         .replace("[位置]", "\uD83D\uDDFA\uFE0F")

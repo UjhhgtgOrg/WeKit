@@ -16,8 +16,8 @@ import kotlin.math.log10
 import kotlin.math.pow
 
 @SuppressLint("StaticFieldLeak")
-@HookItem(path = "视频号/查看媒体链接", desc = "向视频分享菜单中添加 '复制链接' 菜单项 (下载还没写, 目前先自己手动下载)")
-object DisplayMediaLinks : BaseSwitchFunctionHookItem(), WeShortVideosShareMenuApi.IMenuItemsProvider {
+@HookItem(path = "视频号/查看媒体下载链接", desc = "向视频分享菜单中添加 '复制链接' 菜单项 (下载还没写, 目前先自己手动下载)")
+object DisplayMediaDownloadLinks : BaseSwitchFunctionHookItem(), WeShortVideosShareMenuApi.IMenuItemsProvider {
 
     override fun entry(classLoader: ClassLoader) {
         WeShortVideosShareMenuApi.addProvider(this)
