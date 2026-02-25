@@ -74,7 +74,7 @@ object WeMessageApi : ApiHookItem(), IDexFind {
 
     // Service 实现类
     private val classVoiceServiceImpl by dexClass()
-    private val dexMethodVoiceSend by dexMethod()
+    private val methodSendVoice by dexMethod()
 
     // -------------------------------------------------------------------------------------
     // 运行时缓存
@@ -431,7 +431,7 @@ object WeMessageApi : ApiHookItem(), IDexFind {
             // 定位 sendSync 方法 (gh)
             val serviceImplDesc = descriptors[classVoiceServiceImpl.key]
             if (serviceImplDesc != null) {
-                dexMethodVoiceSend.find(dexKit, descriptors, true) {
+                methodSendVoice.find(dexKit, descriptors, true) {
                     matcher {
                         declaredClass(classVoiceServiceImpl.clazz)
                         usingStrings("sendSync only support BaseSendMsgTask Type")
@@ -603,7 +603,7 @@ object WeMessageApi : ApiHookItem(), IDexFind {
                 voiceServiceInterfaceClass = dexClassVoiceServiceInterface.clazz
 
                 // 从 dexFind 结果中恢复方法
-                voiceSendMethod = dexMethodVoiceSend.method
+                voiceSendMethod = methodSendVoice.method
 
                 // -----------------------------------------------------------------------------
                 // 公共逻辑绑定

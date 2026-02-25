@@ -27,28 +27,28 @@ import java.lang.reflect.Proxy
 object WePkgHelper : ApiHookItem(), IDexFind {
 
     // 核心 Protobuf 类
-    val dexClsProtoBase by dexClass()
-    private val dexClsRawReq by dexClass()
-    private val dexClsGenericResp by dexClass()
-    val dexClsConfigBuilder by dexClass()
+    val classProtoBase by dexClass()
+    private val classRawReq by dexClass()
+    private val classGenericResp by dexClass()
+    val classConfigBuilder by dexClass()
 
     // 业务特定请求类
-    private val dexClsNewSendMsgReq by dexClass()
-    val dexClsOplogReq by dexClass()
-    private val dexClsNetScenePat by dexClass()
+    private val classNewSendMsgReq by dexClass()
+    val classOplogReq by dexClass()
+    private val classNetScenePat by dexClass()
 
     // 网络
-    val dexClsNetSceneBase by dexClass()
-    private val dexClsNetQueue by dexClass()
-    private val dexClsKernel by dexClass()
-    private val dexClsNetDispatcher by dexClass()
-    private val dexClsIOnSceneEnd by dexClass()
-    private val dexClsCallbackIface by dexClass()
-    private val dexClsReqResp by dexClass()
+    val classNetSceneBase by dexClass()
+    private val classNetQueue by dexClass()
+    private val classMmKernel by dexClass()
+    private val classNetDispatcher by dexClass()
+    private val classIOnSceneEnd by dexClass()
+    private val classCallbackIface by dexClass()
+    private val classReqResp by dexClass()
 
     // 关键方法 //
-    private val dexMethodGetNetQueue by dexMethod()
-    private val dexMethodNetDispatch by dexMethod()
+    private val methodGetNetQueue by dexMethod()
+    private val methodNetDispatch by dexMethod()
 
     private var classLoader: ClassLoader? = null
     private val cgiReqClassMap = mutableMapOf<Int, Class<*>>()
@@ -57,7 +57,7 @@ object WePkgHelper : ApiHookItem(), IDexFind {
         NewSendMsgSigner(),
         EmojiSigner(),
         AppMsgSigner(),
-        SendPatSigner { dexClsNetScenePat.clazz }
+        SendPatSigner { classNetScenePat.clazz }
     )
 
     const val TAG = "PkgHelper"
@@ -66,8 +66,8 @@ object WePkgHelper : ApiHookItem(), IDexFind {
         this.classLoader = classLoader
 
         // 映射业务请求类
-        cgiReqClassMap[522] = dexClsNewSendMsgReq.clazz
-        cgiReqClassMap[681] = dexClsOplogReq.clazz
+        cgiReqClassMap[522] = classNewSendMsgReq.clazz
+        cgiReqClassMap[681] = classOplogReq.clazz
 
 
         WeLogger.i(TAG, "WePkgHelper 核心组件已加载")
@@ -78,7 +78,7 @@ object WePkgHelper : ApiHookItem(), IDexFind {
         val descriptors = mutableMapOf<String, String>()
 
         // 查找 Protobuf 基类
-        dexClsProtoBase.find(dexKit, descriptors) {
+        classProtoBase.find(dexKit, descriptors) {
             matcher {
                 usingStrings("computeSize error")
                 methods {
@@ -91,7 +91,7 @@ object WePkgHelper : ApiHookItem(), IDexFind {
         }
 
         // 查找 RawReq
-        dexClsRawReq.find(dexKit, descriptors) {
+        classRawReq.find(dexKit, descriptors) {
             matcher {
                 fields {
                     count(1)
@@ -130,7 +130,7 @@ object WePkgHelper : ApiHookItem(), IDexFind {
         }
 
 
-        val wrapperName = dexClsRawReq.clazz.superclass
+        val wrapperName = classRawReq.clazz.superclass
         if (wrapperName != null) {
             val candidates = dexKit.findClass {
                 matcher {
@@ -153,15 +153,15 @@ object WePkgHelper : ApiHookItem(), IDexFind {
                 }.isEmpty()
 
                 if (isMsgReq) {
-                    dexClsNewSendMsgReq.setDescriptor(candidate.name)
-                    descriptors[dexClsNewSendMsgReq.key] = candidate.name
+                    classNewSendMsgReq.setDescriptor(candidate.name)
+                    descriptors[classNewSendMsgReq.key] = candidate.name
                     break
                 }
             }
         }
 
-        val protoBaseName = dexClsProtoBase.getDescriptorString() ?: ""
-        dexClsConfigBuilder.find(dexKit, descriptors) {
+        val protoBaseName = classProtoBase.getDescriptorString() ?: ""
+        classConfigBuilder.find(dexKit, descriptors) {
             matcher {
                 fields {
                     countMin(10)
@@ -173,7 +173,7 @@ object WePkgHelper : ApiHookItem(), IDexFind {
         }
 
         // 查找响应 GenericResp
-        dexClsGenericResp.find(dexKit, descriptors) {
+        classGenericResp.find(dexKit, descriptors) {
             matcher {
                 fields {
                     countMax(1)
@@ -199,7 +199,7 @@ object WePkgHelper : ApiHookItem(), IDexFind {
         }
 
         // 查找 NetSceneBase
-        dexClsNetSceneBase.find(dexKit, descriptors) {
+        classNetSceneBase.find(dexKit, descriptors) {
             matcher {
                 usingStrings("MicroMsg.NetSceneBase")
                 modifiers = Modifier.ABSTRACT
@@ -210,27 +210,27 @@ object WePkgHelper : ApiHookItem(), IDexFind {
         }
 
         // 查找队列与核心单例
-        dexClsNetQueue.find(dexKit, descriptors) {
+        classNetQueue.find(dexKit, descriptors) {
             matcher {
                 usingStrings("MicroMsg.NetSceneQueue", "waiting2running waitingQueue_size =")
             }
         }
 
-        dexClsKernel.find(dexKit, descriptors) {
+        classMmKernel.find(dexKit, descriptors) {
             matcher {
                 usingStrings(":appbrand0", ":appbrand1", ":appbrand2")
                 methods {
                     add {
                         modifiers = Modifier.STATIC or Modifier.PUBLIC
-                        dexClsNetQueue.clazz.let { returnType = it.name }
+                        classNetQueue.clazz.let { returnType = it.name }
                     }
                 }
             }
         }
 
-        val kernelName = dexClsKernel.getDescriptorString() ?: ""
-        val queueName = dexClsNetQueue.getDescriptorString() ?: ""
-        dexMethodGetNetQueue.find(dexKit, descriptors) {
+        val kernelName = classMmKernel.getDescriptorString() ?: ""
+        val queueName = classNetQueue.getDescriptorString() ?: ""
+        methodGetNetQueue.find(dexKit, descriptors) {
             matcher {
                 declaredClass = kernelName
                 modifiers = Modifier.STATIC or Modifier.PUBLIC
@@ -239,8 +239,8 @@ object WePkgHelper : ApiHookItem(), IDexFind {
         }
 
         // 查找分发器与回调
-        val netSceneBaseName = dexClsNetSceneBase.getDescriptorString() ?: ""
-        dexClsCallbackIface.find(dexKit, descriptors) {
+        val netSceneBaseName = classNetSceneBase.getDescriptorString() ?: ""
+        classCallbackIface.find(dexKit, descriptors) {
             matcher {
                 modifiers = Modifier.INTERFACE or Modifier.ABSTRACT
                 methods {
@@ -253,10 +253,10 @@ object WePkgHelper : ApiHookItem(), IDexFind {
             }
         }
 
-        val cbIfaceName = dexClsCallbackIface.getDescriptorString() ?: ""
+        val cbIfaceName = classCallbackIface.getDescriptorString() ?: ""
         if (cbIfaceName.isNotEmpty()) {
             val callbackMethod = dexKit.findMethod {
-                searchInClass(listOf(dexClsCallbackIface.getClassData(dexKit)))
+                searchInClass(listOf(classCallbackIface.getClassData(dexKit)))
                 matcher {
                     paramCount = 5
                 }
@@ -264,8 +264,8 @@ object WePkgHelper : ApiHookItem(), IDexFind {
 
             if (callbackMethod != null) {
                 val reqRespName = callbackMethod.paramTypes[3].name
-                dexClsReqResp.setDescriptor(reqRespName)
-                descriptors[dexClsReqResp.key] = reqRespName
+                classReqResp.setDescriptor(reqRespName)
+                descriptors[classReqResp.key] = reqRespName
 
                 WeLogger.i(TAG, "动态识别 ReqResp 基类: $reqRespName")
 
@@ -278,23 +278,23 @@ object WePkgHelper : ApiHookItem(), IDexFind {
                 }.firstOrNull()
 
                 if (dispatchMethod != null) {
-                    dexClsNetDispatcher.setDescriptor(dispatchMethod.className)
-                    dexMethodNetDispatch.setDescriptor(
+                    classNetDispatcher.setDescriptor(dispatchMethod.className)
+                    methodNetDispatch.setDescriptor(
                         dispatchMethod.className,
                         dispatchMethod.methodName,
                         dispatchMethod.methodSign
                     )
-                    descriptors[dexClsNetDispatcher.key] = dispatchMethod.className
-                    descriptors[dexMethodNetDispatch.key] =
-                        dexMethodNetDispatch.getDescriptorString() ?: ""
+                    descriptors[classNetDispatcher.key] = dispatchMethod.className
+                    descriptors[methodNetDispatch.key] =
+                        methodNetDispatch.getDescriptorString() ?: ""
                 }
             }
         }
 
         try {
-            dexClsOplogReq.find(dexKit, descriptors) {
+            classOplogReq.find(dexKit, descriptors) {
                 matcher {
-                    dexClsProtoBase.clazz.let { superClass = it.name }
+                    classProtoBase.clazz.let { superClass = it.name }
                     usingStrings("/cgi-bin/micromsg-bin/oplog")
                     fields { count(1) }
                     methods {
@@ -333,10 +333,10 @@ object WePkgHelper : ApiHookItem(), IDexFind {
             }?.type ?: throw NoSuchElementException("在 Wrapper 类中未找到实体字段")
 
             WeLogger.i("oplog 定位成功 ${realProtoClass.name}")
-            descriptors[dexClsOplogReq.key] = realProtoClass.name
+            descriptors[classOplogReq.key] = realProtoClass.name
         }
 
-        dexClsIOnSceneEnd.find(dexKit, descriptors) {
+        classIOnSceneEnd.find(dexKit, descriptors) {
             matcher {
                 modifiers = Modifier.INTERFACE
                 interfaceCount(0)
@@ -353,9 +353,9 @@ object WePkgHelper : ApiHookItem(), IDexFind {
             }
         }
 
-        dexClsNetScenePat.find(dexKit, descriptors) {
+        classNetScenePat.find(dexKit, descriptors) {
             matcher {
-                dexClsNetSceneBase.clazz.let { superClass = it.name }
+                classNetSceneBase.clazz.let { superClass = it.name }
 
                 methods {
                     add {
@@ -425,14 +425,14 @@ object WePkgHelper : ApiHookItem(), IDexFind {
                 // 发送逻辑
                 if (nativeNetScene != null) {
                     val netQueue = XposedHelpers.callStaticMethod(
-                        dexClsKernel.clazz,
-                        dexMethodGetNetQueue.method.name
+                        classMmKernel.clazz,
+                        methodGetNetQueue.method.name
                     )
                     val cgiType = XposedHelpers.callMethod(nativeNetScene, "getType") as Int
 
                     val callbackProxy = Proxy.newProxyInstance(
                         loader,
-                        arrayOf(dexClsIOnSceneEnd.clazz)
+                        arrayOf(classIOnSceneEnd.clazz)
                     ) { proxy, method, args ->
                         when (method.name) {
                             "hashCode" -> return@newProxyInstance System.identityHashCode(proxy)
@@ -479,19 +479,19 @@ object WePkgHelper : ApiHookItem(), IDexFind {
                         XposedHelpers.callMethod(finalReqObject, "parseFrom", bytes)
                         WeLogger.i(TAG, "[$cgiId] 使用业务特定类: ${specificReqCls.name}")
                     } else {
-                        val rawCls = dexClsRawReq.clazz
+                        val rawCls = classRawReq.clazz
                         finalReqObject = XposedHelpers.newInstance(rawCls, bytes)
                         WeLogger.i(TAG, "[$cgiId] 使用通用原始类: ${rawCls.name}")
                     }
 
-                    val builder = dexClsConfigBuilder.clazz.getDeclaredConstructor().newInstance()
+                    val builder = classConfigBuilder.clazz.getDeclaredConstructor().newInstance()
                         ?: throw IllegalStateException("ConfigBuilder 实例化失败")
 
                     XposedHelpers.setObjectField(builder, "a", finalReqObject)
                     XposedHelpers.setObjectField(
                         builder,
                         "b",
-                        XposedHelpers.newInstance(dexClsGenericResp.clazz)
+                        XposedHelpers.newInstance(classGenericResp.clazz)
                     )
                     XposedHelpers.setObjectField(builder, "c", uri)
                     XposedHelpers.setIntField(builder, "d", cgiId)
@@ -503,15 +503,15 @@ object WePkgHelper : ApiHookItem(), IDexFind {
                     val rr = XposedHelpers.callMethod(builder, "a")
                     val cbProxy = Proxy.newProxyInstance(
                         loader,
-                        arrayOf(dexClsCallbackIface.clazz),
+                        arrayOf(classCallbackIface.clazz),
                         ResponseHandler(cgiId, callback, successAction)
                     )
 
                     val methodD = XposedHelpers.findMethodExact(
-                        dexClsNetDispatcher.clazz,
+                        classNetDispatcher.clazz,
                         "d",
-                        dexClsReqResp.clazz,
-                        dexClsCallbackIface.clazz,
+                        classReqResp.clazz,
+                        classCallbackIface.clazz,
                         Boolean::class.javaPrimitiveType
                     )
 

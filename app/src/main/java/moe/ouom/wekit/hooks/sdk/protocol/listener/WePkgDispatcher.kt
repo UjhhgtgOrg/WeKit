@@ -18,15 +18,15 @@ import java.util.concurrent.ConcurrentHashMap
 object WePkgDispatcher : ApiHookItem(), IDexFind {
 
     private const val TAG = "WePkgDispatcher"
-    private val dexClsOnGYNetEnd by dexClass()
+    private val classOnGYNetEnd by dexClass()
     // 缓存最近 10 条记录，避免因脚本引起的无限递归
     private val recentRequests = ConcurrentHashMap<String, Long>()
 
     override fun entry(classLoader: ClassLoader) {
         SyncUtils.postDelayed(3000) {
             try {
-                val netSceneBaseClass = WePkgHelper.dexClsNetSceneBase.clazz
-                val callbackInterface = dexClsOnGYNetEnd.clazz
+                val netSceneBaseClass = WePkgHelper.classNetSceneBase.clazz
+                val callbackInterface = classOnGYNetEnd.clazz
 
                 // hookBuilder()
 
@@ -166,7 +166,7 @@ object WePkgDispatcher : ApiHookItem(), IDexFind {
     }
 
     private fun hookBuilder() {
-        val builderClass = WePkgHelper.dexClsConfigBuilder.clazz
+        val builderClass = WePkgHelper.classConfigBuilder.clazz
 
         try {
             WeLogger.i("WePkgListener-gen", "start Hook ${builderClass.name}.a() 方法")
@@ -215,7 +215,7 @@ object WePkgDispatcher : ApiHookItem(), IDexFind {
     override fun dexFind(dexKit: DexKitBridge): Map<String, String> {
         val descriptors = mutableMapOf<String, String>()
 
-        dexClsOnGYNetEnd.find(dexKit, descriptors, true) {
+        classOnGYNetEnd.find(dexKit, descriptors, true) {
             searchPackages("com.tencent.mm.network")
             matcher {
                 methodCount(1)

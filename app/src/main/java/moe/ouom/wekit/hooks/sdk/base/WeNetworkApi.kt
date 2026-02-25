@@ -14,7 +14,7 @@ import java.lang.reflect.Modifier
 @HookItem(path = "API/网络请求服务", desc = "提供通用发包能力")
 object WeNetworkApi : ApiHookItem(), IDexFind {
 
-    private val dexMethodGetNetSceneQueue by dexMethod()
+    private val methodGetNetSceneQueue by dexMethod()
 
     private var methodGetMgr: Method? = null
 
@@ -138,7 +138,7 @@ object WeNetworkApi : ApiHookItem(), IDexFind {
             throw RuntimeException("NetSceneQueue class not found")
         }
 
-        dexMethodGetNetSceneQueue.find(dexKit, allowMultiple = true, descriptors = descriptors) {
+        methodGetNetSceneQueue.find(dexKit, allowMultiple = true, descriptors = descriptors) {
             matcher {
                 modifiers = Modifier.STATIC
                 paramCount = 0
@@ -151,7 +151,7 @@ object WeNetworkApi : ApiHookItem(), IDexFind {
 
     override fun entry(classLoader: ClassLoader) {
         try {
-            methodGetMgr = dexMethodGetNetSceneQueue.method
+            methodGetMgr = methodGetNetSceneQueue.method
 
             isInitialized = true
             WeLogger.i("WeNetworkApi: Initialized")

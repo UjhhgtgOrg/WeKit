@@ -17,10 +17,10 @@ import java.util.concurrent.CopyOnWriteArrayList
 @HookItem(path = "API/朋友圈右键菜单增强扩展", desc = "为朋友圈消息长按菜单提供自定义菜单项功能")
 object WeMomentsContextMenuApi : ApiHookItem(), IDexFind {
 
-    private val dexMethodOnCreateMenu by dexMethod()
-    private val dexMethodOnItemSelected by dexMethod()
-    private val dexMethodSnsInfoStorage by dexMethod()
-    private val dexMethodGetSnsInfoStorage by dexMethod()
+    private val methodOnCreateMenu by dexMethod()
+    private val methodOnItemSelected by dexMethod()
+    private val methodSnsInfoStorage by dexMethod()
+    private val methodGetSnsInfoStorage by dexMethod()
 
     private const val TAG = "WeMomentsContextMenuApi"
 
@@ -65,14 +65,14 @@ object WeMomentsContextMenuApi : ApiHookItem(), IDexFind {
     override fun dexFind(dexKit: DexKitBridge): Map<String, String> {
         val descriptors = mutableMapOf<String, String>()
 
-        dexMethodOnCreateMenu.find(dexKit, descriptors) {
+        methodOnCreateMenu.find(dexKit, descriptors) {
             searchPackages("com.tencent.mm.plugin.sns.ui.listener")
             matcher {
                 usingStrings("MicroMsg.TimelineOnCreateContextMenuListener", "onMMCreateContextMenu error")
             }
         }
 
-        dexMethodOnItemSelected.find(dexKit, descriptors) {
+        methodOnItemSelected.find(dexKit, descriptors) {
             searchPackages("com.tencent.mm.plugin.sns.ui.listener")
             matcher {
                 usingStrings(
@@ -83,7 +83,7 @@ object WeMomentsContextMenuApi : ApiHookItem(), IDexFind {
             }
         }
 
-        dexMethodSnsInfoStorage.find(dexKit, descriptors) {
+        methodSnsInfoStorage.find(dexKit, descriptors) {
             matcher {
                 paramCount(1)
                 paramTypes("java.lang.String")
@@ -95,12 +95,12 @@ object WeMomentsContextMenuApi : ApiHookItem(), IDexFind {
             }
         }
 
-        dexMethodGetSnsInfoStorage.find(dexKit, descriptors) {
+        methodGetSnsInfoStorage.find(dexKit, descriptors) {
             searchPackages("com.tencent.mm.plugin.sns.model")
             matcher {
                 // 必须是静态方法
                 modifiers = Modifier.STATIC
-                returnType(dexMethodSnsInfoStorage.method.declaringClass)
+                returnType(methodSnsInfoStorage.method.declaringClass)
                 // 无参数
                 paramCount(0)
                 // 同时包含两个特征字符串
@@ -115,11 +115,11 @@ object WeMomentsContextMenuApi : ApiHookItem(), IDexFind {
     }
 
     override fun entry(classLoader: ClassLoader) {
-        hookAfter(dexMethodOnCreateMenu.method) { param ->
+        hookAfter(methodOnCreateMenu.method) { param ->
             handleCreateMenu(param)
         }
 
-        hookAfter(dexMethodOnItemSelected.method) { param ->
+        hookAfter(methodOnItemSelected.method) { param ->
             handleSelectMenu(param)
         }
     }
@@ -161,8 +161,8 @@ object WeMomentsContextMenuApi : ApiHookItem(), IDexFind {
             val snsID = fields.firstOrNull {
                 it.type == String::class.java && !Modifier.isFinal(it.modifiers)
             }?.apply { isAccessible = true }?.get(hookedObject) as String
-            val targetMethod = dexMethodSnsInfoStorage.method
-            val instance = dexMethodGetSnsInfoStorage.method.invoke(null)
+            val targetMethod = methodSnsInfoStorage.method
+            val instance = methodGetSnsInfoStorage.method.invoke(null)
             val snsInfo = targetMethod.invoke(instance, snsID)
 
             val context = MomentsContext(activity, snsInfo, timeLineObject)

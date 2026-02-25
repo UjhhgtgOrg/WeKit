@@ -6,7 +6,6 @@ import moe.ouom.wekit.core.dsl.dexMethod
 import moe.ouom.wekit.core.model.ApiHookItem
 import moe.ouom.wekit.dexkit.intf.IDexFind
 import moe.ouom.wekit.hooks.core.annotation.HookItem
-import moe.ouom.wekit.utils.common.SyncUtils
 import moe.ouom.wekit.utils.log.WeLogger
 import org.luckypray.dexkit.DexKitBridge
 import java.lang.reflect.Method
@@ -23,11 +22,11 @@ object WeAppMsgApi : ApiHookItem(), IDexFind {
     // -------------------------------------------------------------------------------------
     // DexKit 定义
     // -------------------------------------------------------------------------------------
-    private val dexClassAppMsgContent by dexClass() // op0.q
-    private val dexClassAppMsgLogic by dexClass()   // com.tencent.mm.pluginsdk.model.app.k0
+    private val classAppMsgContent by dexClass() // op0.q
+    private val classAppMsgLogic by dexClass()   // com.tencent.mm.pluginsdk.model.app.k0
 
-    private val dexMethodParseXml by dexMethod()    // op0.q.u(String)
-    private val dexMethodSendAppMsg by dexMethod()  // k0.J(...)
+    private val methodParseXml by dexMethod()    // op0.q.u(String)
+    private val methodSendAppMsg by dexMethod()  // k0.J(...)
 
     // -------------------------------------------------------------------------------------
     // 运行时缓存
@@ -41,31 +40,27 @@ object WeAppMsgApi : ApiHookItem(), IDexFind {
     @SuppressLint("NonUniqueDexKitData")
     override fun dexFind(dexKit: DexKitBridge): Map<String, String> {
         val descriptors = mutableMapOf<String, String>()
-        WeLogger.i(
-            TAG,
-            ">>>> 开始查找 AppMsg 发送组件 (Process: ${SyncUtils.getProcessName()}) <<<<"
-        )
 
         // 查找 AppMsgContent (op0.q)
-        dexClassAppMsgContent.find(dexKit, descriptors) {
+        classAppMsgContent.find(dexKit, descriptors) {
             matcher {
                 usingStrings("<appmsg appid=\"", "parse amessage xml failed")
             }
         }
 
         // 查找 AppMsgLogic (k0)
-        dexClassAppMsgLogic.find(dexKit, descriptors) {
+        classAppMsgLogic.find(dexKit, descriptors) {
             matcher {
                 usingStrings("MicroMsg.AppMsgLogic", "summerbig sendAppMsg attachFilePath")
             }
         }
 
-        val contentDesc = descriptors[dexClassAppMsgContent.key]
-        val logicDesc = descriptors[dexClassAppMsgLogic.key]
+        val contentDesc = descriptors[classAppMsgContent.key]
+        val logicDesc = descriptors[classAppMsgLogic.key]
 
         if (contentDesc != null) {
             // 查找 Parse 方法 (u)
-            dexMethodParseXml.find(dexKit, descriptors, true) {
+            methodParseXml.find(dexKit, descriptors, true) {
                 matcher {
                     declaredClass = contentDesc
                     modifiers = Modifier.PUBLIC or Modifier.STATIC
@@ -78,7 +73,7 @@ object WeAppMsgApi : ApiHookItem(), IDexFind {
             if (logicDesc != null) {
                 WeLogger.i(TAG, "dexkit: logicDesc=$logicDesc, contentDesc=$contentDesc")
                 // 查找 Send 方法 (J)
-                dexMethodSendAppMsg.find(dexKit, descriptors) {
+                methodSendAppMsg.find(dexKit, descriptors) {
                     matcher {
                         declaredClass = logicDesc
                         modifiers = Modifier.STATIC
@@ -96,16 +91,15 @@ object WeAppMsgApi : ApiHookItem(), IDexFind {
             }
         }
 
-        WeLogger.i(TAG, "DexKit 查找结束，共找到 ${descriptors.size} 项")
         return descriptors
     }
 
     override fun entry(classLoader: ClassLoader) {
         try {
             // 初始化方法引用
-            parseXmlMethod = dexMethodParseXml.method
-            sendAppMsgMethod = dexMethodSendAppMsg.method
-            appMsgContentClass = dexClassAppMsgContent.clazz
+            parseXmlMethod = methodParseXml.method
+            sendAppMsgMethod = methodSendAppMsg.method
+            appMsgContentClass = classAppMsgContent.clazz
 
             if (isValid()) {
                 WeLogger.i(TAG, "WeAppMsgApi 初始化成功")

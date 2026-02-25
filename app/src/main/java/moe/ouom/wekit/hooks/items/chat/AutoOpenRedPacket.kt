@@ -33,9 +33,9 @@ object AutoOpenRedPacket : BaseClickableFunctionHookItem(),
 
     private const val TAG: String = "WeRedPacketAuto"
 
-    private val dexClsReceiveLuckyMoney by dexClass()
-    private val dexClsOpenLuckyMoney by dexClass()
-    private val dexMethodOnGYNetEnd by dexMethod()
+    private val classReceiveLuckyMoney by dexClass()
+    private val classOpenLuckyMoney by dexClass()
+    private val methodOnGYNetEnd by dexMethod()
 
     private val currentRedPacketMap = ConcurrentHashMap<String, RedPacketInfo>()
 
@@ -140,7 +140,7 @@ object AutoOpenRedPacket : BaseClickableFunctionHookItem(),
 
                     WeLogger.i(TAG, "delay ended, preparing to send open packet request (sendId=$sendId)")
                     val req = XposedHelpers.newInstance(
-                        dexClsReceiveLuckyMoney.clazz,
+                        classReceiveLuckyMoney.clazz,
                         msgType, channelId, sendId, nativeUrl, 1, "v1.0", talker
                     )
 
@@ -158,7 +158,7 @@ object AutoOpenRedPacket : BaseClickableFunctionHookItem(),
 
     private fun hookReceiveCallback() {
         try {
-            dexMethodOnGYNetEnd.toDexMethod {
+            methodOnGYNetEnd.toDexMethod {
                 hook {
                     afterIfEnabled { param ->
                         val json = param.args[2] as? JSONObject ?: return@afterIfEnabled
@@ -173,7 +173,7 @@ object AutoOpenRedPacket : BaseClickableFunctionHookItem(),
                         Thread {
                             try {
                                 val openReq = XposedHelpers.newInstance(
-                                    dexClsOpenLuckyMoney.clazz,
+                                    classOpenLuckyMoney.clazz,
                                     info.msgType, info.channelId, info.sendId, info.nativeUrl,
                                     info.headImg, info.nickName, info.talker,
                                     "v1.0", timingIdentifier, ""
@@ -259,7 +259,7 @@ object AutoOpenRedPacket : BaseClickableFunctionHookItem(),
         val descriptors = mutableMapOf<String, String>()
 
         // 查找接收红包类
-        dexClsReceiveLuckyMoney.find(dexKit, descriptors, allowMultiple = true) {
+        classReceiveLuckyMoney.find(dexKit, descriptors, allowMultiple = true) {
             matcher {
                 methods {
                     add {
@@ -271,7 +271,7 @@ object AutoOpenRedPacket : BaseClickableFunctionHookItem(),
         }
 
         // 查找开红包类
-        val foundOpen = dexClsOpenLuckyMoney.find(dexKit, descriptors, allowMultiple = true) {
+        val foundOpen = classOpenLuckyMoney.find(dexKit, descriptors, allowMultiple = true) {
             matcher {
                 methods {
                     add {
@@ -287,9 +287,9 @@ object AutoOpenRedPacket : BaseClickableFunctionHookItem(),
         }
 
         // 查找 onGYNetEnd 回调方法
-        val receiveLuckyMoneyClassName = dexClsReceiveLuckyMoney.getDescriptorString()
+        val receiveLuckyMoneyClassName = classReceiveLuckyMoney.getDescriptorString()
         if (receiveLuckyMoneyClassName != null) {
-            val foundMethod = dexMethodOnGYNetEnd.find(dexKit, descriptors, true) {
+            val foundMethod = methodOnGYNetEnd.find(dexKit, descriptors, true) {
                 matcher {
                     declaredClass = receiveLuckyMoneyClassName
                     name = "onGYNetEnd"
