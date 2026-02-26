@@ -118,19 +118,6 @@ object WeChatContactInfoAdapterItemHook : ApiHookItem() {
             }
 
             isRefInitialized = true
-            WeLogger.i(
-                TAG, """
-                prefConstructor: $prefConstructor
-                prefKeyField: $prefKeyField
-                adapterField: $adapterField
-                onPreferenceTreeClickMethod: $onPreferenceTreeClickMethod
-                addPreferenceMethod: $addPreferenceMethod
-                setKeyMethod: $setKeyMethod
-                setSummaryMethod: $setSummaryMethod
-                setTitleMethod: $setTitleMethod
-            """.trimIndent()
-            )
-            WeLogger.i(TAG, "反射初始化完成")
         }
     }
 

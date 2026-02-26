@@ -11,7 +11,7 @@ import moe.ouom.wekit.utils.log.WeLogger
 import java.util.concurrent.CopyOnWriteArrayList
 
 @HookItem(path = "API/活动启动监听服务", desc = "为其他功能提供 startActivity 监听能力")
-object WeStartActivityListenerApi : ApiHookItem() {
+object WeStartActivityApi : ApiHookItem() {
 
     interface IStartActivityListener {
         fun onStartActivity(param: XC_MethodHook.MethodHookParam, intent: Intent)
