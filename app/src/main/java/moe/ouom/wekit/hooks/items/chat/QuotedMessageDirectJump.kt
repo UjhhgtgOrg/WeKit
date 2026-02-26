@@ -6,7 +6,6 @@ import moe.ouom.wekit.core.dsl.dexMethod
 import moe.ouom.wekit.core.model.BaseSwitchFunctionHookItem
 import moe.ouom.wekit.dexkit.intf.IDexFind
 import moe.ouom.wekit.hooks.core.annotation.HookItem
-import moe.ouom.wekit.hooks.sdk.base.WeMessageApi
 import org.luckypray.dexkit.DexKitBridge
 
 @HookItem(path = "聊天/引用消息直达", desc = "点击被引用消息时直接跳转至对应消息")
@@ -17,6 +16,7 @@ object QuotedMessageDirectJump : BaseSwitchFunctionHookItem(), IDexFind {
     private val methodGetQuoteMessageInfo by dexMethod()
     private val methodChattingContextGetTalker by dexMethod()
     private val classEnumQuoteJumpToPositionSource by dexClass()
+    private val classChattingContext by dexClass()
 
     override fun entry(classLoader: ClassLoader) {
         methodClickEvent.toDexMethod {
@@ -90,9 +90,15 @@ object QuotedMessageDirectJump : BaseSwitchFunctionHookItem(), IDexFind {
             }
         }
 
+        classChattingContext.find(dexKit, descriptors) {
+            matcher {
+                usingEqStrings("MicroMsg.ChattingContext", "[notifyDataSetChange]")
+            }
+        }
+
         methodChattingContextGetTalker.find(dexKit, descriptors) {
             matcher {
-                declaredClass(WeMessageApi.classChattingContext.clazz)
+                declaredClass(classChattingContext.clazz)
                 usingEqStrings("getTalker returns null.")
             }
         }
