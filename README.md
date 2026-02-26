@@ -13,13 +13,13 @@
 
 ## 推荐版本
 
-- 非 Play: 8.0.67~8.0.68
+- 非 Play: 8.0.67~8.0.69 (完美), < 8.0.67 (未测试, 不保证提供支持)
 - Play: 未测试
 
 ## 特色功能
 
 - 基于 JavaScript 的脚本引擎, [API ~~文档~~参考](app/src/main/java/moe/ouom/wekit/hooks/items/scripting_js/globals.d.ts)
-- 实验性的基于 Kotlin Scripting 的脚本引擎 (直接与宿主与模块互通)
+- ~~实验性的基于 Kotlin Scripting 的脚本引擎 (直接与宿主与模块互通)~~ (暂未开发完成)
 - 贴纸包同步 (Telegram Stickers Sync)
 - 通知进化
 - 引用消息直达 (支持新版微信)
@@ -49,7 +49,9 @@
 
 ## 已知问题
 
-- ~~每次 DEX 解析缓存清空后, WeServiceApi 第一次将会必定解析失败, 重启应用重试即可恢复正常, 原因暂时未知~~ 解析 DEX 时不能使用其他类已解析好的 DEX, 其他场景比如 hook 内可以使用
+- ~~每次 DEX 解析缓存清空后, WeServiceApi 第一次将会必定解析失败, 重启应用重试即可恢复正常, 原因暂时未知~~: 已修复, 原因: 解析 DEX 时不能使用其他类已解析好的 DEX, 其他场景比如 hook 内可以使用
+
+- 安装模块后第一次解析 DEX 时微信可能会崩溃: 非模块问题, 重启重试即可
 
 ## lol
 
