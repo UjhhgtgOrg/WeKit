@@ -287,7 +287,7 @@ object AddMainScreenFab : BaseSwitchFunctionHookItem() {
                                             containerColor = backgroundColor,
                                             shape = CircleShape
                                         ) {
-                                            val rotation by animateFloatAsState(if (expanded) -45f else 0f)
+                                            val rotation by animateFloatAsState(if (expanded) 45f else 0f)
                                             Icon(
                                                 Icons.Filled.Add,
                                                 contentDescription = null,
