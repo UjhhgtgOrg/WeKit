@@ -16,7 +16,7 @@ import moe.ouom.wekit.dexkit.intf.IDexFind
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.hooks.sdk.base.WeConversationApi
 import moe.ouom.wekit.hooks.sdk.base.model.MessageInfo
-import moe.ouom.wekit.hooks.sdk.ui.WeChatItemCreateViewListenerApi
+import moe.ouom.wekit.hooks.sdk.ui.WeChatItemCreateViewApi
 import moe.ouom.wekit.utils.common.SimpleLruCache
 import org.luckypray.dexkit.DexKitBridge
 import kotlin.math.roundToInt
@@ -26,7 +26,7 @@ import kotlin.math.roundToInt
     desc = "在群聊中显示群成员的身份: 群主, 管理员, 成员"
 )
 object DisplayGroupMemberRoles : BaseSwitchFunctionHookItem(), IDexFind,
-    WeChatItemCreateViewListenerApi.ICreateViewListener {
+    WeChatItemCreateViewApi.ICreateViewListener {
 
     private val methodGetChatroomData by dexMethod()
 
@@ -34,11 +34,11 @@ object DisplayGroupMemberRoles : BaseSwitchFunctionHookItem(), IDexFind,
     private val cache = SimpleLruCache<Pair<String, String>, Int>()
 
     override fun entry(classLoader: ClassLoader) {
-        WeChatItemCreateViewListenerApi.addListener(this)
+        WeChatItemCreateViewApi.addListener(this)
     }
 
     override fun unload(classLoader: ClassLoader) {
-        WeChatItemCreateViewListenerApi.removeListener(this)
+        WeChatItemCreateViewApi.removeListener(this)
         super.unload(classLoader)
     }
 

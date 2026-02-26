@@ -6,6 +6,10 @@
       <w>composables</w>
       <w>hitokoto</w>
       <w>wxid</w>
+      <w>xposeddescription</w>
+      <w>xposedminversion</w>
+      <w>xposedmodule</w>
+      <w>xposedscope</w>
     </words>
   </dictionary>
 </component>

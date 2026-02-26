@@ -1,0 +1,94 @@
+package moe.ouom.wekit.hooks.items.chat
+
+import android.annotation.SuppressLint
+import android.graphics.Color
+import android.view.Gravity
+import android.view.View
+import android.view.ViewGroup
+import android.widget.RelativeLayout
+import android.widget.TextView
+import com.highcapable.kavaref.KavaRef.Companion.asResolver
+import de.robv.android.xposed.XC_MethodHook
+import moe.ouom.wekit.core.model.BaseSwitchFunctionHookItem
+import moe.ouom.wekit.hooks.core.annotation.HookItem
+import moe.ouom.wekit.hooks.sdk.base.model.MessageInfo
+import moe.ouom.wekit.hooks.sdk.ui.WeChatItemCreateViewApi
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.Locale
+
+
+@HookItem(path = "聊天/显示消息时间", desc = "显示精确消息时间")
+object DisplayAbsoluteMessageSendTime : BaseSwitchFunctionHookItem(),
+    WeChatItemCreateViewApi.ICreateViewListener {
+
+    override fun entry(classLoader: ClassLoader) {
+        WeChatItemCreateViewApi.addListener(this)
+    }
+
+    override fun unload(classLoader: ClassLoader) {
+        WeChatItemCreateViewApi.removeListener(this)
+        super.unload(classLoader)
+    }
+
+    fun formatEpoch(epochMs: Long): String {
+//        val formatter = DateTimeFormatter.ofPattern("yyyy:MM:dd HH:mm:ss")
+        val formatter = DateTimeFormatter.ofPattern("HH:mm:ss")
+            .withZone(ZoneId.of("Asia/Shanghai"))
+            .withLocale(Locale.CHINA)
+
+        return formatter.format(Instant.ofEpochMilli(epochMs))
+    }
+
+    private const val VIEW_TAG = "wekit_message_send_time"
+
+    @SuppressLint("SetTextI18n")
+    override fun onCreateView(
+        param: XC_MethodHook.MethodHookParam,
+        view: View,
+        chattingContext: Any,
+        msgInfo: MessageInfo
+    ) {
+        val tag = view.tag
+        val text = formatEpoch(msgInfo.createTime)
+
+        // FIXME: method 1, bigger font size leads to clipping
+        val avatar = tag.asResolver()
+            .firstField {
+                name = "avatarIV"
+                superclass()
+            }
+            .get() as? View? ?: return
+        val parent = avatar.parent as ViewGroup
+        if (parent.findViewWithTag<TextView>(VIEW_TAG) != null) return
+
+        val context = parent.context
+        val label = TextView(context).apply {
+            this.tag = VIEW_TAG
+            this.text = text
+            textSize = 9f
+            gravity = Gravity.CENTER
+            setTextColor(Color.GRAY)
+        }
+        val lp = RelativeLayout.LayoutParams(
+            ViewGroup.LayoutParams.WRAP_CONTENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        ).apply {
+            addRule(RelativeLayout.ALIGN_TOP, avatar.id)
+            addRule(RelativeLayout.CENTER_HORIZONTAL)
+            topMargin = -13
+        }
+        parent.addView(label, lp)
+
+        // method 2, not as elegant as method 1 so not using
+//        val timeView = tag.asResolver()
+//            .firstField {
+//                name = "timeTV"
+//                superclass()
+//            }
+//            .get() as? TextView? ?: return
+//        timeView.text = text
+//        timeView.visibility = View.VISIBLE
+    }
+}

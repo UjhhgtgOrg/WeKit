@@ -1,98 +1,78 @@
-package moe.ouom.wekit.utils.common;
+package moe.ouom.wekit.utils.common
 
-import android.content.Context;
-import android.system.Os;
+import android.content.Context
+import android.system.Os
+import moe.ouom.wekit.config.WeConfig
+import moe.ouom.wekit.utils.hookstatus.AbiUtils.archStringToArchInt
+import moe.ouom.wekit.utils.hookstatus.AbiUtils.archStringToLibDirName
+import moe.ouom.wekit.utils.hookstatus.AbiUtils.getApplicationActiveAbi
+import moe.ouom.wekit.utils.hookstatus.AbiUtils.getSuggestedAbiVariant
+import moe.ouom.wekit.utils.hookstatus.AbiUtils.queryModuleAbiList
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
+object CheckAbiVariantModel {
+    val HOST_PACKAGES = setOf(
+        "com.tencent.mm",
+    )
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
+    fun collectAbiInfo(context: Context): AbiInfo {
+        val abiInfo = AbiInfo()
+        val uts = Os.uname()
+        val sysAbi = uts.machine
+        abiInfo.sysArchName = sysAbi
+        abiInfo.sysArch = archStringToArchInt(sysAbi)
 
-import moe.ouom.wekit.config.WeConfig;
-import moe.ouom.wekit.utils.hookstatus.AbiUtils;
-
-
-public class CheckAbiVariantModel {
-
-    private CheckAbiVariantModel() {
-        throw new AssertionError("no instance");
-    }
-
-    public static final String[] HOST_PACKAGES = new String[]{
-            "com.tencent.mm",
-    };
-
-    @NonNull
-    public static AbiInfo collectAbiInfo(@NonNull Context context) {
-        var abiInfo = new AbiInfo();
-        var uts = Os.uname();
-        var sysAbi = uts.machine;
-        abiInfo.sysArchName = sysAbi;
-        abiInfo.sysArch = AbiUtils.archStringToArchInt(sysAbi);
-
-        var requestAbis = new HashSet<String>();
-        requestAbis.add(AbiUtils.archStringToLibDirName(sysAbi));
-        for (var pkg : HOST_PACKAGES) {
-            var activeAbi = AbiUtils.getApplicationActiveAbi(pkg);
-            if (activeAbi == null) {
-                continue;
-            }
-            var abi = AbiUtils.archStringToLibDirName(activeAbi);
+        val requestAbis = HashSet<String>()
+        requestAbis.add(archStringToLibDirName(sysAbi))
+        for (pkg in HOST_PACKAGES) {
+            val activeAbi = getApplicationActiveAbi(pkg) ?: continue
+            val abi = archStringToLibDirName(activeAbi)
             if (!isPackageIgnored(pkg)) {
-                requestAbis.add(abi);
+                requestAbis.add(abi)
             }
-            var pi = new AbiInfo.Package();
-            pi.abi = AbiUtils.archStringToArchInt(activeAbi);
-            pi.ignored = isPackageIgnored(pkg);
-            pi.packageName = pkg;
-            abiInfo.packages.put(pkg, pi);
+            val pi = AbiInfo.Package()
+            pi.abi = archStringToArchInt(activeAbi)
+            pi.ignored = isPackageIgnored(pkg)
+            pi.packageName = pkg
+            abiInfo.packages[pkg] = pi
         }
-        var modulesAbis = AbiUtils.queryModuleAbiList();
-        var missingAbis = new HashSet<String>();
+        val modulesAbis = queryModuleAbiList()
+        val missingAbis = HashSet<String?>()
         // check if modulesAbis contains all requestAbis
-        for (var abi : requestAbis) {
-            if (!Arrays.asList(modulesAbis).contains(abi)) {
-                missingAbis.add(abi);
+        for (abi in requestAbis) {
+            if (!modulesAbis.contains(abi)) {
+                missingAbis.add(abi)
             }
         }
-        abiInfo.isAbiMatch = missingAbis.isEmpty();
-        var abi = 0;
-        for (var name : requestAbis) {
-            abi |= AbiUtils.archStringToArchInt(name);
+        abiInfo.isAbiMatch = missingAbis.isEmpty()
+        var abi = 0
+        for (name in requestAbis) {
+            abi = abi or archStringToArchInt(name)
         }
-        abiInfo.suggestedApkAbiVariant = AbiUtils.getSuggestedAbiVariant(abi);
-        return abiInfo;
+        abiInfo.suggestedApkAbiVariant = getSuggestedAbiVariant(abi)
+        return abiInfo
     }
 
-    public static void setPackageIgnored(@NonNull String packageName, boolean ignored) {
-        var cfg = WeConfig.getDefaultConfig();
-        cfg.putBoolean("native_lib_abi_ignore." + packageName, ignored);
+    fun setPackageIgnored(packageName: String, ignored: Boolean) {
+        val cfg = WeConfig.getDefaultConfig()
+        cfg.putBoolean("native_lib_abi_ignore.$packageName", ignored)
     }
 
-    public static boolean isPackageIgnored(@NonNull String packageName) {
-        var cfg = WeConfig.getDefaultConfig();
-        return cfg.getBoolean("native_lib_abi_ignore." + packageName, false);
+    fun isPackageIgnored(packageName: String): Boolean {
+        val cfg = WeConfig.getDefaultConfig()
+        return cfg.getBoolean("native_lib_abi_ignore.$packageName", false)
     }
 
-    public static class AbiInfo {
-
-        public static class Package {
-
-            public String packageName;
-            public int abi;
-            public boolean ignored;
+    class AbiInfo {
+        class Package {
+            var packageName: String? = null
+            var abi: Int = 0
+            var ignored: Boolean = false
         }
 
-        @NonNull
-        public Map<String, Package> packages = new HashMap<>();
-        public String sysArchName;
-        public int sysArch;
-        public boolean isAbiMatch;
-        @Nullable
-        public String suggestedApkAbiVariant;
+        var packages: MutableMap<String?, Package?> = HashMap<String?, Package?>()
+        var sysArchName: String? = null
+        var sysArch: Int = 0
+        var isAbiMatch: Boolean = false
+        var suggestedApkAbiVariant: String? = null
     }
-
 }

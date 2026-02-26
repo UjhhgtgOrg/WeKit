@@ -53,7 +53,7 @@ object FakeMomentsLikes : BaseSwitchFunctionHookItem(), WeMomentsContextMenuApi.
 
     override fun getMenuItems(): List<WeMomentsContextMenuApi.MenuItem> {
         return listOf(
-            WeMomentsContextMenuApi.MenuItem(777001, "伪点赞", lazy { ModuleRes.getDrawable("star_24px") }, { _, _ -> true }) { context ->
+            WeMomentsContextMenuApi.MenuItem(777006, "伪点赞", lazy { ModuleRes.getDrawable("star_24px") }, { _, _ -> true }) { context ->
                 showFakeLikesDialog(context)
             }
         )

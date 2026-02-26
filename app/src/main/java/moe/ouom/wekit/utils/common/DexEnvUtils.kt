@@ -15,7 +15,7 @@ object DexEnvUtils {
             dexElements.forEach { element ->
                 if (element == null) return@forEach
                 val elementPath = extractElementPath(element)
-                if (!elementPath.isNullOrBlank()) {
+                if (elementPath.isNotBlank()) {
                     paths.add(elementPath)
                 }
             }

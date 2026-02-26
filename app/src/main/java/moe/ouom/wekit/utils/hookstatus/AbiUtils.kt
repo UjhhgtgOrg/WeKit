@@ -13,6 +13,7 @@ import java.util.zip.ZipFile
  * This is intended to be used in module process only.
  */
 object AbiUtils {
+
     const val ABI_ARM32: Int = 1
     const val ABI_ARM64: Int = 1 shl 1
     const val ABI_X86: Int = 1 shl 2
@@ -71,16 +72,16 @@ object AbiUtils {
                 )
             }
             val abiFlags = getAbiFlags(abis)
-            if ((abiFlags and (ABI_ARM32 or ABI_ARM64 or ABI_X86 or ABI_X86_64)) == (ABI_ARM32 or ABI_ARM64 or ABI_X86 or ABI_X86_64)) {
-                cachedModuleAbiFlavor = "universal"
+            cachedModuleAbiFlavor = if ((abiFlags and (ABI_ARM32 or ABI_ARM64 or ABI_X86 or ABI_X86_64)) == (ABI_ARM32 or ABI_ARM64 or ABI_X86 or ABI_X86_64)) {
+                "universal"
             } else if ((abiFlags and (ABI_ARM32 or ABI_ARM64)) == (ABI_ARM32 or ABI_ARM64)) {
-                cachedModuleAbiFlavor = "armAll"
+                "armAll"
             } else if (abiFlags == ABI_ARM32) {
-                cachedModuleAbiFlavor = "arm32"
+                "arm32"
             } else if (abiFlags == ABI_ARM64) {
-                cachedModuleAbiFlavor = "arm64"
+                "arm64"
             } else {
-                cachedModuleAbiFlavor = "unknown"
+                "unknown"
             }
             return cachedModuleAbiFlavor!!
         }
@@ -100,26 +101,26 @@ object AbiUtils {
     }
 
     @JvmStatic
-    fun queryModuleAbiList(): Array<String> {
+    fun queryModuleAbiList(): Set<String> {
         when (moduleFlavorName) {
             "arm32" -> {
-                return arrayOf("arm")
+                return setOf("arm")
             }
 
             "arm64" -> {
-                return arrayOf("arm64")
+                return setOf("arm64")
             }
 
             "armAll" -> {
-                return arrayOf("arm", "arm64")
+                return setOf("arm", "arm64")
             }
 
             "universal" -> {
-                return arrayOf("arm", "arm64", "x86", "x86_64")
+                return setOf("arm", "arm64", "x86", "x86_64")
             }
 
             else -> {
-                return arrayOf()
+                return setOf()
             }
         }
     }

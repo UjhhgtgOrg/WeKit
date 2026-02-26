@@ -17,15 +17,7 @@ import moe.ouom.wekit.utils.log.WeLogger;
 
 @SuppressLint("PrivateApi")
 public class SyncUtils {
-    /**
-     * static {
-     * String pkgName = v2.f219924b;
-     * boolean zF = vf.a.f("clicfg_matrix_lifecycle_process_supervisor_enable", true);
-     * o.f(pkgName, "pkgName");
-     * f260937a = new q(new j0(zF, false, c0.d(pkgName, pkgName.concat(":push"), pkgName.concat(":tools"), pkgName.concat(":appbrand0"), pkgName.concat(":appbrand1"), pkgName.concat(":appbrand2"), pkgName.concat(":appbrand3"), pkgName.concat(":appbrand4"), pkgName.concat(":sandbox"), pkgName.concat(":exdevice"), pkgName.concat(":support"), pkgName.concat(":cuploader"), pkgName.concat(":patch"), pkgName.concat(":hotpot.."), pkgName.concat(":fallback"), pkgName.concat(":dexopt"), pkgName.concat(":recovery"), pkgName.concat(":nospace"), pkgName.concat(":jectl"), pkgName.concat(":opengl_detector"), pkgName.concat(":rubbishbin"), pkgName.concat(":isolated_process0"), pkgName.concat(":isolated_process1"), pkgName.concat(":res_can_worker"), pkgName.concat(":extmig"), pkgName.concat(":backtrace__"), pkgName.concat(":TMAssistantDownloadSDKService"), pkgName.concat(":switch"), pkgName.concat(":hld"), pkgName.concat(":playcore_missing_splits_activity"), pkgName.concat(":hldfl"), pkgName.concat(":magic_emoji"))), true, true, new p(!((Boolean) ((n) h.a(a.f260933d)).getValue()).booleanValue() ? null : new b(new LinkedBlockingQueue(), new kk5.d()), 5, 30L, c.f260934d, d.f260935d), true);
-     * }
-     * }
-     */
+
     // 微信的进程常量
     public static final int PROC_MAIN = 1;              // com.tencent.mm
     public static final int PROC_PUSH = 1 << 1;         // :push

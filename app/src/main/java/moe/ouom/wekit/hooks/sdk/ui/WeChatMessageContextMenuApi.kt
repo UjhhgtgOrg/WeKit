@@ -10,7 +10,6 @@ import moe.ouom.wekit.core.model.ApiHookItem
 import moe.ouom.wekit.dexkit.intf.IDexFind
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.hooks.sdk.base.WeMessageApi
-import moe.ouom.wekit.hooks.sdk.base.WeServiceApi
 import moe.ouom.wekit.hooks.sdk.base.model.MessageInfo
 import moe.ouom.wekit.utils.log.WeLogger
 import org.luckypray.dexkit.DexKitBridge
@@ -87,7 +86,6 @@ object WeChatMessageContextMenuApi : ApiHookItem(), IDexFind {
             }
         }
 
-
         methodSelectMenuItem.toDexMethod {
             hook {
                 beforeIfEnabled { param ->
@@ -105,37 +103,46 @@ object WeChatMessageContextMenuApi : ApiHookItem(), IDexFind {
                             superclass()
                         }
                         .get()!!
-                    val apiManager = chattingContext.asResolver()
-                        .firstField {
-                            type = WeServiceApi.methodApiManagerGetApi.method.declaringClass
-                        }
-                        .get()!!
-                    val api = WeServiceApi.methodApiManagerGetApi.method.invoke(
-                        apiManager,
-                        classChattingMessBox.clazz.interfaces[0]
-                    )
-                    val chattingContext2 = api.asResolver()
-                        .firstField {
-                            type = WeMessageApi.classChattingContext.clazz
+//                    val apiManager = chattingContext.asResolver()
+//                        .firstField {
+//                            type = WeServiceApi.methodApiManagerGetApi.method.declaringClass
+//                        }
+//                        .get()!!
+//                    val api = WeServiceApi.methodApiManagerGetApi.method.invoke(
+//                        apiManager,
+//                        classChattingMessBox.clazz.interfaces[0]
+//                    )
+//                    val chattingContext2 = api.asResolver()
+//                        .firstField {
+//                            type = WeMessageApi.classChattingContext.clazz
+//                            superclass()
+//                        }
+//                        .get()!!
+//                    val apiManager2 = chattingContext2.asResolver()
+//                        .firstField {
+//                            type = WeServiceApi.methodApiManagerGetApi.method.declaringClass
+//                        }
+//                        .get()!!
+//                    val api2 = WeServiceApi.methodApiManagerGetApi.method.invoke(
+//                        apiManager2,
+//                        WeMessageApi.classChattingDataAdapter.clazz.interfaces[0]
+//                    )
+                    val tag = currentView!!.tag
+
+                    val msgInfo = tag.asResolver()
+                        .firstMethod {
+                            returnType = WeMessageApi.classMsgInfo.clazz
+                            parameterCount(0)
                             superclass()
                         }
-                        .get()!!
-                    val apiManager2 = chattingContext2.asResolver()
-                        .firstField {
-                            type = WeServiceApi.methodApiManagerGetApi.method.declaringClass
-                        }
-                        .get()!!
-                    val api2 = WeServiceApi.methodApiManagerGetApi.method.invoke(
-                        apiManager2,
-                        WeMessageApi.classChattingDataAdapter.clazz.interfaces[0]
-                    )
+                        .invoke()!!
 
                     val menuItem = param.args[0] as android.view.MenuItem
-                    val msgInfo = api2.asResolver()
-                        .firstMethod {
-                            name = "getItem"
-                        }
-                        .invoke(menuItem.groupId)!!
+//                    val msgInfo = api2.asResolver()
+//                        .firstMethod {
+//                            name = "getItem"
+//                        }
+//                        .invoke(menuItem.groupId)!!
                     val msgInfoWrapper = MessageInfo(msgInfo)
                     try {
                         for (item in menuItems.values.flatten()) {

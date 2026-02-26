@@ -9,22 +9,22 @@ import moe.ouom.wekit.hooks.sdk.base.WeMessageApi
 import moe.ouom.wekit.hooks.sdk.base.WeServiceApi
 import moe.ouom.wekit.hooks.sdk.base.model.MessageInfo
 import moe.ouom.wekit.hooks.sdk.base.model.MessageType
-import moe.ouom.wekit.hooks.sdk.ui.WeChatItemCreateViewListenerApi
+import moe.ouom.wekit.hooks.sdk.ui.WeChatItemCreateViewApi
 import moe.ouom.wekit.utils.common.SimpleLruCache
 import java.lang.reflect.InvocationTargetException
 
 @HookItem(path = "聊天/自动语音转文字", desc = "自动将语音消息转为文字")
 object AutoSpeechToText : BaseSwitchFunctionHookItem(),
-    WeChatItemCreateViewListenerApi.ICreateViewListener {
+    WeChatItemCreateViewApi.ICreateViewListener {
 
     private val cache = SimpleLruCache<Long, Boolean>(100)
 
     override fun entry(classLoader: ClassLoader) {
-        WeChatItemCreateViewListenerApi.addListener(this)
+        WeChatItemCreateViewApi.addListener(this)
     }
 
     override fun unload(classLoader: ClassLoader) {
-        WeChatItemCreateViewListenerApi.removeListener(this)
+        WeChatItemCreateViewApi.removeListener(this)
         super.unload(classLoader)
     }
 

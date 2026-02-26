@@ -137,7 +137,7 @@ fun AppContent(onUrlClick: (String) -> Unit) {
 
         var isAbiMatch = try {
             CheckAbiVariantModel.collectAbiInfo(context).isAbiMatch
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             true
         }
 
