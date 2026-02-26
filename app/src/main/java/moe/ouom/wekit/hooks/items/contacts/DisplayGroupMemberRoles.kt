@@ -67,7 +67,7 @@ object DisplayGroupMemberRoles : BaseSwitchFunctionHookItem(), IDexFind,
 
             if (senderIsGroupOwner) return@getOrPut 1
 
-            val memberData = methodGetChatroomData.method.invoke(group, sender)
+            val memberData = methodGetChatroomData.method.invoke(group, sender) ?: return
             val memberRoleFlags = memberData.asResolver()
                 .firstField {
                     type = Int::class
