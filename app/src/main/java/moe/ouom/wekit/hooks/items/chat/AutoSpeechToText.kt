@@ -8,6 +8,7 @@ import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.hooks.sdk.base.WeMessageApi
 import moe.ouom.wekit.hooks.sdk.base.WeServiceApi
 import moe.ouom.wekit.hooks.sdk.base.model.MessageInfo
+import moe.ouom.wekit.hooks.sdk.base.model.MessageType
 import moe.ouom.wekit.hooks.sdk.ui.WeChatItemCreateViewListenerApi
 import moe.ouom.wekit.utils.common.SimpleLruCache
 import java.lang.reflect.InvocationTargetException
@@ -32,6 +33,8 @@ object AutoSpeechToText : BaseSwitchFunctionHookItem(), WeChatItemCreateViewList
         chattingContext: Any,
         msgInfo: MessageInfo
     ) {
+        if (!msgInfo.isType(MessageType.VOICE)) return
+
         val id = msgInfo.id
         if (cache[id] == true) {
             return
