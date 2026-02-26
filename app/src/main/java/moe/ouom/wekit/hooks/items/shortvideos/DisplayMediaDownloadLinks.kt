@@ -47,7 +47,7 @@ object DisplayMediaDownloadLinks : BaseSwitchFunctionHookItem(),
     ): List<WeShortVideosShareMenuApi.MenuItem> {
         return listOf(
             WeShortVideosShareMenuApi.MenuItem(
-                777001,
+                777004,
                 "复制链接",
                 ModuleRes.getDrawable("link_24px")
             )

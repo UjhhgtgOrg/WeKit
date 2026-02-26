@@ -9,10 +9,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.highcapable.kavaref.KavaRef.Companion.asResolver
-import de.robv.android.xposed.XC_MethodHook
 import moe.ouom.wekit.core.model.BaseSwitchFunctionHookItem
 import moe.ouom.wekit.hooks.core.annotation.HookItem
-import moe.ouom.wekit.hooks.sdk.base.model.MessageInfo
 import moe.ouom.wekit.hooks.sdk.ui.WeChatMessageContextMenuApi
 import moe.ouom.wekit.ui.utils.showComposeDialog
 import moe.ouom.wekit.utils.common.ModuleRes
@@ -33,19 +31,13 @@ object ModifyTextMessageDisplay : BaseSwitchFunctionHookItem(),
         super.unload(classLoader)
     }
 
-    override fun getMenuItems(
-        param: XC_MethodHook.MethodHookParam,
-        msgInfo: MessageInfo
-    ): List<WeChatMessageContextMenuApi.MenuItem> {
-        if (!msgInfo.isText) {
-            return emptyList()
-        }
-
+    override fun getMenuItems(): List<WeChatMessageContextMenuApi.MenuItem> {
         return listOf(
             WeChatMessageContextMenuApi.MenuItem(
                 777002,
                 "修改内容",
-                ModuleRes.getDrawable("edit_24px")
+                lazy { ModuleRes.getDrawable("edit_24px") },
+                { msgInfo -> msgInfo.isText }
             ) { view, _, _ ->
                 showComposeDialog(view.context) { onDismiss ->
                     var input by remember { mutableStateOf("") } // TODO: figure out how to find initial value

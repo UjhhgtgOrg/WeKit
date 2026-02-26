@@ -2,8 +2,8 @@ package moe.ouom.wekit.hooks.sdk.ui
 
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.graphics.drawable.Drawable
 import android.view.ContextMenu
-import android.view.MenuItem
 import de.robv.android.xposed.XC_MethodHook
 import moe.ouom.wekit.core.dsl.dexMethod
 import moe.ouom.wekit.core.model.ApiHookItem
@@ -12,56 +12,43 @@ import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.utils.log.WeLogger
 import org.luckypray.dexkit.DexKitBridge
 import java.lang.reflect.Modifier
-import java.util.concurrent.CopyOnWriteArrayList
 
-@HookItem(path = "API/朋友圈右键菜单增强扩展", desc = "为朋友圈消息长按菜单提供自定义菜单项功能")
+@HookItem(path = "API/朋友圈菜单增强扩展", desc = "为朋友圈消息长按菜单提供添加菜单项功能")
 object WeMomentsContextMenuApi : ApiHookItem(), IDexFind {
-
-    private val methodOnCreateMenu by dexMethod()
-    private val methodOnItemSelected by dexMethod()
-    private val methodSnsInfoStorage by dexMethod()
-    private val methodGetSnsInfoStorage by dexMethod()
 
     private const val TAG = "WeMomentsContextMenuApi"
 
-    val onCreateCallbacks = CopyOnWriteArrayList<IOnCreateListener>()
-    val onSelectCallbacks = CopyOnWriteArrayList<IOnSelectListener>()
-
-    fun addOnCreateListener(listener: IOnCreateListener) {
-        onCreateCallbacks.add(listener)
+    interface IMenuItemsProvider {
+        fun getMenuItems(): List<MenuItem>
     }
 
-    fun removeOnCreateListener(listener: IOnCreateListener) {
-        onCreateCallbacks.remove(listener)
+    private val menuItems = mutableMapOf<String, List<MenuItem>>()
+
+    fun addProvider(provider: IMenuItemsProvider) {
+        menuItems[provider.javaClass.name] = provider.getMenuItems()
     }
 
-    fun addOnSelectListener(listener: IOnSelectListener) {
-        onSelectCallbacks.add(listener)
+    fun removeProvider(provider: IMenuItemsProvider) {
+        menuItems.remove(provider.javaClass.name)
     }
 
-    fun removeOnSelectListener(listener: IOnSelectListener) {
-        onSelectCallbacks.remove(listener)
-    }
-
-    /**
-     * 接口：创建菜单时触发
-     */
-    fun interface IOnCreateListener {
-        fun onCreate(contextMenu: ContextMenu)
-    }
-
-    /**
-     * 接口：选中菜单时触发
-     */
-    fun interface IOnSelectListener {
-        fun onSelect(context: MomentsContext, itemId: Int): Boolean
-    }
+    data class MenuItem(
+        val id: Int,
+        val text: String, val drawable: Lazy<Drawable>,
+        val shouldShow: (context: MomentsContext, itemId: Int) -> Boolean,
+        val onClick: (context: MomentsContext) -> Unit
+    )
 
     data class MomentsContext(
         val activity: Activity,
         val snsInfo: Any?,
         val timeLineObject: Any?
     )
+
+    private val methodOnCreateMenu by dexMethod()
+    private val methodOnItemSelected by dexMethod()
+    private val methodSnsInfoStorage by dexMethod()
+    private val methodGetSnsInfoStorage by dexMethod()
 
     @SuppressLint("NonUniqueDexKitData")
     override fun dexFind(dexKit: DexKitBridge): Map<String, String> {
@@ -120,71 +107,59 @@ object WeMomentsContextMenuApi : ApiHookItem(), IDexFind {
     }
 
     override fun entry(classLoader: ClassLoader) {
-        hookAfter(methodOnCreateMenu.method) { param ->
+        methodOnCreateMenu.method.hookAfter { param ->
             handleCreateMenu(param)
         }
 
-        hookAfter(methodOnItemSelected.method) { param ->
+        methodOnItemSelected.method.hookAfter { param ->
             handleSelectMenu(param)
         }
     }
 
     private fun handleCreateMenu(param: XC_MethodHook.MethodHookParam) {
-        try {
-            val contextMenu = param.args.getOrNull(0) as? ContextMenu ?: return
+        val menu = param.args.getOrNull(0) as? ContextMenu ?: return
 
-            for (listener in onCreateCallbacks) {
-                try {
-                    listener.onCreate(contextMenu)
-                } catch (e: Throwable) {
-                    WeLogger.e(TAG, "OnCreate 回调执行异常", e)
-                }
+        for (item in menuItems.values.flatten()) {
+            try {
+                menu.add(ContextMenu.NONE, item.id, 0, item.text).setIcon(item.drawable.value)
+            } catch (e: Throwable) {
+                WeLogger.e(TAG, "OnCreate 回调执行异常", e)
             }
-        } catch (e: Throwable) {
-            WeLogger.e(TAG, "handleCreateMenu 失败", e)
         }
     }
 
     private fun handleSelectMenu(param: XC_MethodHook.MethodHookParam) {
-        try {
-            val menuItem = param.args.getOrNull(0) as? MenuItem ?: return
-            val hookedObject = param.thisObject
-            val fields = hookedObject.javaClass.declaredFields
-            fields.forEach { field ->
-                field.isAccessible = true
-                val value = field.get(hookedObject)
-                WeLogger.d(TAG, "字段: ${field.name} (${field.type.name}) = $value")
-            }
+        val menuItem = param.args.getOrNull(0) as? android.view.MenuItem ?: return
+        val hookedObject = param.thisObject
+        val fields = hookedObject.javaClass.declaredFields
 
-            val activity = fields.firstOrNull { it.type == Activity::class.java }
-                ?.apply { isAccessible = true }?.get(hookedObject) as Activity
+        val activity = fields.firstOrNull { it.type == Activity::class.java }
+            ?.apply { isAccessible = true }?.get(hookedObject) as Activity
 
-            val timeLineObject = fields.firstOrNull {
-                it.type.name == "com.tencent.mm.protocal.protobuf.TimeLineObject"
-            }?.apply { isAccessible = true }?.get(hookedObject)
+        val timeLineObject = fields.firstOrNull {
+            it.type.name == "com.tencent.mm.protocal.protobuf.TimeLineObject"
+        }?.apply { isAccessible = true }?.get(hookedObject)
 
-            val snsID = fields.firstOrNull {
-                it.type == String::class.java && !Modifier.isFinal(it.modifiers)
-            }?.apply { isAccessible = true }?.get(hookedObject) as String
-            val targetMethod = methodSnsInfoStorage.method
-            val instance = methodGetSnsInfoStorage.method.invoke(null)
-            val snsInfo = targetMethod.invoke(instance, snsID)
+        val snsID = fields.firstOrNull {
+            it.type == String::class.java && !Modifier.isFinal(it.modifiers)
+        }?.apply { isAccessible = true }?.get(hookedObject) as String
+        val targetMethod = methodSnsInfoStorage.method
+        val instance = methodGetSnsInfoStorage.method.invoke(null)
+        val snsInfo = targetMethod.invoke(instance, snsID)
 
-            val context = MomentsContext(activity, snsInfo, timeLineObject)
-            val clickedId = menuItem.itemId
+        val context = MomentsContext(activity, snsInfo, timeLineObject)
+        val clickedId = menuItem.itemId
 
-            for (listener in onSelectCallbacks) {
-                try {
-                    val handled = listener.onSelect(context, clickedId)
-                    if (handled) {
-                        WeLogger.d(TAG, "菜单项 $clickedId 已被动态回调处理")
-                    }
-                } catch (e: Throwable) {
-                    WeLogger.e(TAG, "OnSelect 回调执行异常", e)
+        for (item in menuItems.values.flatten()) {
+            try {
+                if (item.id == clickedId) {
+                    item.onClick(context)
                 }
+                param.result = null
+                return
+            } catch (e: Throwable) {
+                WeLogger.e(TAG, "OnSelect 回调执行异常", e)
             }
-        } catch (e: Throwable) {
-            WeLogger.e(TAG, "handleSelectMenu 失败", e)
         }
     }
 }

@@ -6,12 +6,11 @@ import android.provider.MediaStore
 import com.highcapable.kavaref.KavaRef.Companion.asResolver
 import com.highcapable.kavaref.condition.type.Modifiers
 import com.highcapable.kavaref.extension.toClass
-import de.robv.android.xposed.XC_MethodHook
 import moe.ouom.wekit.core.dsl.dexClass
 import moe.ouom.wekit.core.model.BaseSwitchFunctionHookItem
 import moe.ouom.wekit.dexkit.intf.IDexFind
 import moe.ouom.wekit.hooks.core.annotation.HookItem
-import moe.ouom.wekit.hooks.sdk.base.model.MessageInfo
+import moe.ouom.wekit.hooks.sdk.base.model.MessageType
 import moe.ouom.wekit.hooks.sdk.ui.WeChatMessageContextMenuApi
 import moe.ouom.wekit.host.HostInfo
 import moe.ouom.wekit.utils.common.ModuleRes
@@ -19,7 +18,7 @@ import moe.ouom.wekit.utils.common.ToastUtils
 import moe.ouom.wekit.utils.log.WeLogger
 import org.luckypray.dexkit.DexKitBridge
 
-@HookItem(path = "聊天/贴纸保存到本地", desc = "在贴纸消息菜单添加保存按钮, 允许将表情包保存到本地")
+@HookItem(path = "聊天/贴纸保存到本地", desc = "在贴纸消息菜单添加保存按钮, 允许将图片保存到本地")
 object SaveStickersToLocalStorage : BaseSwitchFunctionHookItem(), IDexFind,
     WeChatMessageContextMenuApi.IMenuItemsProvider {
 
@@ -55,37 +54,16 @@ object SaveStickersToLocalStorage : BaseSwitchFunctionHookItem(), IDexFind,
         return descriptors
     }
 
-    override fun getMenuItems(
-        param: XC_MethodHook.MethodHookParam,
-        msgInfo: MessageInfo
-    ): List<WeChatMessageContextMenuApi.MenuItem> {
-        val type = msgInfo.type
-
-        WeLogger.d(TAG, "type=$type")
-        if (type != 47) {
-            // not a sticker message
-            return emptyList()
-        }
-
+    override fun getMenuItems(): List<WeChatMessageContextMenuApi.MenuItem> {
         return listOf(
             @Suppress("UNCHECKED_CAST")
             WeChatMessageContextMenuApi.MenuItem(
                 777001,
                 "存本地",
-                ModuleRes.getDrawable("download_24px")
-            ) { _, _, msgInfoBean ->
-//                val msgId = msgInfoBean.asResolver()
-//                    .firstField {
-//                        name = "field_msgId"
-//                        superclass()
-//                    }
-//                    .get() as Long
-                val md5 = msgInfoBean.asResolver()
-                    .firstField {
-                        name = "field_imgPath"
-                        superclass()
-                    }
-                    .get() as String
+                lazy { ModuleRes.getDrawable("download_24px") },
+                { msgInfo -> msgInfo.isType(MessageType.STICKER) }
+            ) { _, _, msgInfo ->
+                val md5 = msgInfo.imagePath
                 val emojiInfo = StickersSync.getEmojiInfoByMd5(md5)
                 val emojiFileEncryptMgr = classEmojiFileEncryptMgr.clazz.asResolver()
                     .firstMethod {

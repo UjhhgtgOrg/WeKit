@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.graphics.drawable.Drawable
 import android.view.View
 import com.highcapable.kavaref.KavaRef.Companion.asResolver
-import de.robv.android.xposed.XC_MethodHook
 import moe.ouom.wekit.core.dsl.dexClass
 import moe.ouom.wekit.core.dsl.dexMethod
 import moe.ouom.wekit.core.model.ApiHookItem
@@ -15,41 +14,32 @@ import moe.ouom.wekit.hooks.sdk.base.WeServiceApi
 import moe.ouom.wekit.hooks.sdk.base.model.MessageInfo
 import moe.ouom.wekit.utils.log.WeLogger
 import org.luckypray.dexkit.DexKitBridge
-import java.util.concurrent.CopyOnWriteArrayList
 
 @SuppressLint("StaticFieldLeak")
 @HookItem(path = "API/聊天界面消息菜单扩展", desc = "为聊天界面消息长按菜单提供添加菜单项功能")
 object WeChatMessageContextMenuApi : ApiHookItem(), IDexFind {
 
     interface IMenuItemsProvider {
-        fun getMenuItems(param: XC_MethodHook.MethodHookParam, msgInfo: MessageInfo): List<MenuItem>
+        fun getMenuItems(): List<MenuItem>
     }
 
     data class MenuItem(
         val id: Int,
-        val text: String, val drawable: Drawable,
-        val onClick: (View, Any, MessageInfo) -> Unit /* ChattingContext, MsgInfoBean */
+        val text: String, val drawable: Lazy<Drawable>,
+        val shouldShow: (MessageInfo) -> Boolean,
+        val onClick: (View, Any, MessageInfo) -> Unit /* 2: ChattingContext */
     )
 
     private const val TAG: String = "WeChatMessageContextMenuApi"
 
-    private val providers = CopyOnWriteArrayList<IMenuItemsProvider>()
+    private val menuItems = mutableMapOf<String, List<MenuItem>>()
 
     fun addProvider(provider: IMenuItemsProvider) {
-        if (!providers.contains(provider)) {
-            providers.add(provider)
-            WeLogger.i(TAG, "provider added, current provider count: ${providers.size}")
-        } else {
-            WeLogger.w(TAG, "provider already exists, ignored")
-        }
+        menuItems[provider.javaClass.name] = provider.getMenuItems()
     }
 
     fun removeProvider(provider: IMenuItemsProvider) {
-        val removed = providers.remove(provider)
-        WeLogger.i(
-            TAG,
-            "provider remove ${if (removed) "succeeded" else "failed"}, current provider count: ${providers.size}"
-        )
+        menuItems.remove(provider.javaClass.name)
     }
 
     private val methodCreateMenu by dexMethod()
@@ -75,23 +65,23 @@ object WeChatMessageContextMenuApi : ApiHookItem(), IDexFind {
                         }
                         .invoke()!!
 
-                    for (provider in providers) {
-                        try {
-                            for (item in provider.getMenuItems(param, MessageInfo(msgInfo))) {
+                    try {
+                        for (item in menuItems.values.flatten()) {
+                            if (item.shouldShow(MessageInfo(msgInfo))) {
                                 menu.asResolver()
                                     .firstMethod {
                                         parameters(Int::class, CharSequence::class, Drawable::class)
                                         returnType = android.view.MenuItem::class
                                     }
-                                    .invoke(item.id, item.text, item.drawable)
+                                    .invoke(item.id, item.text, item.drawable.value)
                             }
-                        } catch (e: Throwable) {
-                            WeLogger.e(
-                                TAG,
-                                "provider ${provider.javaClass.name} threw while providing menu items",
-                                e
-                            )
                         }
+                    } catch (ex: Throwable) {
+                        WeLogger.e(
+                            TAG,
+                            "exception occurred threw while providing menu items",
+                            ex
+                        )
                     }
                 }
             }
@@ -147,26 +137,24 @@ object WeChatMessageContextMenuApi : ApiHookItem(), IDexFind {
                         }
                         .invoke(menuItem.groupId)!!
                     val msgInfoWrapper = MessageInfo(msgInfo)
-                    for (provider in providers) {
-                        try {
-                            for (item in provider.getMenuItems(param, msgInfoWrapper)) {
-                                if (item.id == menuItem.itemId) {
-                                    item.onClick(
-                                        currentView!!,
-                                        chattingContext,
-                                        msgInfoWrapper
-                                    )
-                                    param.result = null
-                                    return@beforeIfEnabled
-                                }
+                    try {
+                        for (item in menuItems.values.flatten()) {
+                            if (item.id == menuItem.itemId) {
+                                item.onClick(
+                                    currentView!!,
+                                    chattingContext,
+                                    msgInfoWrapper
+                                )
+                                param.result = null
+                                return@beforeIfEnabled
                             }
-                        } catch (e: Throwable) {
-                            WeLogger.e(
-                                TAG,
-                                "provider ${provider.javaClass.name} threw while handling click event",
-                                e
-                            )
                         }
+                    } catch (ex: Throwable) {
+                        WeLogger.e(
+                            TAG,
+                            "exception occurred while handling click event",
+                            ex
+                        )
                     }
                 }
             }
