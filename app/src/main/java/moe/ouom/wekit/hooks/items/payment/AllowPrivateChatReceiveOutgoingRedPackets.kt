@@ -8,7 +8,9 @@ import moe.ouom.wekit.hooks.sdk.ui.WeStartActivityListenerApi
 import moe.ouom.wekit.utils.log.WeLogger
 
 @HookItem(path = "红包与支付/允许领取私聊红包", desc = "允许打开私聊中自己发出的红包")
-object AllowPrivateChatReceiveOutgoingRedPackets : BaseSwitchFunctionHookItem(), WeStartActivityListenerApi.IStartActivityListener {
+object AllowPrivateChatReceiveOutgoingRedPackets : BaseSwitchFunctionHookItem(),
+    WeStartActivityListenerApi.IStartActivityListener {
+
     private const val TAG = "AllowPrivateChatReceiveOutgoingRedPackets"
 
     override fun entry(classLoader: ClassLoader) {
@@ -27,7 +29,8 @@ object AllowPrivateChatReceiveOutgoingRedPackets : BaseSwitchFunctionHookItem(),
         val className = intent.component?.className ?: return
 
         if (className == "com.tencent.mm.plugin.luckymoney.ui.LuckyMoneyPrepareUI"
-            || className == "com.tencent.mm.plugin.luckymoney.ui.LuckyMoneyNewPrepareUI") {
+            || className == "com.tencent.mm.plugin.luckymoney.ui.LuckyMoneyNewPrepareUI"
+        ) {
             WeLogger.i(TAG, "set key_type to 1 for $className")
             intent.putExtra("key_type", 1)
         }

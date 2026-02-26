@@ -73,21 +73,30 @@ object JsEngine {
             is String -> {
                 if (result.isNotBlank()) WeMessageApi.sendText(talker, result)
             }
+
             is NativeObject -> {
-                val type    = result["type"]?.toString() ?: "text"
+                val type = result["type"]?.toString() ?: "text"
                 val content = result["content"]?.toString()
-                val path    = result["path"]?.toString()
-                val title   = result["title"]?.toString()
+                val path = result["path"]?.toString()
+                val title = result["title"]?.toString()
                 val duration = (result["duration"] as? Number)?.toInt() ?: 0
 
                 when (type) {
-                    "text"  -> content?.let { WeMessageApi.sendText(talker, it) }
+                    "text" -> content?.let { WeMessageApi.sendText(talker, it) }
                     "image" -> path?.let { WeMessageApi.sendImage(talker, it) }
-                    "file"  -> path?.let { WeMessageApi.sendFile(talker, it, title ?: path.substringAfterLast('/')) }
+                    "file" -> path?.let {
+                        WeMessageApi.sendFile(
+                            talker,
+                            it,
+                            title ?: path.substringAfterLast('/')
+                        )
+                    }
+
                     "voice" -> path?.let { WeMessageApi.sendVoice(talker, it, duration) }
-                    else    -> WeLogger.w(TAG, "unknown js return type: $type")
+                    else -> WeLogger.w(TAG, "unknown js return type: $type")
                 }
             }
+
             else -> WeLogger.w(TAG, "onMessage() returned unexpected type: ${result::class.java}")
         }
     }
@@ -147,6 +156,7 @@ object JsEngine {
                     val stringifyFn = stringify.get("stringify", stringify) as Function
                     stringifyFn.call(cx, scope, stringify, arrayOf(result)) as String
                 }
+
                 is String -> result
                 else -> return null
             }
@@ -211,6 +221,7 @@ object JsEngine {
                     val stringifyFn = stringify.get("stringify", stringify) as Function
                     stringifyFn.call(cx, scope, stringify, arrayOf(result)) as String
                 }
+
                 is String -> result
                 else -> return null
             }

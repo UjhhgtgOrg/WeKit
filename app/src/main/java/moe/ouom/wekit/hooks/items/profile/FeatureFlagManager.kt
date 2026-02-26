@@ -58,6 +58,7 @@ object FeatureFlagManager : BaseClickableFunctionHookItem(), IDexFind {
 
     private val config = WeConfig.getDefaultConfig()
     private const val KEY_HOOKED_FEATURE_FLAGS = Constants.PrekXXX + "hooked_feature_flags"
+
     // explanation: i: int, f: float, l: long, s: string
     // example: "RepairerConfig_QuoteJumpOpt_Int;i;1"
     //          "RepairerConfig_TimelineAd_LandingPageHalfScreen_Int;i;1"
@@ -115,6 +116,7 @@ object FeatureFlagManager : BaseClickableFunctionHookItem(), IDexFind {
         }.toSet()
         config.putStringSet(KEY_HOOKED_FEATURE_FLAGS, strSet)
     }
+
     // FIXME: currently, to prevent lag, overrides are loaded only once, so we have to restart host app for changes to take effect
     private val overrides by lazy { loadOverrides() }
     override fun entry(classLoader: ClassLoader) {
@@ -122,7 +124,8 @@ object FeatureFlagManager : BaseClickableFunctionHookItem(), IDexFind {
             hook {
                 beforeIfEnabled { param ->
                     val key = param.args[0]
-                    val override = overrides.firstOrNull { it.internalName == key } ?: return@beforeIfEnabled
+                    val override =
+                        overrides.firstOrNull { it.internalName == key } ?: return@beforeIfEnabled
                     param.result = when (override) {
                         is FeatureFlagOverride.FloatValue -> override.value
                         is FeatureFlagOverride.IntValue -> override.value
@@ -210,7 +213,12 @@ object FeatureFlagManager : BaseClickableFunctionHookItem(), IDexFind {
                             .heightIn(min = 100.dp, max = 500.dp)
                     ) {
                         if (isLoading) {
-                            Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
+                            Box(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .weight(1f),
+                                contentAlignment = Alignment.Center
+                            ) {
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                     CircularWavyProgressIndicator()
                                     Spacer(modifier = Modifier.height(8.dp))
@@ -222,12 +230,16 @@ object FeatureFlagManager : BaseClickableFunctionHookItem(), IDexFind {
                             OutlinedTextField(
                                 value = searchQuery,
                                 onValueChange = { searchQuery = it },
-                                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(bottom = 8.dp),
                                 placeholder = { Text("搜索类名...") },
                                 singleLine = true,
                                 trailingIcon = {
                                     if (searchQuery.isNotEmpty()) {
-                                        androidx.compose.material3.IconButton(onClick = { searchQuery = "" }) {
+                                        androidx.compose.material3.IconButton(onClick = {
+                                            searchQuery = ""
+                                        }) {
                                             Text("×") // 简单的清除按钮
                                         }
                                     }
@@ -235,25 +247,41 @@ object FeatureFlagManager : BaseClickableFunctionHookItem(), IDexFind {
                             )
 
                             if (filteredClasses.isEmpty()) {
-                                Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
-                                    Text("未找到匹配的类", style = MaterialTheme.typography.bodyMedium)
+                                Box(
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .weight(1f),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        "未找到匹配的类",
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
                                 }
                             } else {
-                                LazyColumn(modifier = Modifier.fillMaxWidth().weight(1f)) {
+                                LazyColumn(modifier = Modifier
+                                    .fillMaxWidth()
+                                    .weight(1f)) {
                                     items(filteredClasses) { className ->
                                         var showActionDialog by remember { mutableStateOf(false) }
 
                                         // 操作选项对话框
                                         if (showActionDialog) {
-                                            var showOverrideDialog by remember { mutableStateOf(false) }
+                                            var showOverrideDialog by remember {
+                                                mutableStateOf(
+                                                    false
+                                                )
+                                            }
 
                                             var internalName by remember { mutableStateOf("null") }
                                             var description by remember { mutableStateOf("") }
                                             var configKey by remember { mutableStateOf("null") }
                                             LaunchedEffect(Unit) {
-                                                val flagInstance = className.toClass().createInstance()
+                                                val flagInstance =
+                                                    className.toClass().createInstance()
                                                 flagInstance
-                                                    .asResolver().method { returnType = String::class }.apply {
+                                                    .asResolver()
+                                                    .method { returnType = String::class }.apply {
                                                         internalName = this[0].invoke()!! as String
                                                         description = this[1].invoke()!! as String
                                                         for (m in this) {
@@ -274,37 +302,94 @@ object FeatureFlagManager : BaseClickableFunctionHookItem(), IDexFind {
                                                     )
                                                 },
                                                 text = {
-                                                    Column(modifier = Modifier.fillMaxWidth()
-                                                        .clip(MaterialTheme.shapes.large)) {
-                                                        ListItem(headlineContent = { Text("复制完整类名", style = MaterialTheme.typography.bodyLarge) },
+                                                    Column(
+                                                        modifier = Modifier
+                                                            .fillMaxWidth()
+                                                            .clip(MaterialTheme.shapes.large)
+                                                    ) {
+                                                        ListItem(
+                                                            headlineContent = {
+                                                                Text(
+                                                                    "复制完整类名",
+                                                                    style = MaterialTheme.typography.bodyLarge
+                                                                )
+                                                            },
                                                             supportingContent = { Text(className) },
                                                             modifier = Modifier.clickable {
-                                                                val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                                                                clipboard.setPrimaryClip(ClipData.newPlainText("ClassName", className))
+                                                                val clipboard =
+                                                                    context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                                                clipboard.setPrimaryClip(
+                                                                    ClipData.newPlainText(
+                                                                        "ClassName",
+                                                                        className
+                                                                    )
+                                                                )
                                                             })
 
-                                                        ListItem(headlineContent = { Text("复制功能内部名称", style = MaterialTheme.typography.bodyLarge) },
+                                                        ListItem(
+                                                            headlineContent = {
+                                                                Text(
+                                                                    "复制功能内部名称",
+                                                                    style = MaterialTheme.typography.bodyLarge
+                                                                )
+                                                            },
                                                             supportingContent = { Text(internalName) },
                                                             modifier = Modifier.clickable {
-                                                                val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                                                                clipboard.setPrimaryClip(ClipData.newPlainText("InternalName", internalName))
+                                                                val clipboard =
+                                                                    context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                                                clipboard.setPrimaryClip(
+                                                                    ClipData.newPlainText(
+                                                                        "InternalName",
+                                                                        internalName
+                                                                    )
+                                                                )
                                                             })
 
-                                                        ListItem(headlineContent = { Text("复制功能简介", style = MaterialTheme.typography.bodyLarge) },
+                                                        ListItem(
+                                                            headlineContent = {
+                                                                Text(
+                                                                    "复制功能简介",
+                                                                    style = MaterialTheme.typography.bodyLarge
+                                                                )
+                                                            },
                                                             supportingContent = { Text(description) },
                                                             modifier = Modifier.clickable {
-                                                                val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                                                                clipboard.setPrimaryClip(ClipData.newPlainText("Description", description))
+                                                                val clipboard =
+                                                                    context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                                                clipboard.setPrimaryClip(
+                                                                    ClipData.newPlainText(
+                                                                        "Description",
+                                                                        description
+                                                                    )
+                                                                )
                                                             })
 
-                                                        ListItem(headlineContent = { Text("复制配置键名", style = MaterialTheme.typography.bodyLarge) },
+                                                        ListItem(
+                                                            headlineContent = {
+                                                                Text(
+                                                                    "复制配置键名",
+                                                                    style = MaterialTheme.typography.bodyLarge
+                                                                )
+                                                            },
                                                             supportingContent = { Text(configKey) },
                                                             modifier = Modifier.clickable {
-                                                                val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                                                                clipboard.setPrimaryClip(ClipData.newPlainText("ConfigKey", configKey))
+                                                                val clipboard =
+                                                                    context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                                                clipboard.setPrimaryClip(
+                                                                    ClipData.newPlainText(
+                                                                        "ConfigKey",
+                                                                        configKey
+                                                                    )
+                                                                )
                                                             })
 
-                                                        ListItem(headlineContent = { Text("覆盖功能取值", style = MaterialTheme.typography.bodyLarge) },
+                                                        ListItem(
+                                                            headlineContent = {
+                                                                Text(
+                                                                    "覆盖功能取值",
+                                                                    style = MaterialTheme.typography.bodyLarge
+                                                                )
+                                                            },
                                                             supportingContent = { Text("为该灰度测试项覆盖其当前取值") },
                                                             modifier = Modifier.clickable {
                                                                 showOverrideDialog = true
@@ -312,7 +397,9 @@ object FeatureFlagManager : BaseClickableFunctionHookItem(), IDexFind {
                                                     }
                                                 },
                                                 confirmButton = {
-                                                    TextButton(onClick = { showActionDialog = false }) {
+                                                    TextButton(onClick = {
+                                                        showActionDialog = false
+                                                    }) {
                                                         Text("取消")
                                                     }
                                                 }
@@ -324,23 +411,31 @@ object FeatureFlagManager : BaseClickableFunctionHookItem(), IDexFind {
 
                                                 LaunchedEffect(Unit) {
                                                     val overrides = loadOverrides()
-                                                    val override = overrides.firstOrNull { o -> o.internalName == internalName } ?: run {
-                                                        WeLogger.w(TAG, "override not found for $internalName")
-                                                        return@LaunchedEffect
-                                                    }
+                                                    val override =
+                                                        overrides.firstOrNull { o -> o.internalName == internalName }
+                                                            ?: run {
+                                                                WeLogger.w(
+                                                                    TAG,
+                                                                    "override not found for $internalName"
+                                                                )
+                                                                return@LaunchedEffect
+                                                            }
                                                     when (override) {
                                                         is FeatureFlagOverride.FloatValue -> {
                                                             type = "f"
                                                             rawValue = override.value.toString()
                                                         }
+
                                                         is FeatureFlagOverride.StringValue -> {
                                                             type = "s"
                                                             rawValue = override.value
                                                         }
+
                                                         is FeatureFlagOverride.IntValue -> {
                                                             type = "i"
                                                             rawValue = override.value.toString()
                                                         }
+
                                                         is FeatureFlagOverride.LongValue -> {
                                                             type = "l"
                                                             rawValue = override.value.toString()
@@ -349,22 +444,35 @@ object FeatureFlagManager : BaseClickableFunctionHookItem(), IDexFind {
                                                 }
 
                                                 // TODO: refine this UI
-                                                AlertDialog(onDismissRequest = { showOverrideDialog = false },
+                                                AlertDialog(
+                                                    onDismissRequest = {
+                                                        showOverrideDialog = false
+                                                    },
                                                     title = { Text("设置覆盖值") },
                                                     text = {
                                                         Column {
-                                                            TextField(value = type, onValueChange = { type = it },
-                                                                singleLine = true, label = { Text("类型 ([s]tring/[f]loat/[i]nt/[l]ong)") })
+                                                            TextField(
+                                                                value = type,
+                                                                onValueChange = { type = it },
+                                                                singleLine = true,
+                                                                label = { Text("类型 ([s]tring/[f]loat/[i]nt/[l]ong)") })
                                                             Spacer(Modifier.height(8.dp))
-                                                            TextField(value = rawValue, onValueChange = { rawValue = it },
-                                                                singleLine = true, label = { Text("值") })
+                                                            TextField(
+                                                                value = rawValue,
+                                                                onValueChange = { rawValue = it },
+                                                                singleLine = true,
+                                                                label = { Text("值") })
                                                         }
                                                     },
                                                     dismissButton = {
-                                                        TextButton(onClick = { showOverrideDialog = false }) { Text("取消") }
                                                         TextButton(onClick = {
-                                                            val overrides = loadOverrides().toMutableList()
-                                                            val existingIndex = overrides.indexOfFirst { o -> o.internalName == internalName }
+                                                            showOverrideDialog = false
+                                                        }) { Text("取消") }
+                                                        TextButton(onClick = {
+                                                            val overrides =
+                                                                loadOverrides().toMutableList()
+                                                            val existingIndex =
+                                                                overrides.indexOfFirst { o -> o.internalName == internalName }
                                                             if (existingIndex == -1) {
                                                                 WeLogger.w(
                                                                     TAG,
@@ -374,45 +482,71 @@ object FeatureFlagManager : BaseClickableFunctionHookItem(), IDexFind {
                                                                 return@TextButton
                                                             }
 
-                                                            WeLogger.i(TAG, "override found for $internalName, removing it")
+                                                            WeLogger.i(
+                                                                TAG,
+                                                                "override found for $internalName, removing it"
+                                                            )
                                                             overrides.removeAt(existingIndex)
                                                             saveOverrides(overrides)
                                                             showOverrideDialog = false
                                                         }) { Text("清除") }
                                                     },
-                                                    confirmButton = { Button(onClick = {
-                                                        val override = when (type) {
-                                                            "s", "string" -> FeatureFlagOverride.StringValue(internalName, rawValue)
-                                                            "i", "int" -> FeatureFlagOverride.IntValue(internalName, rawValue.toIntOrNull() ?: run {
-                                                                ToastUtils.showToast("值格式不正确, 请重新输入")
-                                                                return@Button
-                                                            })
-                                                            "l", "long" -> FeatureFlagOverride.LongValue(internalName, rawValue.toLongOrNull() ?: run {
-                                                                ToastUtils.showToast("值格式不正确, 请重新输入")
-                                                                return@Button
-                                                            })
-                                                            "f", "float" -> FeatureFlagOverride.FloatValue(internalName, rawValue.toFloatOrNull() ?: run {
-                                                                ToastUtils.showToast("值格式不正确, 请重新输入")
-                                                                return@Button
-                                                            })
-                                                            else -> {
-                                                                ToastUtils.showToast("类型格式不正确, 请重新输入")
-                                                                return@Button
+                                                    confirmButton = {
+                                                        Button(onClick = {
+                                                            val override = when (type) {
+                                                                "s", "string" -> FeatureFlagOverride.StringValue(
+                                                                    internalName,
+                                                                    rawValue
+                                                                )
+
+                                                                "i", "int" -> FeatureFlagOverride.IntValue(
+                                                                    internalName,
+                                                                    rawValue.toIntOrNull() ?: run {
+                                                                        ToastUtils.showToast("值格式不正确, 请重新输入")
+                                                                        return@Button
+                                                                    })
+
+                                                                "l", "long" -> FeatureFlagOverride.LongValue(
+                                                                    internalName,
+                                                                    rawValue.toLongOrNull() ?: run {
+                                                                        ToastUtils.showToast("值格式不正确, 请重新输入")
+                                                                        return@Button
+                                                                    })
+
+                                                                "f", "float" -> FeatureFlagOverride.FloatValue(
+                                                                    internalName,
+                                                                    rawValue.toFloatOrNull()
+                                                                        ?: run {
+                                                                            ToastUtils.showToast("值格式不正确, 请重新输入")
+                                                                            return@Button
+                                                                        })
+
+                                                                else -> {
+                                                                    ToastUtils.showToast("类型格式不正确, 请重新输入")
+                                                                    return@Button
+                                                                }
                                                             }
-                                                        }
-                                                        val overrides = loadOverrides().toMutableList()
-                                                        val existingIndex = overrides.indexOfFirst { o -> o.internalName == internalName }
-                                                        if (existingIndex == -1) {
-                                                            WeLogger.i(TAG, "override not found for $internalName, adding new one")
-                                                            overrides.add(override)
-                                                        }
-                                                        else {
-                                                            WeLogger.i(TAG, "override found for $internalName, modifying it")
-                                                            overrides[existingIndex] = override
-                                                        }
-                                                        saveOverrides(overrides)
-                                                        showOverrideDialog = false
-                                                    }) { Text("确定") } })
+                                                            val overrides =
+                                                                loadOverrides().toMutableList()
+                                                            val existingIndex =
+                                                                overrides.indexOfFirst { o -> o.internalName == internalName }
+                                                            if (existingIndex == -1) {
+                                                                WeLogger.i(
+                                                                    TAG,
+                                                                    "override not found for $internalName, adding new one"
+                                                                )
+                                                                overrides.add(override)
+                                                            } else {
+                                                                WeLogger.i(
+                                                                    TAG,
+                                                                    "override found for $internalName, modifying it"
+                                                                )
+                                                                overrides[existingIndex] = override
+                                                            }
+                                                            saveOverrides(overrides)
+                                                            showOverrideDialog = false
+                                                        }) { Text("确定") }
+                                                    })
                                             }
                                         }
 

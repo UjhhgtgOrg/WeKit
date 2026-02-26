@@ -20,7 +20,8 @@ import moe.ouom.wekit.utils.log.WeLogger
 import org.luckypray.dexkit.DexKitBridge
 
 @HookItem(path = "聊天/贴纸保存到本地", desc = "在贴纸消息菜单添加保存按钮, 允许将表情包保存到本地")
-object SaveStickersToLocalStorage : BaseSwitchFunctionHookItem(), IDexFind, WeChatMessageContextMenuApi.IMenuItemsProvider {
+object SaveStickersToLocalStorage : BaseSwitchFunctionHookItem(), IDexFind,
+    WeChatMessageContextMenuApi.IMenuItemsProvider {
 
     private const val TAG = "SaveStickersToLocalStorage"
 
@@ -42,7 +43,10 @@ object SaveStickersToLocalStorage : BaseSwitchFunctionHookItem(), IDexFind, WeCh
             matcher {
                 methods {
                     add {
-                        usingEqStrings("MicroMsg.emoji.EmojiFileEncryptMgr", "decode emoji file failed. path is no exist :%s ")
+                        usingEqStrings(
+                            "MicroMsg.emoji.EmojiFileEncryptMgr",
+                            "decode emoji file failed. path is no exist :%s "
+                        )
                     }
                 }
             }
@@ -65,7 +69,11 @@ object SaveStickersToLocalStorage : BaseSwitchFunctionHookItem(), IDexFind, WeCh
 
         return listOf(
             @Suppress("UNCHECKED_CAST")
-            WeChatMessageContextMenuApi.MenuItem(777001, "存本地", ModuleRes.getDrawable("download_24px")) { _, _, msgInfoBean ->
+            WeChatMessageContextMenuApi.MenuItem(
+                777001,
+                "存本地",
+                ModuleRes.getDrawable("download_24px")
+            ) { _, _, msgInfoBean ->
 //                val msgId = msgInfoBean.asResolver()
 //                    .firstField {
 //                        name = "field_msgId"
@@ -102,10 +110,14 @@ object SaveStickersToLocalStorage : BaseSwitchFunctionHookItem(), IDexFind, WeCh
                 val contentValues = ContentValues().apply {
                     put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
                     put(MediaStore.MediaColumns.MIME_TYPE, "image/gif")
-                    put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/WeKit")
+                    put(
+                        MediaStore.MediaColumns.RELATIVE_PATH,
+                        Environment.DIRECTORY_PICTURES + "/WeKit"
+                    )
                     put(MediaStore.Images.Media.IS_PENDING, 1)
                 }
-                val imageUri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
+                val imageUri =
+                    resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
                 imageUri?.let { uri ->
                     try {
                         resolver.openOutputStream(uri)?.use { outputStream ->

@@ -14,7 +14,8 @@ import org.luckypray.dexkit.DexKitBridge
 object EnableWebViewFeatures : BaseSwitchFunctionHookItem(), IDexFind {
     private const val WEBVIEW_UI_CLASS_NAME = "com.tencent.mm.plugin.webview.ui.tools.WebViewUI"
 
-    private val TRUE_INTENT_KEYS = setOf("show_feedback", "KRightBtn", "KShowFixToolsBtn", "key_enable_fts_quick")
+    private val TRUE_INTENT_KEYS =
+        setOf("show_feedback", "KRightBtn", "KShowFixToolsBtn", "key_enable_fts_quick")
 
     private val methodInitWebViewFeatures by dexMethod()
 
@@ -59,7 +60,10 @@ object EnableWebViewFeatures : BaseSwitchFunctionHookItem(), IDexFind {
         methodInitWebViewFeatures.find(dexKit, descriptors) {
             matcher {
                 declaredClass = WEBVIEW_UI_CLASS_NAME
-                usingEqStrings("banRightBtn:%b, showFixToolsBtn:%b", "MicroMsg.WebViewFtsQuickHelper")
+                usingEqStrings(
+                    "banRightBtn:%b, showFixToolsBtn:%b",
+                    "MicroMsg.WebViewFtsQuickHelper"
+                )
             }
         }
 

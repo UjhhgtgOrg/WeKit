@@ -52,7 +52,10 @@ object WeDatabaseListenerApi : ApiHookItem() {
 
         // 只有实现了至少一个接口才打印日志
         if (addedTypes.isNotEmpty()) {
-            WeLogger.i(TAG, "监听器已添加: ${listener.javaClass.simpleName} [${addedTypes.joinToString()}]")
+            WeLogger.i(
+                TAG,
+                "监听器已添加: ${listener.javaClass.simpleName} [${addedTypes.joinToString()}]"
+            )
         }
     }
 
@@ -100,7 +103,12 @@ object WeDatabaseListenerApi : ApiHookItem() {
         }.joinToString(", ")
     }
 
-    private fun logWithStack(methodName: String, table: String, args: Array<out Any?>, result: Any? = null) {
+    private fun logWithStack(
+        methodName: String,
+        table: String,
+        args: Array<out Any?>,
+        result: Any? = null
+    ) {
         if (!shouldLogDatabase()) return
 
         val argsInfo = formatArgs(args)
@@ -153,7 +161,8 @@ object WeDatabaseListenerApi : ApiHookItem() {
             val isNewVersion = (!isPlay && version >= MMVersion.MM_8_0_43) ||
                     (isPlay && version >= MMVersion.MM_8_0_48_PLAY)
 
-            val clsName = if (isNewVersion) Constants.CLAZZ_COMPAT_SQLITE_DATABASE else Constants.CLAZZ_SQLITE_DATABASE
+            val clsName =
+                if (isNewVersion) Constants.CLAZZ_COMPAT_SQLITE_DATABASE else Constants.CLAZZ_SQLITE_DATABASE
             val clsSQLite = loadClass(clsName)
 
             val method = XposedHelpers.findMethodExact(
@@ -172,8 +181,8 @@ object WeDatabaseListenerApi : ApiHookItem() {
 
                     val table = param.args[0] as String
                     val values = param.args[1] as ContentValues
-                    val whereClause = param.args[2] as? String
-                    @Suppress("UNCHECKED_CAST") val whereArgs = param.args[3] as? Array<String>
+                    param.args[2] as? String
+                    param.args[3] as? Array<String>
 
                     logWithStack("Update", table, param.args)
 
@@ -182,7 +191,10 @@ object WeDatabaseListenerApi : ApiHookItem() {
 
                     if (shouldBlock) {
                         param.result = 0 // 返回0表示没有行被更新
-                        WeLogger.d(TAG, "[Update] 被监听器阻止, table=$table, stack=${WeLogger.getStackTraceString()}")
+                        WeLogger.d(
+                            TAG,
+                            "[Update] 被监听器阻止, table=$table, stack=${WeLogger.getStackTraceString()}"
+                        )
                     }
                 } catch (e: Throwable) {
                     WeLogger.e(TAG, "Update dispatch failed", e)
@@ -238,7 +250,10 @@ object WeDatabaseListenerApi : ApiHookItem() {
 
                 if (currentSql != sql) {
                     param.args[0] = currentSql
-                    WeLogger.d(TAG, "[rawQuery] SQL被修改: $sql -> $currentSql, stack=${WeLogger.getStackTraceString()}")
+                    WeLogger.d(
+                        TAG,
+                        "[rawQuery] SQL被修改: $sql -> $currentSql, stack=${WeLogger.getStackTraceString()}"
+                    )
                 }
             } catch (e: Throwable) {
                 WeLogger.e(TAG, "New version query dispatch failed", e)
@@ -248,7 +263,8 @@ object WeDatabaseListenerApi : ApiHookItem() {
 
     private fun hookOldVersionQuery() {
         val clsSQLite = loadClass(Constants.CLAZZ_SQLITE_DATABASE)
-        val cursorFactoryClass = loadClass("com.tencent.wcdb.database.SQLiteDatabase\$CursorFactory")
+        val cursorFactoryClass =
+            loadClass("com.tencent.wcdb.database.SQLiteDatabase\$CursorFactory")
         val cancellationSignalClass = loadClass("com.tencent.wcdb.support.CancellationSignal")
 
         val method = XposedHelpers.findMethodExact(
@@ -276,7 +292,10 @@ object WeDatabaseListenerApi : ApiHookItem() {
 
                 if (currentSql != sql) {
                     param.args[1] = currentSql
-                    WeLogger.d(TAG, "[rawQueryWithFactory] SQL被修改: $sql -> $currentSql, stack=${WeLogger.getStackTraceString()}")
+                    WeLogger.d(
+                        TAG,
+                        "[rawQueryWithFactory] SQL被修改: $sql -> $currentSql, stack=${WeLogger.getStackTraceString()}"
+                    )
                 }
             } catch (e: Throwable) {
                 WeLogger.e(TAG, "Old version query dispatch failed", e)

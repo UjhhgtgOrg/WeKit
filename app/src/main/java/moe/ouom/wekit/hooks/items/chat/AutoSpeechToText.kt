@@ -14,7 +14,8 @@ import moe.ouom.wekit.utils.common.SimpleLruCache
 import java.lang.reflect.InvocationTargetException
 
 @HookItem(path = "聊天/自动语音转文字", desc = "自动将语音消息转为文字")
-object AutoSpeechToText : BaseSwitchFunctionHookItem(), WeChatItemCreateViewListenerApi.ICreateViewListener {
+object AutoSpeechToText : BaseSwitchFunctionHookItem(),
+    WeChatItemCreateViewListenerApi.ICreateViewListener {
 
     private val cache = SimpleLruCache<Long, Boolean>(100)
 
@@ -45,7 +46,10 @@ object AutoSpeechToText : BaseSwitchFunctionHookItem(), WeChatItemCreateViewList
                 type = WeServiceApi.methodApiManagerGetApi.method.declaringClass
             }
             .get()!!
-        val api = WeServiceApi.methodApiManagerGetApi.method.invoke(apiManager, WeMessageApi.classTransformChattingComponent.clazz.interfaces[0])
+        val api = WeServiceApi.methodApiManagerGetApi.method.invoke(
+            apiManager,
+            WeMessageApi.classTransformChattingComponent.clazz.interfaces[0]
+        )
         val chatViewItem = api.asResolver()
             .firstMethod {
                 parameters(Long::class)
@@ -60,12 +64,16 @@ object AutoSpeechToText : BaseSwitchFunctionHookItem(), WeChatItemCreateViewList
             try {
                 api.asResolver()
                     .firstMethod {
-                        parameters(WeMessageApi.classMsgInfo.clazz, Boolean::class.java, Int::class.java, Int::class.java)
+                        parameters(
+                            WeMessageApi.classMsgInfo.clazz,
+                            Boolean::class.java,
+                            Int::class.java,
+                            Int::class.java
+                        )
                         returnType = Void::class.javaPrimitiveType
                     }
                     .invoke(msgInfo.instance, false, -1, 0)
-            }
-            catch (_: InvocationTargetException) {
+            } catch (_: InvocationTargetException) {
                 // WeChat throws `java.lang.NullPointerException: getImgPath(...) must not be null`,
                 // but that's not what we should care about and doesn't affect functionality
             }

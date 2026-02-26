@@ -89,11 +89,20 @@ object MsgIdProvider {
     fun previewNextId(tableName: String): Long {
         return try {
             val mmkvClass = Class.forName("com.tencent.mmkv.MMKV")
-            val mmkvWithIDMethod = mmkvClass.getDeclaredMethod("mmkvWithID", String::class.java, Int::class.javaPrimitiveType)
+            val mmkvWithIDMethod = mmkvClass.getDeclaredMethod(
+                "mmkvWithID",
+                String::class.java,
+                Int::class.javaPrimitiveType
+            )
             val mmkvInstance = mmkvWithIDMethod.invoke(null, MMKV_FILE_ID, 2)
-            val decodeLongMethod = mmkvClass.getDeclaredMethod("decodeLong", String::class.java, Long::class.javaPrimitiveType)
+            val decodeLongMethod = mmkvClass.getDeclaredMethod(
+                "decodeLong",
+                String::class.java,
+                Long::class.javaPrimitiveType
+            )
 
-            val currentId = decodeLongMethod.invoke(mmkvInstance, "$KEY_PREFIX$tableName", 0L) as Long
+            val currentId =
+                decodeLongMethod.invoke(mmkvInstance, "$KEY_PREFIX$tableName", 0L) as Long
 
             if (currentId == 0L) {
                 getInitialId(tableName)

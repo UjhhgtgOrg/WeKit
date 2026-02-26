@@ -49,15 +49,17 @@ object WeConversationApi : ApiHookItem(), IDexFind {
     }
 
     fun markAllAsRead() {
-        val cursor = WeDatabaseApi.execQueryMethod!!.invoke(WeDatabaseApi.dbInstance,
-            "SELECT username FROM rconversation WHERE unReadCount>0 OR unReadMuteCount>0", arrayOf<String>()) as Cursor
+        val cursor = WeDatabaseApi.execQueryMethod!!.invoke(
+            WeDatabaseApi.dbInstance,
+            "SELECT username FROM rconversation WHERE unReadCount>0 OR unReadMuteCount>0",
+            arrayOf<String>()
+        ) as Cursor
         while (cursor.moveToNext()) {
             val talker = cursor.getString(0)
             try {
                 methodUpdateUnreadByTalker.method.invoke(conversationStorage, talker)
                 WeLogger.d(TAG, "marked $talker as read")
-            }
-            catch (ex: Exception) {
+            } catch (ex: Exception) {
                 WeLogger.w(TAG, "exception while updating unread count for $talker", ex)
             }
         }
@@ -68,8 +70,7 @@ object WeConversationApi : ApiHookItem(), IDexFind {
         try {
             methodUpdateUnreadByTalker.method.invoke(conversationStorage, talker)
             WeLogger.d(TAG, "marked $talker as read")
-        }
-        catch (ex: Exception) {
+        } catch (ex: Exception) {
             WeLogger.w(TAG, "exception while updating unread count for $talker", ex)
         }
     }

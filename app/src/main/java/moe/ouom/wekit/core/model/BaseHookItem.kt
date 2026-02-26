@@ -158,7 +158,10 @@ abstract class BaseHookItem {
     }
 
     @JvmName("hookBeforeKavaRef")
-    fun <T : Any> hookBefore(methodResolver: MethodResolver<Class<T>>, action: HookAction): XC_MethodHook.Unhook {
+    fun <T : Any> hookBefore(
+        methodResolver: MethodResolver<Class<T>>,
+        action: HookAction
+    ): XC_MethodHook.Unhook {
         return hookBefore(methodResolver.self, action)
     }
 
@@ -168,7 +171,10 @@ abstract class BaseHookItem {
     }
 
     @JvmName("hookBeforeKavaRef2")
-    fun <T : Any> hookBefore(methodResolver: MethodResolver<KClass<T>>, action: HookAction): XC_MethodHook.Unhook {
+    fun <T : Any> hookBefore(
+        methodResolver: MethodResolver<KClass<T>>,
+        action: HookAction
+    ): XC_MethodHook.Unhook {
         return hookBefore(methodResolver.self, action)
     }
 
@@ -178,7 +184,10 @@ abstract class BaseHookItem {
     }
 
     @JvmName("hookBeforeKavaRef3")
-    fun hookBefore(methodResolver: MethodResolver<Class<*>>, action: HookAction): XC_MethodHook.Unhook {
+    fun hookBefore(
+        methodResolver: MethodResolver<Class<*>>,
+        action: HookAction
+    ): XC_MethodHook.Unhook {
         return hookBefore(methodResolver.self, action)
     }
 
@@ -210,7 +219,10 @@ abstract class BaseHookItem {
     }
 
     @JvmName("hookAfterKavaRef")
-    fun <T : Any> hookAfter(methodResolver: MethodResolver<Class<T>>, action: HookAction): XC_MethodHook.Unhook {
+    fun <T : Any> hookAfter(
+        methodResolver: MethodResolver<Class<T>>,
+        action: HookAction
+    ): XC_MethodHook.Unhook {
         return hookAfter(methodResolver.self, action)
     }
 
@@ -220,7 +232,10 @@ abstract class BaseHookItem {
     }
 
     @JvmName("hookAfterKavaRef2")
-    fun <T : Any> hookAfter(methodResolver: MethodResolver<KClass<T>>, action: HookAction): XC_MethodHook.Unhook {
+    fun <T : Any> hookAfter(
+        methodResolver: MethodResolver<KClass<T>>,
+        action: HookAction
+    ): XC_MethodHook.Unhook {
         return hookAfter(methodResolver.self, action)
     }
 
@@ -230,7 +245,10 @@ abstract class BaseHookItem {
     }
 
     @JvmName("hookAfterKavaRef3")
-    fun hookAfter(methodResolver: MethodResolver<Class<*>>, action: HookAction): XC_MethodHook.Unhook {
+    fun hookAfter(
+        methodResolver: MethodResolver<Class<*>>,
+        action: HookAction
+    ): XC_MethodHook.Unhook {
         return hookAfter(methodResolver.self, action)
     }
 

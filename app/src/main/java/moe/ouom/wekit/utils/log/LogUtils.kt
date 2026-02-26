@@ -16,23 +16,23 @@ object LogUtils {
     private val logRootDirectory: Path?
         get() {
             return PathUtils.moduleDataPath?.resolve("logs")?.apply {
-                    createDirectories()
-                }
+                createDirectories()
+            }
         }
 
     private val runLogDirectory: Path?
         get() {
-        return logRootDirectory?.resolve("run")?.apply {
-            createDirectories()
+            return logRootDirectory?.resolve("run")?.apply {
+                createDirectories()
+            }
         }
-    }
 
     private val errorLogDirectory: Path?
         get() {
-        return logRootDirectory?.resolve("error")?.apply {
-            createDirectories()
+            return logRootDirectory?.resolve("error")?.apply {
+                createDirectories()
+            }
         }
-    }
 
     fun getCallStack(): String {
         val throwable = Throwable()
@@ -97,7 +97,7 @@ object LogUtils {
     private fun addLog(fileName: String, desc: String?, content: Any?, isError: Boolean) {
         try {
             if (NativeCoreBridge.isNativeCoreInitialized() && !WeConfig.getDefaultConfig()
-                .getBooleanOrFalse(Constants.PrekEnableLog)
+                    .getBooleanOrFalse(Constants.PrekEnableLog)
             ) {
                 return
             }

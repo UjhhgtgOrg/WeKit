@@ -62,9 +62,12 @@ enum class MessageType(val code: Int) {
         fun isPat(code: Int) = code == PAT.code
         fun isTransfer(code: Int) = code == TRANSFER.code
         fun isGroupNote(code: Int) = code == GROUP_NOTE.code
-        fun isVideoAccount(code: Int) = code == VIDEO_ACCOUNT.code || code == VIDEO_ACCOUNT_CARD.code || code == VIDEO_ACCOUNT_LIVE.code
+        fun isVideoAccount(code: Int) =
+            code == VIDEO_ACCOUNT.code || code == VIDEO_ACCOUNT_CARD.code || code == VIDEO_ACCOUNT_LIVE.code
+
         fun isCard(code: Int) = code == CARD.code
         fun isMoments(code: Int) = code == MOMENTS.code
-        fun isVoip(code: Int) = code == VOIP.code || code == VOIP_NOTIFY.code || code == VOIP_INVITE.code
+        fun isVoip(code: Int) =
+            code == VOIP.code || code == VOIP_NOTIFY.code || code == VOIP_INVITE.code
     }
 }

@@ -39,7 +39,8 @@ class MessageInfo(val instance: Any) {
 
         if (isType(MessageType.PAT)) {
             val patMsg = PatMessage(content)
-            return@lazy patMsg.fromUser ?: throw IllegalArgumentException("could not determine pat message's from user")
+            return@lazy patMsg.fromUser
+                ?: throw IllegalArgumentException("could not determine pat message's from user")
         }
 
         if (isSend()) {

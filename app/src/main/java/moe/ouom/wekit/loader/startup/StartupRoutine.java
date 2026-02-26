@@ -20,7 +20,7 @@ public class StartupRoutine {
      * <p>
      * Kotlin and androidx are dangerous, and should be invoked only after the class loader is ready.
      *
-     * @param ctx         Application context for host
+     * @param ctx Application context for host
      */
     public static void execPostStartupInit(@NonNull Context ctx) {
         // init all kotlin utils here

@@ -34,7 +34,10 @@ object DisableWebViewSafetyWarnings : BaseSwitchFunctionHookItem(), IDexFind {
 
         methodGetIsInterceptEnabled.find(dexKit, descriptors) {
             matcher {
-                usingEqStrings("MicroMsg.WebViewHighRiskAdH5Interceptor", "isInterceptEnabled, expt=")
+                usingEqStrings(
+                    "MicroMsg.WebViewHighRiskAdH5Interceptor",
+                    "isInterceptEnabled, expt="
+                )
             }
         }
 

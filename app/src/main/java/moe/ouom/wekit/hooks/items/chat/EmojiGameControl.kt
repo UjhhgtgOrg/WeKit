@@ -123,7 +123,10 @@ object EmojiGameControl : BaseSwitchFunctionHookItem(), IDexFind {
                         val fields = obj.javaClass.declaredFields
                         var infoType = -1
                         for (field in fields) {
-                            if (field.type == Int::class.javaPrimitiveType && java.lang.reflect.Modifier.isFinal(field.modifiers)) {
+                            if (field.type == Int::class.javaPrimitiveType && java.lang.reflect.Modifier.isFinal(
+                                    field.modifiers
+                                )
+                            ) {
                                 field.isAccessible = true
                                 infoType = field.getInt(obj)
                                 break
@@ -132,14 +135,19 @@ object EmojiGameControl : BaseSwitchFunctionHookItem(), IDexFind {
 
                         if (infoType == 0) {
                             // Reflection: Get EmojiInfo inner object to check MD5
-                            val emojiInfoField = fields.firstOrNull { it.type.name.contains("IEmojiInfo") }
+                            val emojiInfoField =
+                                fields.firstOrNull { it.type.name.contains("IEmojiInfo") }
 
                             if (emojiInfoField != null) {
                                 emojiInfoField.isAccessible = true
                                 val emojiInfo = emojiInfoField.get(obj)
 
                                 if (emojiInfo != null) {
-                                    val getMd5Method = XposedHelpers.findMethodExact(emojiInfo.javaClass, "getMd5", *arrayOf<Any>())
+                                    val getMd5Method = XposedHelpers.findMethodExact(
+                                        emojiInfo.javaClass,
+                                        "getMd5",
+                                        *arrayOf<Any>()
+                                    )
                                     val emojiMd5 = getMd5Method.invoke(emojiInfo) as? String
 
                                     when (emojiMd5) {
@@ -171,11 +179,16 @@ object EmojiGameControl : BaseSwitchFunctionHookItem(), IDexFind {
                 onSend = { isSingle, inputText ->
                     try {
                         if (isSingle) {
-                            XposedBridge.invokeOriginalMethod(param.method, param.thisObject, param.args)
+                            XposedBridge.invokeOriginalMethod(
+                                param.method,
+                                param.thisObject,
+                                param.args
+                            )
                         } else {
                             val values = parseMultipleInput(inputText, isDice)
                             if (values.isEmpty()) {
-                                Toast.makeText(activity, "输入格式错误，请重试", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(activity, "输入格式错误，请重试", Toast.LENGTH_SHORT)
+                                    .show()
                                 return@EmojiGameDialog
                             }
                             sendMultiple(param, values, isDice, activity)
@@ -190,7 +203,11 @@ object EmojiGameControl : BaseSwitchFunctionHookItem(), IDexFind {
                         if (isSingle) {
                             if (isDice) valDice = Random.nextInt(0, 6)
                             else valMorra = Random.nextInt(0, 3)
-                            XposedBridge.invokeOriginalMethod(param.method, param.thisObject, param.args)
+                            XposedBridge.invokeOriginalMethod(
+                                param.method,
+                                param.thisObject,
+                                param.args
+                            )
                         } else {
                             val count = if (isDice) Random.nextInt(3, 10) else Random.nextInt(3, 8)
                             val values = List(count) {
@@ -216,7 +233,7 @@ object EmojiGameControl : BaseSwitchFunctionHookItem(), IDexFind {
         onDismiss: () -> Unit
     ) {
         var isSingleMode by remember { mutableStateOf(true) }
-        var inputText    by remember { mutableStateOf("") }
+        var inputText by remember { mutableStateOf("") }
 
         // first item selected by default
         var selectedIndex by remember { mutableIntStateOf(0) }
@@ -234,9 +251,14 @@ object EmojiGameControl : BaseSwitchFunctionHookItem(), IDexFind {
         Surface(
             shape = MaterialTheme.shapes.extraLarge,
             tonalElevation = 6.dp,
-            modifier = Modifier.fillMaxWidth().padding(16.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
         ) {
-            Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(
+                modifier = Modifier.padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
                 Text(
                     text = if (isDice) "选择骰子点数" else "选择猜拳结果",
                     style = MaterialTheme.typography.titleMedium
@@ -245,13 +267,17 @@ object EmojiGameControl : BaseSwitchFunctionHookItem(), IDexFind {
                 HorizontalDivider()
 
                 // ── Mode selector ──────────────────────────────────────────────
-                Text("发送模式", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(
+                    "发送模式",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     listOf("单次" to true, "多次" to false).forEach { (label, single) ->
                         FilterChip(
                             selected = isSingleMode == single,
-                            onClick  = { isSingleMode = single },
-                            label    = { Text(label) }
+                            onClick = { isSingleMode = single },
+                            label = { Text(label) }
                         )
                     }
                 }
@@ -271,7 +297,7 @@ object EmojiGameControl : BaseSwitchFunctionHookItem(), IDexFind {
                             ) {
                                 RadioButton(
                                     selected = selectedIndex == index,
-                                    onClick  = { selectedIndex = index }
+                                    onClick = { selectedIndex = index }
                                 )
                                 Text(label)
                             }
@@ -288,11 +314,11 @@ object EmojiGameControl : BaseSwitchFunctionHookItem(), IDexFind {
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         OutlinedTextField(
-                            value         = inputText,
+                            value = inputText,
                             onValueChange = { inputText = it },
-                            placeholder   = { Text(if (isDice) "例如: 123456" else "例如: 123") },
-                            singleLine    = true,
-                            modifier      = Modifier.fillMaxWidth()
+                            placeholder = { Text(if (isDice) "例如: 123456" else "例如: 123") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
                         )
                     }
                 }
@@ -304,7 +330,12 @@ object EmojiGameControl : BaseSwitchFunctionHookItem(), IDexFind {
                 ) {
                     TextButton(onClick = { onDismiss() }) { Text("取消") }
                     TextButton(onClick = { onRandom(isSingleMode); onDismiss() }) { Text("随机") }
-                    Button(onClick = { onSend(isSingleMode, inputText); onDismiss() })  { Text("发送") }
+                    Button(onClick = {
+                        onSend(
+                            isSingleMode,
+                            inputText
+                        ); onDismiss()
+                    }) { Text("发送") }
                 }
             }
         }
@@ -348,7 +379,8 @@ object EmojiGameControl : BaseSwitchFunctionHookItem(), IDexFind {
                 } catch (e: Throwable) {
                     WeLogger.e(TAG, "failed to send at index $index", e)
                     activity.runOnUiThread {
-                        Toast.makeText(activity, "第 ${index + 1} 次发送失败", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(activity, "第 ${index + 1} 次发送失败", Toast.LENGTH_SHORT)
+                            .show()
                     }
                 }
             }
@@ -364,8 +396,10 @@ object EmojiGameControl : BaseSwitchFunctionHookItem(), IDexFind {
     private fun getActivity(): Activity? {
         try {
             val activityThreadClass = Class.forName("android.app.ActivityThread")
-            val activityThread = XposedHelpers.callStaticMethod(activityThreadClass, "currentActivityThread")
-            val activities = XposedHelpers.getObjectField(activityThread, "mActivities") as Map<*, *>
+            val activityThread =
+                XposedHelpers.callStaticMethod(activityThreadClass, "currentActivityThread")
+            val activities =
+                XposedHelpers.getObjectField(activityThread, "mActivities") as Map<*, *>
             for (value in activities.values) {
                 val activityRecord = value as Any
                 val paused = XposedHelpers.getBooleanField(activityRecord, "paused")

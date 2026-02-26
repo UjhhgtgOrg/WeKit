@@ -57,11 +57,11 @@ object WeDatabaseApi : ApiHookItem(), IDexFind {
 
     fun getSelfProfileField(field: SelfProfileField) =
         configStorage.asResolver()
-        .firstMethod {
-            parameters(Int::class, Any::class)
-            returnType = Any::class
-        }
-        .invoke(field.code, null)!!
+            .firstMethod {
+                parameters(Int::class, Any::class)
+                returnType = Any::class
+            }
+            .invoke(field.code, null)!!
 
     private object SqlStatements {
         // 基础字段 - 联系人查询常用字段
@@ -71,7 +71,8 @@ object WeDatabaseApi : ApiHookItem(), IDexFind {
         """
 
         // 基础字段 - 群聊查询常用字段
-        const val CHATROOM_FIELDS = "r.username, r.nickname, r.pyInitial, r.quanPin, i.reserved2 AS avatarUrl"
+        const val CHATROOM_FIELDS =
+            "r.username, r.nickname, r.pyInitial, r.quanPin, i.reserved2 AS avatarUrl"
 
         // 基础字段 - 公众号查询常用字段
         const val OFFICIAL_FIELDS = "r.username, r.alias, r.nickname, i.reserved2 AS avatarUrl"
@@ -184,7 +185,10 @@ object WeDatabaseApi : ApiHookItem(), IDexFind {
 
         classCoreStorage.find(dexKit, descriptors) {
             matcher {
-                usingEqStrings("MMKernel.CoreStorage", "CheckData path[%s] blocksize:%s blockcount:%s availcount:%s")
+                usingEqStrings(
+                    "MMKernel.CoreStorage",
+                    "CheckData path[%s] blocksize:%s blockcount:%s availcount:%s"
+                )
             }
         }
 
@@ -282,7 +286,8 @@ object WeDatabaseApi : ApiHookItem(), IDexFind {
                 if (checkMethodFeature(obj) || checkStringFeature(obj)) {
                     return obj
                 }
-            } catch (_: Throwable) {}
+            } catch (_: Throwable) {
+            }
         }
         return null
     }
@@ -296,7 +301,9 @@ object WeDatabaseApi : ApiHookItem(), IDexFind {
                 it.isAccessible = true
                 it.type == String::class.java && it.get(obj) == "MicroMsg.SqliteDB"
             }
-        } catch (_: Exception) { false }
+        } catch (_: Exception) {
+            false
+        }
     }
 
     /**
@@ -307,7 +314,9 @@ object WeDatabaseApi : ApiHookItem(), IDexFind {
             obj.javaClass.declaredMethods.any {
                 it.parameterCount == 0 && it.returnType.name == "com.tencent.wcdb.database.SQLiteDatabase"
             }
-        } catch (_: Exception) { false }
+        } catch (_: Exception) {
+            false
+        }
     }
 
     fun executeQuery(sql: String, args: Array<Any>? = null): List<Map<String, Any?>> {
@@ -345,8 +354,7 @@ object WeDatabaseApi : ApiHookItem(), IDexFind {
         try {
             execStatementMethod?.invoke(dbInstance, sql)
             return true
-        }
-        catch (e: Exception) {
+        } catch (e: Exception) {
             WeLogger.e(TAG, "SQL Update 执行异常", e)
         }
         return false

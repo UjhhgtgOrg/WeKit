@@ -27,16 +27,14 @@ import kotlin.random.Random
 
 @SuppressLint("DiscouragedApi")
 @HookItem(path = "红包与支付/自动抢红包", desc = "监听消息并自动拆开红包")
-object AutoOpenRedPacket : BaseClickableFunctionHookItem(),
-    
-    WeDatabaseListenerApi.IInsertListener, IDexFind {
+object AutoOpenRedPacket : BaseClickableFunctionHookItem(), WeDatabaseListenerApi.IInsertListener,
+    IDexFind {
 
-    private const val TAG: String = "WeRedPacketAuto"
+    private const val TAG = "AutoOpenRedPacket"
 
     private val classReceiveLuckyMoney by dexClass()
     private val classOpenLuckyMoney by dexClass()
     private val methodOnGYNetEnd by dexMethod()
-
     private val currentRedPacketMap = ConcurrentHashMap<String, RedPacketInfo>()
 
     private const val TYPE_RED_PACKET = 436207665 // 红包
@@ -126,7 +124,10 @@ object AutoOpenRedPacket : BaseClickableFunctionHookItem(),
                 val baseDelay = if (customDelay > 0) customDelay else 1000L
                 val randomOffset = Random.nextLong(-500, 500)
                 val finalDelay = (baseDelay + randomOffset).coerceAtLeast(0)
-                WeLogger.i(TAG, "random delay mode - baseDelay=$baseDelay, randomOffset=$randomOffset, finalDelay=$finalDelay")
+                WeLogger.i(
+                    TAG,
+                    "random delay mode - baseDelay=$baseDelay, randomOffset=$randomOffset, finalDelay=$finalDelay"
+                )
                 finalDelay
             } else {
                 WeLogger.i(TAG, "fixed delay mode - delayTime=$customDelay")
@@ -138,7 +139,10 @@ object AutoOpenRedPacket : BaseClickableFunctionHookItem(),
                     WeLogger.i(TAG, "started delaying for ${delayTime}ms (sendId=$sendId)")
                     if (delayTime > 0) Thread.sleep(delayTime)
 
-                    WeLogger.i(TAG, "delay ended, preparing to send open packet request (sendId=$sendId)")
+                    WeLogger.i(
+                        TAG,
+                        "delay ended, preparing to send open packet request (sendId=$sendId)"
+                    )
                     val req = XposedHelpers.newInstance(
                         classReceiveLuckyMoney.clazz,
                         msgType, channelId, sendId, nativeUrl, 1, "v1.0", talker
@@ -168,7 +172,10 @@ object AutoOpenRedPacket : BaseClickableFunctionHookItem(),
                         if (timingIdentifier.isNullOrEmpty() || sendId.isNullOrEmpty()) return@afterIfEnabled
 
                         val info = currentRedPacketMap[sendId] ?: return@afterIfEnabled
-                        WeLogger.i(TAG, "unpack request finished, sending open packet request ($sendId)")
+                        WeLogger.i(
+                            TAG,
+                            "unpack request finished, sending open packet request ($sendId)"
+                        )
 
                         Thread {
                             try {

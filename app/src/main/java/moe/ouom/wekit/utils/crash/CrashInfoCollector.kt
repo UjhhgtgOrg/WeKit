@@ -181,7 +181,8 @@ object CrashInfoCollector {
             sb.append("Thread ID: ").append(currentThread.id).append("\n")
             sb.append("Thread Priority: ").append(currentThread.priority).append("\n")
             sb.append("Thread State: ").append(currentThread.state).append("\n")
-            sb.append("Thread Group: ").append(currentThread.threadGroup!!.name ?: "null").append("\n")
+            sb.append("Thread Group: ").append(currentThread.threadGroup!!.name ?: "null")
+                .append("\n")
 
             // 活跃线程数
             var rootGroup = Thread.currentThread().threadGroup!!

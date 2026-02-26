@@ -4,7 +4,6 @@ import static moe.ouom.wekit.constants.Constants.CLAZZ_WECHAT_LAUNCHER_UI;
 
 import android.app.Activity;
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.os.Bundle;
 
@@ -36,7 +35,7 @@ public class WeLauncher {
 
         try {
             ParcelableFixer.init(
-                cl, WeLauncher.class.getClassLoader()
+                    cl, WeLauncher.class.getClassLoader()
             );
             WeLogger.i(TAG, "ParcelableFixer installed.");
         } catch (Throwable e) {

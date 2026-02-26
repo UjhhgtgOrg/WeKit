@@ -70,8 +70,11 @@ class SimpleExample :
     // Hook 入口
     override fun entry(classLoader: ClassLoader) {
         // 日志输出请务必使用 `WeLogger`，他会自动添加 TAG，并且适配多种输出需求，如：
-        WeLogger.i("SimplifiedExample", "日志输出请务必使用 `WeLogger`，他会自动添加 TAG，并且适配多种输出需求，如：")
-        WeLogger.i("SimplifiedExample",  "错误", Throwable())
+        WeLogger.i(
+            "SimplifiedExample",
+            "日志输出请务必使用 `WeLogger`，他会自动添加 TAG，并且适配多种输出需求，如："
+        )
+        WeLogger.i("SimplifiedExample", "错误", Throwable())
         WeLogger.e("SimplifiedExample", "xxxxx")
         WeLogger.w("SimplifiedExample", "xxxxx")
         WeLogger.v("SimplifiedExample", "xxxxx")

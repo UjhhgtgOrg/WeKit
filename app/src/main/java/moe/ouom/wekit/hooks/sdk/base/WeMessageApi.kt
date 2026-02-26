@@ -140,7 +140,10 @@ object WeMessageApi : ApiHookItem(), IDexFind {
 
             classChattingDataAdapter.find(dexKit, descriptors) {
                 matcher {
-                    usingEqStrings("MicroMsg.ChattingDataAdapterV3", "[handleMsgChange] isLockNotify:")
+                    usingEqStrings(
+                        "MicroMsg.ChattingDataAdapterV3",
+                        "[handleMsgChange] isLockNotify:"
+                    )
                 }
             }
 
@@ -700,7 +703,14 @@ object WeMessageApi : ApiHookItem(), IDexFind {
             assignValueToFirstFieldByType(paramsObj, Int::class.javaPrimitiveType!!, 4)
 
             val taskObj =
-                XposedHelpers.newInstance(taskClass, imgPath, 0, getSelfCustomWxId(), toUser, paramsObj)
+                XposedHelpers.newInstance(
+                    taskClass,
+                    imgPath,
+                    0,
+                    getSelfCustomWxId(),
+                    toUser,
+                    paramsObj
+                )
             assignValueToLastFieldByType(taskObj, String::class.java, "media_generate_send_img")
 
             sendImageMethod?.invoke(serviceObj, taskObj)

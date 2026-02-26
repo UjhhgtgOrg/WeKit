@@ -15,10 +15,11 @@ object DisableTypingStatusUploading : BaseSwitchFunctionHookItem(), IDexFind {
     private val classMmTypingSendReq by dexClass()
 
     override fun entry(classLoader: ClassLoader) {
-        classMmTypingSendReq.clazz.asResolver().firstMethod { name = "doScene" }.hookBefore { param ->
-            WeLogger.i(TAG, "preventing upload of typing status")
-            param.result = -1
-        }
+        classMmTypingSendReq.clazz.asResolver().firstMethod { name = "doScene" }
+            .hookBefore { param ->
+                WeLogger.i(TAG, "preventing upload of typing status")
+                param.result = -1
+            }
     }
 
     override fun dexFind(dexKit: DexKitBridge): Map<String, String> {
@@ -27,7 +28,10 @@ object DisableTypingStatusUploading : BaseSwitchFunctionHookItem(), IDexFind {
         classMmTypingSendReq.find(dexKit, descriptors) {
             searchPackages("com.tencent.mm.modelsimple")
             matcher {
-                usingEqStrings("null cannot be cast to non-null type com.tencent.mm.protocal.MMTypingSend.Req", "autoAuth")
+                usingEqStrings(
+                    "null cannot be cast to non-null type com.tencent.mm.protocal.MMTypingSend.Req",
+                    "autoAuth"
+                )
             }
         }
 

@@ -16,8 +16,8 @@ object SkipMiniAppVideoAds : BaseSwitchFunctionHookItem() {
 
                 if (arg0 == "onVideoTimeUpdate") {
                     val json = JSONObject(arg1)
-                    json.put("position", 60);
-                    json.put("duration", 1);
+                    json.put("position", 60)
+                    json.put("duration", 1)
                     param.args[1] = json.toString()
                 }
             }

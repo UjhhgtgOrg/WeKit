@@ -13,15 +13,22 @@ import moe.ouom.wekit.ui.utils.showComposeDialog
 object ClearDexCache : BaseClickableFunctionHookItem() {
     override fun onClick(context: Context) {
         showComposeDialog(context) { onDismiss ->
-            AlertDialog(onDismissRequest = onDismiss,
+            AlertDialog(
+                onDismissRequest = onDismiss,
                 title = { Text("清除适配信息") },
-                text = { Text("这将删除所有的 DEX 适配信息，宿主重启后需要重新适配。\n" +
-                        "确定清除吗？") },
+                text = {
+                    Text(
+                        "这将删除所有的 DEX 适配信息，宿主重启后需要重新适配。\n" +
+                                "确定清除吗？"
+                    )
+                },
                 dismissButton = { TextButton(onClick = onDismiss) { Text("取消") } },
-                confirmButton = { TextButton(onClick = {
-                    DexCacheManager.clearAllCache()
-                    onDismiss()
-                }) { Text("确定") } })
+                confirmButton = {
+                    TextButton(onClick = {
+                        DexCacheManager.clearAllCache()
+                        onDismiss()
+                    }) { Text("确定") }
+                })
         }
     }
 

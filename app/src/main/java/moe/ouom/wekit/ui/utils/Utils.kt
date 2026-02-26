@@ -20,7 +20,10 @@ import moe.ouom.wekit.host.HostInfo
 // useful for showing a compose dialog in non-compose context,
 // or when you don't want to manage the state for a dialog inside a composable
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
-fun showComposeDialog(context: Context? = null, content: @Composable (onDismiss: () -> Unit) -> Unit) {
+fun showComposeDialog(
+    context: Context? = null,
+    content: @Composable (onDismiss: () -> Unit) -> Unit
+) {
     var ctx = context
 
     ctx = if (ctx == null)

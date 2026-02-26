@@ -179,7 +179,8 @@ object WeSettingsInjector : ApiHookItem(), IDexFind {
                 val context = activity as Context
 
                 try {
-                    val clsIconPref = "com.tencent.mm.ui.base.preference.IconPreference".toClass(classLoader)
+                    val clsIconPref =
+                        "com.tencent.mm.ui.base.preference.IconPreference".toClass(classLoader)
                     val prefInstance = clsIconPref.createInstance(context)
 
                     setKeyMethod.invoke(prefInstance, KEY_WEKIT_ENTRY)
@@ -196,7 +197,7 @@ object WeSettingsInjector : ApiHookItem(), IDexFind {
 
             WeLogger.i("WeSettingInjector: Created WeKit setting")
 
-            clsSettingsUi.hookBefore( "onPreferenceTreeClick") { param ->
+            clsSettingsUi.hookBefore("onPreferenceTreeClick") { param ->
                 if (param.args.size < 2) return@hookBefore
                 val preference = param.args[1] ?: return@hookBefore
 
@@ -222,16 +223,26 @@ object WeSettingsInjector : ApiHookItem(), IDexFind {
     }
 
     private fun tryHookNewSettings(classLoader: ClassLoader) {
-        val newSettingsCls = "com.tencent.mm.plugin.setting.ui.setting_new.base.BaseSettingPrefUI".toClassOrNull(classLoader) ?: return
+        val newSettingsCls =
+            "com.tencent.mm.plugin.setting.ui.setting_new.base.BaseSettingPrefUI".toClassOrNull(
+                classLoader
+            ) ?: return
 
         newSettingsCls.hookAfter("onCreate") { param ->
             if (param.thisObject.javaClass
-                == "com.tencent.mm.plugin.setting.ui.setting_new.MainSettingsUI".toClassOrNull(classLoader)) {
+                == "com.tencent.mm.plugin.setting.ui.setting_new.MainSettingsUI".toClassOrNull(
+                    classLoader
+                )
+            ) {
                 val activity = param.thisObject as Activity
                 activity.asResolver()
                     .firstMethod {
                         name = "addTextOptionMenu"
-                        parameters(Int::class, String::class, MenuItem.OnMenuItemClickListener::class)
+                        parameters(
+                            Int::class,
+                            String::class,
+                            MenuItem.OnMenuItemClickListener::class
+                        )
                         superclass()
                     }
                     .invoke(0, "WeKit", SettingsMenuItemClickListener(activity))
@@ -249,7 +260,8 @@ object WeSettingsInjector : ApiHookItem(), IDexFind {
 
     override fun unload(classLoader: ClassLoader) {}
 
-    private class SettingsMenuItemClickListener(val activity: Activity) : MenuItem.OnMenuItemClickListener {
+    private class SettingsMenuItemClickListener(val activity: Activity) :
+        MenuItem.OnMenuItemClickListener {
         override fun onMenuItemClick(p0: MenuItem): Boolean {
             try {
                 MainSettingsDialog(activity).show()

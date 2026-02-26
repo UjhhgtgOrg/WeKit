@@ -19,6 +19,7 @@ object WePkgDispatcher : ApiHookItem(), IDexFind {
 
     private const val TAG = "WePkgDispatcher"
     private val classOnGYNetEnd by dexClass()
+
     // 缓存最近 10 条记录，避免因脚本引起的无限递归
     private val recentRequests = ConcurrentHashMap<String, Long>()
 
@@ -40,10 +41,12 @@ object WePkgDispatcher : ApiHookItem(), IDexFind {
                     try {
                         val reqWrapper = XposedHelpers.callMethod(v0Var, "getReqObj")
                         val reqPbObj = XposedHelpers.getObjectField(reqWrapper, "a") // m.a
-                        val reqBytes = XposedHelpers.callMethod(reqPbObj, "toByteArray") as ByteArray
+                        val reqBytes =
+                            XposedHelpers.callMethod(reqPbObj, "toByteArray") as ByteArray
 
                         // 构造唯一标识符
-                        val key = "$cgiId|$uri|${reqWrapper?.javaClass?.name}|${reqPbObj?.javaClass?.name}|${reqBytes.contentToString()}"
+                        val key =
+                            "$cgiId|$uri|${reqWrapper?.javaClass?.name}|${reqPbObj?.javaClass?.name}|${reqBytes.contentToString()}"
                         // 检查是否在缓存中且时间间隔小于500毫秒
                         val currentTime = System.currentTimeMillis()
                         val lastTime = recentRequests[key]
@@ -119,7 +122,8 @@ object WePkgDispatcher : ApiHookItem(), IDexFind {
 
                                         if (respWrapper != null) {
                                             val respPbObj = try {
-                                                respWrapper.asResolver().firstField { name = "a" }.get()
+                                                respWrapper.asResolver().firstField { name = "a" }
+                                                    .get()
                                             } catch (_: NoSuchFieldException) {
                                                 null
                                             }
@@ -127,7 +131,8 @@ object WePkgDispatcher : ApiHookItem(), IDexFind {
                                             if (respPbObj != null) {
                                                 try {
                                                     val originalRespBytes = respPbObj.asResolver()
-                                                        .firstMethod { name = "toByteArray" }.invoke() as ByteArray
+                                                        .firstMethod { name = "toByteArray" }
+                                                        .invoke() as ByteArray
                                                     WePkgManager.handleResponseTamper(
                                                         uri,
                                                         cgiId,
@@ -143,9 +148,9 @@ object WePkgDispatcher : ApiHookItem(), IDexFind {
                                                             "Response Tampered (PB): $uri"
                                                         )
                                                     }
+                                                } catch (_: NoSuchElementException) {
+                                                } catch (_: NoSuchMethodException) {
                                                 }
-                                                catch (_: NoSuchElementException) {}
-                                                catch (_: NoSuchMethodException) {}
                                             }
                                         }
                                     }
@@ -155,11 +160,13 @@ object WePkgDispatcher : ApiHookItem(), IDexFind {
                             }
                         }
 
-                        return@newProxyInstance method.invoke(originalCallback, *(args ?: emptyArray()))
+                        return@newProxyInstance method.invoke(
+                            originalCallback,
+                            *(args ?: emptyArray())
+                        )
                     }
                 }
-            }
-            catch (ex: IllegalStateException) {
+            } catch (ex: IllegalStateException) {
                 WeLogger.w(TAG, "exception occurred during entry: dex not resolved yet", ex)
             }
         }

@@ -28,14 +28,17 @@ object RemoveChatMessageContextMenuItems : BaseClickableFunctionHookItem(), IDex
     private val methodAddMenuItem2 by dexMethod()
     private val config = WeConfig.getDefaultConfig()
     private const val KEY_REMOVED_ITEM_NAMES = "removed_menu_item_names"
-    private const val DEFAULT_REMOVED_ITEM_NAMES = "收藏,提醒,翻译,搜一搜,编辑,打开,相关表情,合拍,查看专辑,静音播放,听筒播放,背景播放"
+    private const val DEFAULT_REMOVED_ITEM_NAMES =
+        "收藏,提醒,翻译,搜一搜,编辑,打开,相关表情,合拍,查看专辑,静音播放,听筒播放,背景播放"
 
     override fun entry(classLoader: ClassLoader) {
         methodAddMenuItem1.toDexMethod {
             hook {
                 afterIfEnabled { param ->
                     val name = param.args[3] as CharSequence
-                    val removedNames = config.getStringPrek(KEY_REMOVED_ITEM_NAMES, DEFAULT_REMOVED_ITEM_NAMES).split(',')
+                    val removedNames =
+                        config.getStringPrek(KEY_REMOVED_ITEM_NAMES, DEFAULT_REMOVED_ITEM_NAMES)
+                            .split(',')
 
                     if (removedNames.contains(name)) {
                         val list = param.thisObject.asResolver()
@@ -51,7 +54,9 @@ object RemoveChatMessageContextMenuItems : BaseClickableFunctionHookItem(), IDex
             hook {
                 afterIfEnabled { param ->
                     val name = param.args[3] as CharSequence
-                    val removedNames = config.getStringPrek(KEY_REMOVED_ITEM_NAMES, DEFAULT_REMOVED_ITEM_NAMES).split(',')
+                    val removedNames =
+                        config.getStringPrek(KEY_REMOVED_ITEM_NAMES, DEFAULT_REMOVED_ITEM_NAMES)
+                            .split(',')
 
                     if (removedNames.contains(name)) {
                         val list = param.thisObject.asResolver()
@@ -76,7 +81,12 @@ object RemoveChatMessageContextMenuItems : BaseClickableFunctionHookItem(), IDex
                 }
 
                 name = "add"
-                paramTypes(Int::class.java, Int::class.java, Int::class.java, CharSequence::class.java)
+                paramTypes(
+                    Int::class.java,
+                    Int::class.java,
+                    Int::class.java,
+                    CharSequence::class.java
+                )
                 returnType(MenuItem::class.java)
             }
         }
@@ -84,7 +94,13 @@ object RemoveChatMessageContextMenuItems : BaseClickableFunctionHookItem(), IDex
         methodAddMenuItem2.find(dexKit, descriptors) {
             matcher {
                 declaredClass(methodAddMenuItem1.method.declaringClass)
-                paramTypes(Int::class.java, Int::class.java, Int::class.java, CharSequence::class.java, Int::class.java)
+                paramTypes(
+                    Int::class.java,
+                    Int::class.java,
+                    Int::class.java,
+                    CharSequence::class.java,
+                    Int::class.java
+                )
                 returnType(MenuItem::class.java)
             }
         }
@@ -94,17 +110,30 @@ object RemoveChatMessageContextMenuItems : BaseClickableFunctionHookItem(), IDex
 
     override fun onClick(context: Context) {
         showComposeDialog(context) { onDismiss ->
-            var removedNames by remember { mutableStateOf(config.getStringPrek(KEY_REMOVED_ITEM_NAMES, DEFAULT_REMOVED_ITEM_NAMES)) }
-            AlertDialog(onDismissRequest = onDismiss,
+            var removedNames by remember {
+                mutableStateOf(
+                    config.getStringPrek(
+                        KEY_REMOVED_ITEM_NAMES,
+                        DEFAULT_REMOVED_ITEM_NAMES
+                    )
+                )
+            }
+            AlertDialog(
+                onDismissRequest = onDismiss,
                 title = { Text("移除消息菜单项") },
-                text = { TextField(value = removedNames,
-                    onValueChange = { removedNames = it },
-                    label = { Text("要移除的菜单项名称 (以逗号分割):") }) },
+                text = {
+                    TextField(
+                        value = removedNames,
+                        onValueChange = { removedNames = it },
+                        label = { Text("要移除的菜单项名称 (以逗号分割):") })
+                },
                 dismissButton = { TextButton(onClick = onDismiss) { Text("取消") } },
-                confirmButton = { TextButton(onClick = {
-                    config.putString(Constants.PrekXXX + KEY_REMOVED_ITEM_NAMES, removedNames)
-                    onDismiss()
-                }) { Text("确定") } })
+                confirmButton = {
+                    TextButton(onClick = {
+                        config.putString(Constants.PrekXXX + KEY_REMOVED_ITEM_NAMES, removedNames)
+                        onDismiss()
+                    }) { Text("确定") }
+                })
         }
     }
 }

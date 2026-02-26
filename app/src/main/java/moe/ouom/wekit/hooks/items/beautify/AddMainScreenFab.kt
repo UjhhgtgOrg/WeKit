@@ -93,7 +93,10 @@ object AddMainScreenFab : BaseSwitchFunctionHookItem() {
 
     fun removeProvider(provider: IMenuItemsProvider) {
         val removed = providers.remove(provider)
-        WeLogger.i(TAG, "provider remove ${if (removed) "succeeded" else "failed"}, current provider count: ${providers.size}")
+        WeLogger.i(
+            TAG,
+            "provider remove ${if (removed) "succeeded" else "failed"}, current provider count: ${providers.size}"
+        )
     }
 
     private const val TAG = "AddMainScreenFab"
@@ -118,24 +121,34 @@ object AddMainScreenFab : BaseSwitchFunctionHookItem() {
 
                     val menuItems = mutableMapOf(
                         "扫一扫" to (Icons.Default.QrCodeScanner to {
-                            startActivityByName(activity,
-                                "com.tencent.mm.plugin.scanner.ui.BaseScanUI")
+                            startActivityByName(
+                                activity,
+                                "com.tencent.mm.plugin.scanner.ui.BaseScanUI"
+                            )
                         }),
                         "朋友圈" to (Icons.Default.Camera to {
-                            startActivityByName(activity,
-                                "com.tencent.mm.plugin.sns.ui.improve.ImproveSnsTimelineUI")
+                            startActivityByName(
+                                activity,
+                                "com.tencent.mm.plugin.sns.ui.improve.ImproveSnsTimelineUI"
+                            )
                         }),
                         "钱包" to (Icons.Default.Wallet to {
-                            startActivityByName(activity,
-                                "com.tencent.mm.plugin.mall.ui.MallIndexUIv2")
+                            startActivityByName(
+                                activity,
+                                "com.tencent.mm.plugin.mall.ui.MallIndexUIv2"
+                            )
                         }),
                         "视频号" to (Icons.Default.Movie to {
-                            startActivityByName(activity,
-                                "com.tencent.mm.plugin.finder.ui.FinderHomeAffinityUI")
+                            startActivityByName(
+                                activity,
+                                "com.tencent.mm.plugin.finder.ui.FinderHomeAffinityUI"
+                            )
                         }),
                         "设置" to (Icons.Default.Settings to {
-                            startActivityByName(activity,
-                                "com.tencent.mm.plugin.setting.ui.setting_new.MainSettingsUI")
+                            startActivityByName(
+                                activity,
+                                "com.tencent.mm.plugin.setting.ui.setting_new.MainSettingsUI"
+                            )
                         }),
                         "模块设置" to (Icons.Default.Extension to {
                             MainSettingsDialog(activity).show()
@@ -146,16 +159,20 @@ object AddMainScreenFab : BaseSwitchFunctionHookItem() {
                         "全部已读" to (Icons.Default.Update to {
                             WeConversationApi.markAllAsRead()
                             ToastUtils.showToast("已将全部未读消息标为已读")
-                        }))
+                        })
+                    )
 
                     for (provider in providers) {
                         try {
                             for (item in provider.getMenuItems(activity)) {
                                 menuItems[item.text] = item.icon to item.onClick
                             }
-                        }
-                        catch (ex: Exception) {
-                            WeLogger.e(TAG, "provider ${provider.javaClass.name} threw while providing menu items", ex)
+                        } catch (ex: Exception) {
+                            WeLogger.e(
+                                TAG,
+                                "provider ${provider.javaClass.name} threw while providing menu items",
+                                ex
+                            )
                         }
                     }
 
@@ -185,8 +202,10 @@ object AddMainScreenFab : BaseSwitchFunctionHookItem() {
                                 // WeChat doesn't follow MaterialTheme so we don't use that too
                                 // or else different color palettes clash and it's hideous
                                 val isDark = isSystemInDarkTheme()
-                                val backgroundColor = if (isDark) Color(0xFF191919) else Color(0xFFF7F7F7)
-                                val activeColor = if (isDark) Color(0xFF06A854) else Color(0xFF09A854)
+                                val backgroundColor =
+                                    if (isDark) Color(0xFF191919) else Color(0xFFF7F7F7)
+                                val activeColor =
+                                    if (isDark) Color(0xFF06A854) else Color(0xFF09A854)
 
                                 var expanded by remember { mutableStateOf(false) }
 
@@ -246,7 +265,9 @@ object AddMainScreenFab : BaseSwitchFunctionHookItem() {
                                                 ) {
                                                     Row(
                                                         verticalAlignment = Alignment.CenterVertically,
-                                                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                                        horizontalArrangement = Arrangement.spacedBy(
+                                                            12.dp
+                                                        )
                                                     ) {
                                                         // The Floating Label
                                                         Surface(
@@ -257,7 +278,10 @@ object AddMainScreenFab : BaseSwitchFunctionHookItem() {
                                                         ) {
                                                             Text(
                                                                 text = name,
-                                                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                                                modifier = Modifier.padding(
+                                                                    horizontal = 12.dp,
+                                                                    vertical = 6.dp
+                                                                ),
                                                                 color = activeColor,
                                                                 fontSize = 14.sp,
                                                                 fontWeight = FontWeight.Medium
@@ -272,9 +296,15 @@ object AddMainScreenFab : BaseSwitchFunctionHookItem() {
                                                             },
                                                             containerColor = backgroundColor,
                                                             shape = CircleShape,
-                                                            elevation = FloatingActionButtonDefaults.elevation(2.dp)
+                                                            elevation = FloatingActionButtonDefaults.elevation(
+                                                                2.dp
+                                                            )
                                                         ) {
-                                                            Icon(pair.first, contentDescription = null, tint = activeColor)
+                                                            Icon(
+                                                                pair.first,
+                                                                contentDescription = null,
+                                                                tint = activeColor
+                                                            )
                                                         }
                                                     }
                                                 }

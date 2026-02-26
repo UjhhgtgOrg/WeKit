@@ -32,7 +32,10 @@ object WeStartActivityListenerApi : ApiHookItem() {
 
     fun removeListener(listener: IStartActivityListener) {
         val removed = listeners.remove(listener)
-        WeLogger.i(TAG, "listener remove ${if (removed) "succeeded" else "failed"}, current listener count: ${listeners.size}")
+        WeLogger.i(
+            TAG,
+            "listener remove ${if (removed) "succeeded" else "failed"}, current listener count: ${listeners.size}"
+        )
     }
 
     override fun entry(classLoader: ClassLoader) {

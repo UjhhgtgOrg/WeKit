@@ -16,7 +16,8 @@ import kotlin.system.exitProcess
  */
 class JavaCrashHandler(context: Context) : Thread.UncaughtExceptionHandler {
     private val context: Context = context.applicationContext
-    private val defaultHandler: Thread.UncaughtExceptionHandler? = Thread.getDefaultUncaughtExceptionHandler()
+    private val defaultHandler: Thread.UncaughtExceptionHandler? =
+        Thread.getDefaultUncaughtExceptionHandler()
 
     /**
      * 获取崩溃日志管理器

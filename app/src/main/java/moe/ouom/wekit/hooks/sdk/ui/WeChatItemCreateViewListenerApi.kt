@@ -17,8 +17,10 @@ import java.util.concurrent.CopyOnWriteArrayList
 object WeChatItemCreateViewListenerApi : ApiHookItem(), IDexFind {
 
     interface ICreateViewListener {
-        fun onCreateView(param: XC_MethodHook.MethodHookParam, view: View,
-                         chattingContext: Any, msgInfo: MessageInfo)
+        fun onCreateView(
+            param: XC_MethodHook.MethodHookParam, view: View,
+            chattingContext: Any, msgInfo: MessageInfo
+        )
     }
 
     private val listeners = CopyOnWriteArrayList<ICreateViewListener>()
@@ -34,7 +36,10 @@ object WeChatItemCreateViewListenerApi : ApiHookItem(), IDexFind {
 
     fun removeListener(listener: ICreateViewListener) {
         val removed = listeners.remove(listener)
-        WeLogger.i(TAG, "listener remove ${if (removed) "succeeded" else "failed"}, current listener count: ${listeners.size}")
+        WeLogger.i(
+            TAG,
+            "listener remove ${if (removed) "succeeded" else "failed"}, current listener count: ${listeners.size}"
+        )
     }
 
     private const val TAG = "WeChatItemCreateViewListenerApi"
@@ -65,9 +70,13 @@ object WeChatItemCreateViewListenerApi : ApiHookItem(), IDexFind {
 
                     for (listener in listeners) {
                         try {
-                            listener.onCreateView(param, view, chattingContext, MessageInfo(msgInfo))
-                        }
-                        catch (ex: Exception) {
+                            listener.onCreateView(
+                                param,
+                                view,
+                                chattingContext,
+                                MessageInfo(msgInfo)
+                            )
+                        } catch (ex: Exception) {
                             WeLogger.e(TAG, "listener ${listener.javaClass.name} threw", ex)
                         }
                     }
@@ -81,7 +90,11 @@ object WeChatItemCreateViewListenerApi : ApiHookItem(), IDexFind {
 
         methodChatItemOnBindView.find(dexKit, descriptors) {
             matcher {
-                usingEqStrings("MicroMsg.MvvmChattingItem", "dealItemView", "[onBindView] finish position:")
+                usingEqStrings(
+                    "MicroMsg.MvvmChattingItem",
+                    "dealItemView",
+                    "[onBindView] finish position:"
+                )
             }
         }
 

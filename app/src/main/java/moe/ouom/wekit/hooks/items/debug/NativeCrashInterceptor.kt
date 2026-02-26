@@ -275,7 +275,8 @@ object NativeCrashInterceptor : BaseSwitchFunctionHookItem() {
                     dismissPendingDialog()
 
                     // 使用 CommonContextWrapper 包装 Activity Context
-                    val wrappedContext = CommonContextWrapper.Companion.createAppCompatContext(activity)
+                    val wrappedContext =
+                        CommonContextWrapper.createAppCompatContext(activity)
 
                     WeLogger.i(
                         "NativeCrashInterceptor",
@@ -335,7 +336,8 @@ object NativeCrashInterceptor : BaseSwitchFunctionHookItem() {
                     dismissPendingDialog()
 
                     // 使用 CommonContextWrapper 包装 Activity Context
-                    val wrappedContext = CommonContextWrapper.Companion.createAppCompatContext(activity)
+                    val wrappedContext =
+                        CommonContextWrapper.createAppCompatContext(activity)
 
                     @Suppress("DEPRECATION")
                     pendingDialog = MaterialDialog(wrappedContext)
@@ -475,7 +477,7 @@ object NativeCrashInterceptor : BaseSwitchFunctionHookItem() {
      */
     private fun exportLog(activity: Activity, logFile: File) {
         try {
-            val wrappedContext = CommonContextWrapper.Companion.createAppCompatContext(activity)
+            val wrappedContext = CommonContextWrapper.createAppCompatContext(activity)
             val fileName = "native_crash_${logFile.name}"
 
             SafUtils.requestSaveFile(wrappedContext)

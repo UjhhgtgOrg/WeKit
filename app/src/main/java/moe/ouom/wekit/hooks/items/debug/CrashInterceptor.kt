@@ -184,7 +184,8 @@ object CrashInterceptor : BaseSwitchFunctionHookItem() {
             Handler(Looper.getMainLooper()).post {
                 try {
                     dismissPendingDialog()
-                    val wrappedContext = CommonContextWrapper.Companion.createAppCompatContext(activity)
+                    val wrappedContext =
+                        CommonContextWrapper.createAppCompatContext(activity)
 
                     pendingDialog = MaterialDialog(wrappedContext)
                         .title(text = "检测到上次 Java 崩溃")
@@ -231,7 +232,8 @@ object CrashInterceptor : BaseSwitchFunctionHookItem() {
             Handler(Looper.getMainLooper()).post {
                 try {
                     dismissPendingDialog()
-                    val wrappedContext = CommonContextWrapper.Companion.createAppCompatContext(activity)
+                    val wrappedContext =
+                        CommonContextWrapper.createAppCompatContext(activity)
 
                     // 限制显示长度，防止卡死
                     val maxDisplayLength = 15 * 1024
@@ -285,7 +287,7 @@ object CrashInterceptor : BaseSwitchFunctionHookItem() {
      */
     private fun exportLog(activity: Activity, logFile: File) {
         try {
-            val wrappedContext = CommonContextWrapper.Companion.createAppCompatContext(activity)
+            val wrappedContext = CommonContextWrapper.createAppCompatContext(activity)
             val fileName = "crash_${logFile.name}"
 
             SafUtils.requestSaveFile(wrappedContext)

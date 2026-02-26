@@ -12,14 +12,18 @@ object PathUtils {
     val moduleDataPath: Path?
         get() {
             try {
-                val directory = storageDirectory.resolve("Android").resolve("data").resolve(hostInfo.packageName).resolve("files").resolve("WeKit")
+                val directory = storageDirectory.resolve("Android").resolve("data")
+                    .resolve(hostInfo.packageName).resolve("files").resolve("WeKit")
                 return directory.apply {
                     createDirectories()
                 }
+            } catch (_: Exception) {
+                return null
             }
-            catch (_: Exception) { return null }
-    }
+        }
 
     val moduleCachePath: Path?
-        get() { return moduleDataPath?.resolve("cache")?.apply { createDirectories() } }
+        get() {
+            return moduleDataPath?.resolve("cache")?.apply { createDirectories() }
+        }
 }

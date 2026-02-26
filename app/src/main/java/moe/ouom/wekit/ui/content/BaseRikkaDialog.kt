@@ -301,7 +301,8 @@ private fun DialogContent(
     val summaryStates = remember {
         mutableStateMapOf<String, String>().also { map ->
             rows.filterIsInstance<PrefRow.EditText>().forEach { row ->
-                val v = WeConfig.getDefaultConfig().getString(row.configKey, row.defaultValue) ?: row.defaultValue
+                val v = WeConfig.getDefaultConfig().getString(row.configKey, row.defaultValue)
+                    ?: row.defaultValue
                 map[row.configKey] = row.summaryFormatter?.invoke(v)
                     ?: if (v.isEmpty()) row.baseSummary else "${row.baseSummary}: $v"
             }

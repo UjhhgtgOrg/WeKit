@@ -27,7 +27,10 @@ object SkipMiniAppSplashAds : BaseSwitchFunctionHookItem(), IDexFind {
         methodAdDataCallback.find(dexKit, descriptors) {
             searchPackages("com.tencent.mm.plugin.appbrand.jsapi.auth")
             matcher {
-                usingEqStrings("MicroMsg.AppBrand.JsApiAdOperateWXData[AppBrandSplashAd]", "cgi callback, callbackId:%s, service not running or preloaded")
+                usingEqStrings(
+                    "MicroMsg.AppBrand.JsApiAdOperateWXData[AppBrandSplashAd]",
+                    "cgi callback, callbackId:%s, service not running or preloaded"
+                )
             }
         }
 

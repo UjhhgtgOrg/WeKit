@@ -117,7 +117,8 @@ object Initiator {
             if (cref != null) {
                 try {
                     return cref.getDeclaredField("this$0").type
-                } catch (_: ReflectiveOperationException) { }
+                } catch (_: ReflectiveOperationException) {
+                }
             }
         }
         return null

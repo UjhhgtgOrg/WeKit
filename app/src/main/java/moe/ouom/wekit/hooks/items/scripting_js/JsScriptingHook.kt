@@ -39,8 +39,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 @HookItem(path = "脚本/脚本引擎", desc = "点击管理脚本")
 object JsScriptingHook : BaseClickableFunctionHookItem(),
     WeDatabaseListenerApi.IInsertListener,
-    IWePkgInterceptor
-{
+    IWePkgInterceptor {
     private const val TAG = "ScriptingHook"
 
     // type=0 post
@@ -97,14 +96,17 @@ object JsScriptingHook : BaseClickableFunctionHookItem(),
 
         if (table != "message") return
 
-        val isSend  = values.getAsInteger("isSend")  ?: return
+        val isSend = values.getAsInteger("isSend") ?: return
         // if (isSend != 0) return // ignore outgoing
 
-        val talker  = values.getAsString("talker")   ?: return
-        val content = values.getAsString("content")  ?: return
-        val type    = values.getAsInteger("type")    ?: 0
+        val talker = values.getAsString("talker") ?: return
+        val content = values.getAsString("content") ?: return
+        val type = values.getAsInteger("type") ?: 0
 
-        WeLogger.i(TAG, "message received: talker=$talker type=$type content.length=${content.length}")
+        WeLogger.i(
+            TAG,
+            "message received: talker=$talker type=$type content.length=${content.length}"
+        )
 
         JsEngine.executeAllOnMessage(rules, talker, content, type, isSend)
     }
@@ -164,7 +166,9 @@ private fun AutomationSettingsDialogContent(rules: MutableList<JsScript>) {
     var snapshot by remember { mutableStateOf(rules.toList()) }
     var showAddDialog by remember { mutableStateOf(false) }
 
-    fun refresh() { snapshot = rules.toList() }
+    fun refresh() {
+        snapshot = rules.toList()
+    }
 
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(
@@ -191,7 +195,9 @@ private fun AutomationSettingsDialogContent(rules: MutableList<JsScript>) {
                         rule = rule,
                         onToggle = {
                             val idx = rules.indexOfFirst { it.id == rule.id }
-                            if (idx != -1) { rules[idx] = rule.copy(enabled = !rule.enabled) }
+                            if (idx != -1) {
+                                rules[idx] = rule.copy(enabled = !rule.enabled)
+                            }
                             refresh()
                         },
                         onDelete = {
@@ -265,7 +271,9 @@ private fun AddAutomationRuleDialog(onConfirm: (JsScript) -> Unit, onDismiss: ()
                     value = script,
                     onValueChange = { script = it },
                     label = { Text("JavaScript 脚本") },
-                    modifier = Modifier.fillMaxWidth().height(200.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp),
                     placeholder = {
                         Text(
                             "function onMessage(talker, content, type, isSend) {\n" +

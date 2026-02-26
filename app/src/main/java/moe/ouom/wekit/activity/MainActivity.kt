@@ -142,7 +142,7 @@ fun AppContent(onUrlClick: (String) -> Unit) {
         }
 
         if ((isHookEnabled && HostInfo.isInModuleProcess() && !HookStatus.isZygoteHookMode
-            && HookStatus.isTaiChiInstalled(context))
+                    && HookStatus.isTaiChiInstalled(context))
             && HookStatus.hookType == HookStatus.HookType.APP_PATCH
             && "armAll" != AbiUtils.moduleFlavorName
         ) {
@@ -342,10 +342,15 @@ fun AppContent(onUrlClick: (String) -> Unit) {
                 }
 
                 if (showErrorDialog) {
-                    AlertDialog(onDismissRequest = { showErrorDialog = false },
+                    AlertDialog(
+                        onDismissRequest = { showErrorDialog = false },
                         title = { Text("未授予 Root 权限") },
                         text = { Text("请授予 Root 权限以一键强制停止并启动微信") },
-                        confirmButton = { Button(onClick = { showErrorDialog = false }) { Text("确定") } })
+                        confirmButton = {
+                            Button(onClick = {
+                                showErrorDialog = false
+                            }) { Text("确定") }
+                        })
                 }
 
                 HorizontalDivider(

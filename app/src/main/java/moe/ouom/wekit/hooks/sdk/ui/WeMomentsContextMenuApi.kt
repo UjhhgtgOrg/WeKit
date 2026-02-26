@@ -30,6 +30,7 @@ object WeMomentsContextMenuApi : ApiHookItem(), IDexFind {
     fun addOnCreateListener(listener: IOnCreateListener) {
         onCreateCallbacks.add(listener)
     }
+
     fun removeOnCreateListener(listener: IOnCreateListener) {
         onCreateCallbacks.remove(listener)
     }
@@ -37,6 +38,7 @@ object WeMomentsContextMenuApi : ApiHookItem(), IDexFind {
     fun addOnSelectListener(listener: IOnSelectListener) {
         onSelectCallbacks.add(listener)
     }
+
     fun removeOnSelectListener(listener: IOnSelectListener) {
         onSelectCallbacks.remove(listener)
     }
@@ -68,7 +70,10 @@ object WeMomentsContextMenuApi : ApiHookItem(), IDexFind {
         methodOnCreateMenu.find(dexKit, descriptors) {
             searchPackages("com.tencent.mm.plugin.sns.ui.listener")
             matcher {
-                usingStrings("MicroMsg.TimelineOnCreateContextMenuListener", "onMMCreateContextMenu error")
+                usingStrings(
+                    "MicroMsg.TimelineOnCreateContextMenuListener",
+                    "onMMCreateContextMenu error"
+                )
             }
         }
 

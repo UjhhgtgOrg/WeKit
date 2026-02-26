@@ -30,14 +30,17 @@ object QuotedMessageDirectJump : BaseSwitchFunctionHookItem(), IDexFind {
                     val chattingItemHolder = param.args[7]
                     val chattingItem = chattingItemHolder.asResolver()
                         .firstField { type { it != String::class.java } }.get()!!
-                    val msgInfo = methodGetQuoteMessageInfo.method.invoke(null,
+                    val msgInfo = methodGetQuoteMessageInfo.method.invoke(
+                        null,
                         false /* isGroupChat: this arg is ignored */,
                         methodChattingContextGetTalker.method.invoke(chattingContext),
                         longValue,
                         stringValue,
                         msgQuoteItem,
-                        "handleQuoteMsgClick" /* hardcoded in original code */)
-                    methodClickToPositionEvent.method.invoke(null,
+                        "handleQuoteMsgClick" /* hardcoded in original code */
+                    )
+                    methodClickToPositionEvent.method.invoke(
+                        null,
                         chattingContext,
                         chattingItem,
                         msgInfo,
@@ -46,7 +49,8 @@ object QuotedMessageDirectJump : BaseSwitchFunctionHookItem(), IDexFind {
                         stringValue,
                         msgQuoteItem,
                         classEnumQuoteJumpToPositionSource.clazz.asResolver() // java doesn't implicitly cast integer to the upper enum type, so we still have to locate the enum class
-                            .firstMethod { name = "valueOf" }.invoke("QuoteLongClickFromQuoteView"))
+                            .firstMethod { name = "valueOf" }.invoke("QuoteLongClickFromQuoteView")
+                    )
                     param.result = null
                 }
             }
@@ -59,21 +63,30 @@ object QuotedMessageDirectJump : BaseSwitchFunctionHookItem(), IDexFind {
         methodClickEvent.find(dexKit, descriptors) {
             searchPackages("com.tencent.mm.ui.chatting.viewitems")
             matcher {
-                usingEqStrings("MicroMsg.msgquote.QuoteMsgSourceClickLogic", "handleItemClickEvent,quotedMsg is null!")
+                usingEqStrings(
+                    "MicroMsg.msgquote.QuoteMsgSourceClickLogic",
+                    "handleItemClickEvent,quotedMsg is null!"
+                )
             }
         }
 
         methodClickToPositionEvent.find(dexKit, descriptors) {
             matcher {
                 declaredClass(methodClickEvent.method.declaringClass)
-                usingEqStrings("MicroMsg.msgquote.QuoteMsgSourceClickLogic", "handleItemClickToPositionEvent,quotedMsg is null!")
+                usingEqStrings(
+                    "MicroMsg.msgquote.QuoteMsgSourceClickLogic",
+                    "handleItemClickToPositionEvent,quotedMsg is null!"
+                )
             }
         }
 
         methodGetQuoteMessageInfo.find(dexKit, descriptors) {
             matcher {
                 declaredClass(methodClickEvent.method.declaringClass)
-                usingEqStrings("MicroMsg.msgquote.QuoteMsgSourceClickLogic", "getQuoteMsgInfo %s msgId:%s msgSvrId:%s msgTaker:%s MsgQuoteItem(type:%s svrid:%s content:%s)")
+                usingEqStrings(
+                    "MicroMsg.msgquote.QuoteMsgSourceClickLogic",
+                    "getQuoteMsgInfo %s msgId:%s msgSvrId:%s msgTaker:%s MsgQuoteItem(type:%s svrid:%s content:%s)"
+                )
             }
         }
 

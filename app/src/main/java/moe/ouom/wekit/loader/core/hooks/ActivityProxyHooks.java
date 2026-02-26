@@ -11,13 +11,24 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
-import android.os.*;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.IBinder;
+import android.os.Looper;
+import android.os.Message;
+import android.os.PersistableBundle;
+import android.os.TestLooperManager;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import java.lang.reflect.*;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -125,7 +136,8 @@ public class ActivityProxyHooks {
             var getMethod = singletonClass.getDeclaredMethod("get");
             getMethod.setAccessible(true);
             getMethod.invoke(gDefault);
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
 
         var mInstance = mInstanceField.get(gDefault);
         if (mInstance == null) {
@@ -466,7 +478,8 @@ public class ActivityProxyHooks {
                         var f = Activity.class.getDeclaredField("mClassLoader");
                         f.setAccessible(true);
                         f.set(activity, hybridCL);
-                    } catch (Throwable ignored) {}
+                    } catch (Throwable ignored) {
+                    }
 
                     var intent = activity.getIntent();
                     if (intent != null) {

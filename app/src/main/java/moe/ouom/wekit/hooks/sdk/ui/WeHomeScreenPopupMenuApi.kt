@@ -22,9 +22,11 @@ object WeHomeScreenPopupMenuApi : ApiHookItem(), IDexFind {
         fun getMenuItems(param: XC_MethodHook.MethodHookParam): List<MenuItem>
     }
 
-    data class MenuItem(val id: Int,
-                        val text: String, val drawableResourceId: Int,
-                        val onClick: () -> Unit)
+    data class MenuItem(
+        val id: Int,
+        val text: String, val drawableResourceId: Int,
+        val onClick: () -> Unit
+    )
 
     private val providers = CopyOnWriteArrayList<IMenuItemsProvider>()
 
@@ -39,7 +41,10 @@ object WeHomeScreenPopupMenuApi : ApiHookItem(), IDexFind {
 
     fun removeProvider(provider: IMenuItemsProvider) {
         val removed = providers.remove(provider)
-        WeLogger.i(TAG, "provider remove ${if (removed) "succeeded" else "failed"}, current provider count: ${providers.size}")
+        WeLogger.i(
+            TAG,
+            "provider remove ${if (removed) "succeeded" else "failed"}, current provider count: ${providers.size}"
+        )
     }
 
     private const val TAG = "WeHomeScreenPopupMenuApi"
@@ -54,6 +59,7 @@ object WeHomeScreenPopupMenuApi : ApiHookItem(), IDexFind {
             hook {
                 afterIfEnabled { param ->
                     val thisObj = param.thisObject
+
                     @Suppress("UNCHECKED_CAST")
                     val items = thisObj.asResolver()
                         .firstField {
@@ -71,13 +77,23 @@ object WeHomeScreenPopupMenuApi : ApiHookItem(), IDexFind {
                     for (provider in providers) {
                         try {
                             for (item in provider.getMenuItems(param)) {
-                                val itemData = classMenuItemData.clazz.createInstance(item.id, item.text, "", item.drawableResourceId, 0)
-                                val itemWrapper = classMenuItemWrapper.clazz.createInstance(itemData)
+                                val itemData = classMenuItemData.clazz.createInstance(
+                                    item.id,
+                                    item.text,
+                                    "",
+                                    item.drawableResourceId,
+                                    0
+                                )
+                                val itemWrapper =
+                                    classMenuItemWrapper.clazz.createInstance(itemData)
                                 items.put(items.size, itemWrapper)
                             }
-                        }
-                        catch (ex: Exception) {
-                            WeLogger.e(TAG, "provider ${provider.javaClass.name} threw while providing menu items", ex)
+                        } catch (ex: Exception) {
+                            WeLogger.e(
+                                TAG,
+                                "provider ${provider.javaClass.name} threw while providing menu items",
+                                ex
+                            )
                         }
                     }
                     baseAdapter.notifyDataSetChanged()
@@ -89,6 +105,7 @@ object WeHomeScreenPopupMenuApi : ApiHookItem(), IDexFind {
             hook {
                 beforeIfEnabled { param ->
                     val thisObj = param.thisObject
+
                     @Suppress("UNCHECKED_CAST")
                     val items = thisObj.asResolver()
                         .firstField {
@@ -109,9 +126,12 @@ object WeHomeScreenPopupMenuApi : ApiHookItem(), IDexFind {
                                     item.onClick()
                                     param.result = null
                                     return@beforeIfEnabled
-                                }
-                                catch (ex: Exception) {
-                                    WeLogger.e(TAG, "provider ${provider.javaClass.name} threw while handling click event", ex)
+                                } catch (ex: Exception) {
+                                    WeLogger.e(
+                                        TAG,
+                                        "provider ${provider.javaClass.name} threw while handling click event",
+                                        ex
+                                    )
                                 }
                             }
                         }
@@ -127,7 +147,10 @@ object WeHomeScreenPopupMenuApi : ApiHookItem(), IDexFind {
         methodAddItem.find(dexKit, descriptors) {
             searchPackages("com.tencent.mm.ui")
             matcher {
-                usingEqStrings("MicroMsg.PlusSubMenuHelper", "dyna plus config is null, we use default one")
+                usingEqStrings(
+                    "MicroMsg.PlusSubMenuHelper",
+                    "dyna plus config is null, we use default one"
+                )
             }
         }
 

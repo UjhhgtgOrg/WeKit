@@ -9,7 +9,8 @@ import moe.ouom.wekit.hooks.core.annotation.HookItem
 object AutoEnableNoCompressOnSendMedia : BaseSwitchFunctionHookItem() {
 
     override fun entry(classLoader: ClassLoader) {
-        for (clsName in setOf("com.tencent.mm.plugin.gallery.ui.AlbumPreviewUI",
+        for (clsName in setOf(
+            "com.tencent.mm.plugin.gallery.ui.AlbumPreviewUI",
             "com.tencent.mm.plugin.gallery.ui.ImagePreviewUI"
         )) {
             clsName.toClass(classLoader).hookBefore("onCreate") { param ->

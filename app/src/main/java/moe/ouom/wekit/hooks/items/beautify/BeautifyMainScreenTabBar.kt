@@ -34,7 +34,10 @@ import moe.ouom.wekit.hooks.sdk.ui.WeMainActivityBeautifyApi
 import moe.ouom.wekit.ui.utils.XposedLifecycleOwner
 import moe.ouom.wekit.utils.log.WeLogger
 
-@HookItem(path = "界面美化/美化首页底部导航栏", desc = "将首页底部导航栏替换为 Jetpack Compose 组件")
+@HookItem(
+    path = "界面美化/美化首页底部导航栏",
+    desc = "将首页底部导航栏替换为 Jetpack Compose 组件"
+)
 object BeautifyMainScreenTabBar : BaseSwitchFunctionHookItem() {
 
     private const val TAG = "BeautifyMainScreenTabBar"
@@ -107,9 +110,11 @@ object BeautifyMainScreenTabBar : BaseSwitchFunctionHookItem() {
                                 // WeChat doesn't follow MaterialTheme so we don't use that too
                                 // or else different color palettes clash and it's hideous
                                 val isDark = isSystemInDarkTheme()
-                                val backgroundColor = if (isDark) Color(0xFF191919) else Color(0xFFF7F7F7)
+                                val backgroundColor =
+                                    if (isDark) Color(0xFF191919) else Color(0xFFF7F7F7)
                                 val activeColor = Color(0xFF07C160)
-                                val inactiveColor = if (isDark) Color(0xFF999999) else Color(0xFF181818)
+                                val inactiveColor =
+                                    if (isDark) Color(0xFF999999) else Color(0xFF181818)
 
                                 Row(
                                     modifier = Modifier
@@ -130,9 +135,11 @@ object BeautifyMainScreenTabBar : BaseSwitchFunctionHookItem() {
                                             currentIndex -> {
                                                 lerpColor(activeColor, inactiveColor, offset)
                                             }
+
                                             currentIndex + 1 -> {
                                                 lerpColor(inactiveColor, activeColor, offset)
                                             }
+
                                             else -> inactiveColor
                                         }
 
@@ -140,7 +147,9 @@ object BeautifyMainScreenTabBar : BaseSwitchFunctionHookItem() {
                                             onClick = {
                                                 methodOnTabClick.invoke(index)
                                             },
-                                            modifier = Modifier.weight(1f).fillMaxHeight()
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .fillMaxHeight()
                                         ) {
                                             Icon(
                                                 imageVector = icon,
@@ -151,7 +160,7 @@ object BeautifyMainScreenTabBar : BaseSwitchFunctionHookItem() {
                                     }
                                 }
                             }
-                    })
+                        })
                 }
             }
         }

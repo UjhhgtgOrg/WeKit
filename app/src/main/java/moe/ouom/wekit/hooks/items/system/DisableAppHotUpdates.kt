@@ -23,10 +23,11 @@ object DisableAppHotUpdates : BaseSwitchFunctionHookItem() {
             if (file.exists()) {
                 file.deleteRecursively()
             }
+        } catch (_: FileSystemException) {
         }
-        catch (_: FileSystemException) { }
 
-        val tinkerCls = "com.tencent.tinker.loader.shareutil.ShareTinkerInternals".toClass(classLoader)
+        val tinkerCls =
+            "com.tencent.tinker.loader.shareutil.ShareTinkerInternals".toClass(classLoader)
 
         tinkerCls.asResolver()
             .method {

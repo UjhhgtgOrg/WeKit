@@ -29,23 +29,29 @@ import moe.ouom.wekit.utils.log.WeLogger
 import java.net.HttpURLConnection
 import java.net.URL
 
-@HookItem(path = "通知/通知进化", desc = "让应用的新消息通知更易用\n1. '快速回复' 按钮\n2. '标记为已读' 按钮\n3. 使用原生对话样式 (MessagingStyle)")
+@HookItem(
+    path = "通知/通知进化",
+    desc = "让应用的新消息通知更易用\n1. '快速回复' 按钮\n2. '标记为已读' 按钮\n3. 使用原生对话样式 (MessagingStyle)"
+)
 object NotificationEvolved : BaseSwitchFunctionHookItem() {
 
     private const val TAG = "NotificationEvolved"
     private const val ACTION_REPLY = "${PackageConstants.PACKAGE_NAME_WECHAT}.ACTION_WEKIT_REPLY"
-    private const val ACTION_MARK_READ = "${PackageConstants.PACKAGE_NAME_WECHAT}.ACTION_WEKIT_MARK_READ"
+    private const val ACTION_MARK_READ =
+        "${PackageConstants.PACKAGE_NAME_WECHAT}.ACTION_WEKIT_MARK_READ"
 
     // cache friends to avoid repeating sql queries
     // TODO: build a sql statement to directly query target contact
     private val friends by lazy { WeDatabaseApi.getFriends() }
+
     // TODO: see if we can retrieve avatar icon from local storage instead of remote
     private var meAvatarIcon: Icon? = null
 
     val notificationReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             val targetWxId = intent.getStringExtra("extra_target_wxid") ?: return
-            val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            val notificationManager =
+                context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
             when (intent.action) {
                 ACTION_REPLY -> {
@@ -106,13 +112,16 @@ object NotificationEvolved : BaseSwitchFunctionHookItem() {
                 }
 
                 val builder = param.thisObject as Notification.Builder
-                val notification = builder.asResolver().firstField { type = Notification::class }.get() as Notification
+                val notification = builder.asResolver().firstField { type = Notification::class }
+                    .get() as Notification
                 val channelId = notification.channelId
 
                 if (channelId == "message_channel_new_id") {
 
                     val title = notification.extras.getString(Notification.EXTRA_TITLE) ?: "Unknown"
-                    val rawText = notification.extras.getCharSequence(Notification.EXTRA_TEXT)?.toString() ?: ""
+                    val rawText =
+                        notification.extras.getCharSequence(Notification.EXTRA_TEXT)?.toString()
+                            ?: ""
 
                     val matchResult = multiMessageRegex.find(rawText)
                     var cleanText = if (matchResult != null) {
@@ -130,7 +139,8 @@ object NotificationEvolved : BaseSwitchFunctionHookItem() {
                         .replace("[转账]", "\uD83D\uDCB5")
 
                     // 1. Resolve exact WXID immediately during notification creation
-                    val friend = friends.firstOrNull { it.nickname == title || it.remarkName == title }
+                    val friend =
+                        friends.firstOrNull { it.nickname == title || it.remarkName == title }
                     val targetWxid = friend?.wxid
 
                     if (targetWxid == null) {

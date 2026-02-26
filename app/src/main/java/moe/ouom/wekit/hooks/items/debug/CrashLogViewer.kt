@@ -72,7 +72,8 @@ object CrashLogViewer : BaseClickableFunctionHookItem() {
 
             Handler(Looper.getMainLooper()).post {
                 try {
-                    val wrappedContext = CommonContextWrapper.Companion.createAppCompatContext(context)
+                    val wrappedContext =
+                        CommonContextWrapper.createAppCompatContext(context)
 
                     val listDialog = MaterialDialog(wrappedContext)
                         .title(text = "崩溃日志列表 (共${logFiles.size}条)")
@@ -119,7 +120,8 @@ object CrashLogViewer : BaseClickableFunctionHookItem() {
 
             Handler(Looper.getMainLooper()).post {
                 try {
-                    val wrappedContext = CommonContextWrapper.Companion.createAppCompatContext(context)
+                    val wrappedContext =
+                        CommonContextWrapper.createAppCompatContext(context)
 
                     val optionsDialog = MaterialDialog(wrappedContext)
                         .title(text = logFile.name)
@@ -181,7 +183,8 @@ object CrashLogViewer : BaseClickableFunctionHookItem() {
 
             Handler(Looper.getMainLooper()).post {
                 try {
-                    val wrappedContext = CommonContextWrapper.Companion.createAppCompatContext(context)
+                    val wrappedContext =
+                        CommonContextWrapper.createAppCompatContext(context)
 
                     // 创建可选择文本的对话框
                     val dialog = MaterialDialog(wrappedContext)
@@ -270,7 +273,8 @@ object CrashLogViewer : BaseClickableFunctionHookItem() {
         try {
             Handler(Looper.getMainLooper()).post {
                 try {
-                    val wrappedContext = CommonContextWrapper.Companion.createAppCompatContext(context)
+                    val wrappedContext =
+                        CommonContextWrapper.createAppCompatContext(context)
 
                     SafUtils.requestSaveFile(wrappedContext)
                         .setDefaultFileName("wekit_${logFile.name}")
@@ -335,7 +339,7 @@ object CrashLogViewer : BaseClickableFunctionHookItem() {
     private fun confirmDeleteLog(context: Context, logFile: File) {
         Handler(Looper.getMainLooper()).post {
             try {
-                val wrappedContext = CommonContextWrapper.Companion.createAppCompatContext(context)
+                val wrappedContext = CommonContextWrapper.createAppCompatContext(context)
 
                 MaterialDialog(wrappedContext)
                     .title(text = "确认删除")
@@ -379,7 +383,7 @@ object CrashLogViewer : BaseClickableFunctionHookItem() {
     private fun confirmDeleteAllLogs(context: Context) {
         Handler(Looper.getMainLooper()).post {
             try {
-                val wrappedContext = CommonContextWrapper.Companion.createAppCompatContext(context)
+                val wrappedContext = CommonContextWrapper.createAppCompatContext(context)
 
                 MaterialDialog(wrappedContext)
                     .title(text = "确认删除")

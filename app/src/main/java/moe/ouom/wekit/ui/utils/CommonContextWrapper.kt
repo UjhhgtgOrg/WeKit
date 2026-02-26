@@ -123,7 +123,8 @@ class CommonContextWrapper(base: Context?, themeResId: Int) : ContextWrapper(bas
                 try {
                     val view = createView(name, prefix, attrs)
                     if (view != null) return view
-                } catch (_: ClassNotFoundException) { }
+                } catch (_: ClassNotFoundException) {
+                }
             }
             return super.onCreateView(name, attrs)
         }

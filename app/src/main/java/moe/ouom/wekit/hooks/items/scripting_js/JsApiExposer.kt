@@ -65,7 +65,8 @@ object JsApiExposer {
         val httpObj = NativeObject()
 
         // http.get(url, params?, headers?)
-        ScriptableObject.putProperty(httpObj, "get",
+        ScriptableObject.putProperty(
+            httpObj, "get",
             object : BaseFunction() {
                 override fun call(
                     cx: Context,
@@ -77,7 +78,10 @@ object JsApiExposer {
                     val params = args.getOrNull(1) as? NativeObject
                     val headers = args.getOrNull(2) as? NativeObject
 
-                    WeLogger.i(TAG_HTTP_API, "http.get invoked: url=$url params=$params headers=$headers")
+                    WeLogger.i(
+                        TAG_HTTP_API,
+                        "http.get invoked: url=$url params=$params headers=$headers"
+                    )
 
                     return try {
                         httpGet(url, params, headers)
@@ -90,7 +94,8 @@ object JsApiExposer {
         )
 
         // http.post(url, form_data_body?, json_body?, headers?)
-        ScriptableObject.putProperty(httpObj, "post",
+        ScriptableObject.putProperty(
+            httpObj, "post",
             object : BaseFunction() {
                 override fun call(
                     cx: Context,
@@ -103,7 +108,10 @@ object JsApiExposer {
                     val jsonBody = args.getOrNull(2) as? NativeObject
                     val headers = args.getOrNull(3) as? NativeObject
 
-                    WeLogger.i(TAG_HTTP_API, "http.post invoked: url=$url formData=$formData jsonBody=$jsonBody headers=$headers")
+                    WeLogger.i(
+                        TAG_HTTP_API,
+                        "http.post invoked: url=$url formData=$formData jsonBody=$jsonBody headers=$headers"
+                    )
 
                     return try {
                         httpPost(url, formData, jsonBody, headers)
@@ -116,7 +124,8 @@ object JsApiExposer {
         )
 
         // http.download(url, filename?) -> { ok: Boolean, path: String }
-        ScriptableObject.putProperty(httpObj, "download",
+        ScriptableObject.putProperty(
+            httpObj, "download",
             object : BaseFunction() {
                 override fun call(
                     cx: Context,
@@ -141,7 +150,10 @@ object JsApiExposer {
                         if (cacheDir.isDirectory()) {
                             // drop cache if size too large
                             if (cacheDir.fileSize() / 1024 / 1024 >= MAX_CACHE_SIZE_IN_MIB) {
-                                WeLogger.w(TAG, "http.download cache size too large, dropping cache...")
+                                WeLogger.w(
+                                    TAG,
+                                    "http.download cache size too large, dropping cache..."
+                                )
                                 cacheDir.deleteRecursively()
                             }
                         }
@@ -193,7 +205,8 @@ object JsApiExposer {
     ): NativeObject {
         // Build URL with query parameters
         val finalUrl = if (params != null) {
-            val httpUrl = urlString.toHttpUrlOrNull() ?: throw IllegalArgumentException("Invalid URL")
+            val httpUrl =
+                urlString.toHttpUrlOrNull() ?: throw IllegalArgumentException("Invalid URL")
             val builder = httpUrl.newBuilder()
             params.keys.forEach { key ->
                 val value = params[key]?.toString() ?: ""
@@ -225,6 +238,7 @@ object JsApiExposer {
                 val json = nativeObjectToJson(jsonBody)
                 json.toRequestBody("application/json; charset=utf-8".toMediaType())
             }
+
             formData != null -> {
                 val formBuilder = FormBody.Builder()
                 formData.keys.forEach { key ->
@@ -233,6 +247,7 @@ object JsApiExposer {
                 }
                 formBuilder.build()
             }
+
             else -> {
                 "".toRequestBody("text/plain; charset=utf-8".toMediaType())
             }
@@ -274,6 +289,7 @@ object JsApiExposer {
                 }
                 json
             }
+
             is NativeArray -> {
                 val array = org.json.JSONArray()
                 for (i in 0 until value.length) {
@@ -281,6 +297,7 @@ object JsApiExposer {
                 }
                 array
             }
+
             is Number, is String, is Boolean -> value
             null -> JSONObject.NULL
             else -> value.toString()
@@ -335,7 +352,8 @@ object JsApiExposer {
         val logObj = NativeObject()
 
         // log.d(msg)
-        ScriptableObject.putProperty(logObj, "d",
+        ScriptableObject.putProperty(
+            logObj, "d",
             object : BaseFunction() {
                 override fun call(
                     cx: Context,
@@ -351,7 +369,8 @@ object JsApiExposer {
         )
 
         // log.i(msg)
-        ScriptableObject.putProperty(logObj, "i",
+        ScriptableObject.putProperty(
+            logObj, "i",
             object : BaseFunction() {
                 override fun call(
                     cx: Context,
@@ -367,7 +386,8 @@ object JsApiExposer {
         )
 
         // log.w(msg)
-        ScriptableObject.putProperty(logObj, "w",
+        ScriptableObject.putProperty(
+            logObj, "w",
             object : BaseFunction() {
                 override fun call(
                     cx: Context,
@@ -383,7 +403,8 @@ object JsApiExposer {
         )
 
         // log.e(msg)
-        ScriptableObject.putProperty(logObj, "e",
+        ScriptableObject.putProperty(
+            logObj, "e",
             object : BaseFunction() {
                 override fun call(
                     cx: Context,
@@ -405,7 +426,8 @@ object JsApiExposer {
         val timeObj = NativeObject()
 
         // time.sleepS(seconds)
-        ScriptableObject.putProperty(timeObj, "sleepS",
+        ScriptableObject.putProperty(
+            timeObj, "sleepS",
             object : BaseFunction() {
                 override fun call(
                     cx: Context,
@@ -428,7 +450,8 @@ object JsApiExposer {
         )
 
         // time.sleepMs(milliseconds)
-        ScriptableObject.putProperty(timeObj, "sleepMs",
+        ScriptableObject.putProperty(
+            timeObj, "sleepMs",
             object : BaseFunction() {
                 override fun call(
                     cx: Context,
@@ -451,7 +474,8 @@ object JsApiExposer {
         )
 
         // time.getCurrentUnixEpoch()
-        ScriptableObject.putProperty(timeObj, "getCurrentUnixEpoch",
+        ScriptableObject.putProperty(
+            timeObj, "getCurrentUnixEpoch",
             object : BaseFunction() {
                 override fun call(
                     cx: Context,
@@ -494,7 +518,10 @@ object JsApiExposer {
         try {
             if (!storageFile.exists()) return
             val json = storageFile.readText()
-            val map = gson.fromJson<Map<String, Any?>>(json, object : TypeToken<Map<String, Any?>>() {}.type)
+            val map = gson.fromJson<Map<String, Any?>>(
+                json,
+                object : TypeToken<Map<String, Any?>>() {}.type
+            )
             map?.forEach { (k, v) -> storage[k] = v }
         } catch (e: Exception) {
             WeLogger.e(TAG, "Failed to load js storage from disk", e)
@@ -511,9 +538,15 @@ object JsApiExposer {
         val storageObj = NativeObject()
 
         // storage.get(key) -> object
-        ScriptableObject.putProperty(storageObj, "get",
+        ScriptableObject.putProperty(
+            storageObj, "get",
             object : BaseFunction() {
-                override fun call(cx: Context, scope: Scriptable, thisObj: Scriptable, args: Array<Any?>): Any? {
+                override fun call(
+                    cx: Context,
+                    scope: Scriptable,
+                    thisObj: Scriptable,
+                    args: Array<Any?>
+                ): Any? {
                     val key = args.getOrNull(0)?.toString() ?: return null
                     val value = storage[key]
 
@@ -523,24 +556,40 @@ object JsApiExposer {
         )
 
         // storage.getOrDefault(key, defaultValue) -> object
-        ScriptableObject.putProperty(storageObj, "getOrDefault",
+        ScriptableObject.putProperty(
+            storageObj, "getOrDefault",
             object : BaseFunction() {
-                override fun call(cx: Context, scope: Scriptable, thisObj: Scriptable, args: Array<Any?>): Any? {
+                override fun call(
+                    cx: Context,
+                    scope: Scriptable,
+                    thisObj: Scriptable,
+                    args: Array<Any?>
+                ): Any? {
                     val key = args.getOrNull(0)?.toString() ?: return args.getOrNull(1)
-                    return storage.getOrDefault(key, args.getOrNull(1)) ?: Context.getUndefinedValue()
+                    return storage.getOrDefault(key, args.getOrNull(1))
+                        ?: Context.getUndefinedValue()
                 }
             }
         )
 
         // storage.set(key, object)
-        ScriptableObject.putProperty(storageObj, "set",
+        ScriptableObject.putProperty(
+            storageObj, "set",
             object : BaseFunction() {
-                override fun call(cx: Context, scope: Scriptable, thisObj: Scriptable, args: Array<Any?>): Any? {
+                override fun call(
+                    cx: Context,
+                    scope: Scriptable,
+                    thisObj: Scriptable,
+                    args: Array<Any?>
+                ): Any? {
                     val key = args.getOrNull(0)?.toString() ?: return null
                     val value = args.getOrNull(1)
 
                     if (value is Undefined) {
-                        WeLogger.w(TAG, "js tries to set undefined into cache, removing that key instead")
+                        WeLogger.w(
+                            TAG,
+                            "js tries to set undefined into cache, removing that key instead"
+                        )
                         storage.remove(key)
                     } else {
                         storage[key] = value
@@ -553,9 +602,15 @@ object JsApiExposer {
         )
 
         // storage.clear()
-        ScriptableObject.putProperty(storageObj, "clear",
+        ScriptableObject.putProperty(
+            storageObj, "clear",
             object : BaseFunction() {
-                override fun call(cx: Context, scope: Scriptable, thisObj: Scriptable, args: Array<Any?>): Any? {
+                override fun call(
+                    cx: Context,
+                    scope: Scriptable,
+                    thisObj: Scriptable,
+                    args: Array<Any?>
+                ): Any? {
                     storage.clear()
                     saveStorageToDisk()
                     return null
@@ -564,9 +619,15 @@ object JsApiExposer {
         )
 
         // storage.remove(key)
-        ScriptableObject.putProperty(storageObj, "remove",
+        ScriptableObject.putProperty(
+            storageObj, "remove",
             object : BaseFunction() {
-                override fun call(cx: Context, scope: Scriptable, thisObj: Scriptable, args: Array<Any?>): Any? {
+                override fun call(
+                    cx: Context,
+                    scope: Scriptable,
+                    thisObj: Scriptable,
+                    args: Array<Any?>
+                ): Any? {
                     val key = args.getOrNull(0)?.toString() ?: return null
                     storage.remove(key)
                     saveStorageToDisk()
@@ -576,19 +637,32 @@ object JsApiExposer {
         )
 
         // storage.pop(key) -> object
-        ScriptableObject.putProperty(storageObj, "pop",
+        ScriptableObject.putProperty(
+            storageObj, "pop",
             object : BaseFunction() {
-                override fun call(cx: Context, scope: Scriptable, thisObj: Scriptable, args: Array<Any?>): Any? {
+                override fun call(
+                    cx: Context,
+                    scope: Scriptable,
+                    thisObj: Scriptable,
+                    args: Array<Any?>
+                ): Any? {
                     val key = args.getOrNull(0)?.toString() ?: return Context.getUndefinedValue()
-                    return (storage.remove(key) ?: Context.getUndefinedValue()).also { saveStorageToDisk() }
+                    return (storage.remove(key)
+                        ?: Context.getUndefinedValue()).also { saveStorageToDisk() }
                 }
             }
         )
 
         // storage.hasKey(key) -> bool
-        ScriptableObject.putProperty(storageObj, "hasKey",
+        ScriptableObject.putProperty(
+            storageObj, "hasKey",
             object : BaseFunction() {
-                override fun call(cx: Context, scope: Scriptable, thisObj: Scriptable, args: Array<Any?>): Any {
+                override fun call(
+                    cx: Context,
+                    scope: Scriptable,
+                    thisObj: Scriptable,
+                    args: Array<Any?>
+                ): Any {
                     val key = args.getOrNull(0)?.toString() ?: return false
                     return storage.containsKey(key)
                 }
@@ -596,18 +670,30 @@ object JsApiExposer {
         )
 
         // storage.isEmpty() -> bool
-        ScriptableObject.putProperty(storageObj, "isEmpty",
+        ScriptableObject.putProperty(
+            storageObj, "isEmpty",
             object : BaseFunction() {
-                override fun call(cx: Context, scope: Scriptable, thisObj: Scriptable, args: Array<Any?>): Any {
+                override fun call(
+                    cx: Context,
+                    scope: Scriptable,
+                    thisObj: Scriptable,
+                    args: Array<Any?>
+                ): Any {
                     return storage.isEmpty()
                 }
             }
         )
 
         // storage.keys() -> Array
-        ScriptableObject.putProperty(storageObj, "keys",
+        ScriptableObject.putProperty(
+            storageObj, "keys",
             object : BaseFunction() {
-                override fun call(cx: Context, scope: Scriptable, thisObj: Scriptable, args: Array<Any?>): Any {
+                override fun call(
+                    cx: Context,
+                    scope: Scriptable,
+                    thisObj: Scriptable,
+                    args: Array<Any?>
+                ): Any {
                     // Converts Kotlin Set to a JS Array
                     return cx.newArray(scope, storage.keys.toTypedArray())
                 }
@@ -615,9 +701,15 @@ object JsApiExposer {
         )
 
         // storage.size() -> int
-        ScriptableObject.putProperty(storageObj, "size",
+        ScriptableObject.putProperty(
+            storageObj, "size",
             object : BaseFunction() {
-                override fun call(cx: Context, scope: Scriptable, thisObj: Scriptable, args: Array<Any?>): Any {
+                override fun call(
+                    cx: Context,
+                    scope: Scriptable,
+                    thisObj: Scriptable,
+                    args: Array<Any?>
+                ): Any {
                     return storage.size
                 }
             }
@@ -630,101 +722,161 @@ object JsApiExposer {
     fun exposeWeChatApis(scope: ScriptableObject, talker: String? = null) {
         val weObj = NativeObject()
 
-        ScriptableObject.putProperty(weObj, "sendText",
+        ScriptableObject.putProperty(
+            weObj, "sendText",
             object : BaseFunction() {
-                override fun call(cx: Context, scope: Scriptable, thisObj: Scriptable, args: Array<Any?>): Any? {
-                    val to   = args.getOrNull(0)?.toString() ?: return null
+                override fun call(
+                    cx: Context,
+                    scope: Scriptable,
+                    thisObj: Scriptable,
+                    args: Array<Any?>
+                ): Any? {
+                    val to = args.getOrNull(0)?.toString() ?: return null
                     val text = args.getOrNull(1)?.toString() ?: return null
                     WeMessageApi.sendText(to, text)
                     return null
                 }
             }
         )
-        ScriptableObject.putProperty(weObj, "sendImage",
+        ScriptableObject.putProperty(
+            weObj, "sendImage",
             object : BaseFunction() {
-                override fun call(cx: Context, scope: Scriptable, thisObj: Scriptable, args: Array<Any?>): Any? {
-                    val to   = args.getOrNull(0)?.toString() ?: return null
+                override fun call(
+                    cx: Context,
+                    scope: Scriptable,
+                    thisObj: Scriptable,
+                    args: Array<Any?>
+                ): Any? {
+                    val to = args.getOrNull(0)?.toString() ?: return null
                     val path = args.getOrNull(1)?.toString() ?: return null
                     WeMessageApi.sendImage(to, path)
                     return null
                 }
             }
         )
-        ScriptableObject.putProperty(weObj, "sendFile",
+        ScriptableObject.putProperty(
+            weObj, "sendFile",
             object : BaseFunction() {
-                override fun call(cx: Context, scope: Scriptable, thisObj: Scriptable, args: Array<Any?>): Any? {
-                    val to    = args.getOrNull(0)?.toString() ?: return null
-                    val path  = args.getOrNull(1)?.toString() ?: return null
+                override fun call(
+                    cx: Context,
+                    scope: Scriptable,
+                    thisObj: Scriptable,
+                    args: Array<Any?>
+                ): Any? {
+                    val to = args.getOrNull(0)?.toString() ?: return null
+                    val path = args.getOrNull(1)?.toString() ?: return null
                     val title = args.getOrNull(2)?.toString() ?: path.substringAfterLast('/')
                     WeMessageApi.sendFile(to, path, title)
                     return null
                 }
             }
         )
-        ScriptableObject.putProperty(weObj, "sendVoice",
+        ScriptableObject.putProperty(
+            weObj, "sendVoice",
             object : BaseFunction() {
-                override fun call(cx: Context, scope: Scriptable, thisObj: Scriptable, args: Array<Any?>): Any? {
-                    val to         = args.getOrNull(0)?.toString() ?: return null
-                    val path       = args.getOrNull(1)?.toString() ?: return null
+                override fun call(
+                    cx: Context,
+                    scope: Scriptable,
+                    thisObj: Scriptable,
+                    args: Array<Any?>
+                ): Any? {
+                    val to = args.getOrNull(0)?.toString() ?: return null
+                    val path = args.getOrNull(1)?.toString() ?: return null
                     val durationMs = (args.getOrNull(2) as? Number)?.toInt() ?: 0
                     WeMessageApi.sendVoice(to, path, durationMs)
                     return null
                 }
             }
         )
-        ScriptableObject.putProperty(weObj, "sendAppMsg",
+        ScriptableObject.putProperty(
+            weObj, "sendAppMsg",
             object : BaseFunction() {
-                override fun call(cx: Context, scope: Scriptable, thisObj: Scriptable, args: Array<Any?>): Any? {
-                    val to         = args.getOrNull(0)?.toString() ?: return null
-                    val content    = args.getOrNull(1)?.toString() ?: return null
+                override fun call(
+                    cx: Context,
+                    scope: Scriptable,
+                    thisObj: Scriptable,
+                    args: Array<Any?>
+                ): Any? {
+                    val to = args.getOrNull(0)?.toString() ?: return null
+                    val content = args.getOrNull(1)?.toString() ?: return null
                     WeMessageApi.sendXmlAppMsg(to, content)
                     return null
                 }
             }
         )
         if (talker != null) {
-            ScriptableObject.putProperty(weObj, "replyText",
+            ScriptableObject.putProperty(
+                weObj, "replyText",
                 object : BaseFunction() {
-                    override fun call(cx: Context, scope: Scriptable, thisObj: Scriptable, args: Array<Any?>): Any? {
+                    override fun call(
+                        cx: Context,
+                        scope: Scriptable,
+                        thisObj: Scriptable,
+                        args: Array<Any?>
+                    ): Any? {
                         val text = args.getOrNull(0)?.toString() ?: return null
                         WeMessageApi.sendText(talker, text)
                         return null
                     }
                 }
             )
-            ScriptableObject.putProperty(weObj, "replyImage",
+            ScriptableObject.putProperty(
+                weObj, "replyImage",
                 object : BaseFunction() {
-                    override fun call(cx: Context, scope: Scriptable, thisObj: Scriptable, args: Array<Any?>): Any? {
+                    override fun call(
+                        cx: Context,
+                        scope: Scriptable,
+                        thisObj: Scriptable,
+                        args: Array<Any?>
+                    ): Any? {
                         val path = args.getOrNull(0)?.toString() ?: return null
                         WeMessageApi.sendImage(talker, path)
                         return null
                     }
                 }
             )
-            ScriptableObject.putProperty(weObj, "replyFile",
+            ScriptableObject.putProperty(
+                weObj, "replyFile",
                 object : BaseFunction() {
-                    override fun call(cx: Context, scope: Scriptable, thisObj: Scriptable, args: Array<Any?>): Any? {
-                        val path  = args.getOrNull(0)?.toString() ?: return null
+                    override fun call(
+                        cx: Context,
+                        scope: Scriptable,
+                        thisObj: Scriptable,
+                        args: Array<Any?>
+                    ): Any? {
+                        val path = args.getOrNull(0)?.toString() ?: return null
                         val title = args.getOrNull(1)?.toString() ?: path.substringAfterLast('/')
                         WeMessageApi.sendFile(talker, path, title)
                         return null
                     }
                 }
             )
-            ScriptableObject.putProperty(weObj, "replyVoice",
+            ScriptableObject.putProperty(
+                weObj, "replyVoice",
                 object : BaseFunction() {
-                    override fun call(cx: Context, scope: Scriptable, thisObj: Scriptable, args: Array<Any?>): Any? {
-                        val path       = args.getOrNull(0)?.toString() ?: return null
+                    override fun call(
+                        cx: Context,
+                        scope: Scriptable,
+                        thisObj: Scriptable,
+                        args: Array<Any?>
+                    ): Any? {
+                        val path = args.getOrNull(0)?.toString() ?: return null
                         val durationMs = (args.getOrNull(1) as? Number)?.toInt() ?: 0
                         WeMessageApi.sendVoice(talker, path, durationMs)
                         return null
                     }
                 }
             )
-            ScriptableObject.putProperty(weObj, "replyAppMsg",
+            ScriptableObject.putProperty(
+                weObj, "replyAppMsg",
                 object : BaseFunction() {
-                    override fun call(cx: Context, scope: Scriptable, thisObj: Scriptable, args: Array<Any?>): Any? {
-                        val content    = args.getOrNull(0)?.toString() ?: return null
+                    override fun call(
+                        cx: Context,
+                        scope: Scriptable,
+                        thisObj: Scriptable,
+                        args: Array<Any?>
+                    ): Any? {
+                        val content = args.getOrNull(0)?.toString() ?: return null
                         WeMessageApi.sendXmlAppMsg(talker, content)
                         return null
                     }

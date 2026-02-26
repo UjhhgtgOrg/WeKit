@@ -47,13 +47,24 @@ import moe.ouom.wekit.ui.utils.showComposeDialog
 import moe.ouom.wekit.utils.common.ToastUtils
 import moe.ouom.wekit.utils.log.WeLogger
 
-@HookItem(path = "聊天/链接跳转系统打开方式", desc = "打开链接或卡片链接时显示对话框, 可直接使用系统打开方式打开\n若要跳转到第三方应用, 需先在对应应用设置中启用 '在此应用中打开支持的网页链接'")
-object LinkExternalAppJump : BaseSwitchFunctionHookItem(), WeStartActivityListenerApi.IStartActivityListener {
+@HookItem(
+    path = "聊天/链接跳转系统打开方式",
+    desc = "打开链接或卡片链接时显示对话框, 可直接使用系统打开方式打开\n若要跳转到第三方应用, 需先在对应应用设置中启用 '在此应用中打开支持的网页链接'"
+)
+object LinkExternalAppJump : BaseSwitchFunctionHookItem(),
+    WeStartActivityListenerApi.IStartActivityListener {
 
     private const val TAG = "ExternalBrowsableAppJump"
 
     private val WECHAT_INTERNAL_HOSTS = setOf(
-        "weixin.com", "qq.com", "weixin.qq.com.cn", "wechatpay.cn", "tenpay.com", "weixinbridge.com", "kf.qq.com", "pay.wechatpay.cn"
+        "weixin.com",
+        "qq.com",
+        "weixin.qq.com.cn",
+        "wechatpay.cn",
+        "tenpay.com",
+        "weixinbridge.com",
+        "kf.qq.com",
+        "pay.wechatpay.cn"
     )
 
     override fun entry(classLoader: ClassLoader) {
@@ -88,6 +99,7 @@ object LinkExternalAppJump : BaseSwitchFunctionHookItem(), WeStartActivityListen
         newIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
 
         val packageManager = HostInfo.getApplication().packageManager
+
         @SuppressLint("QueryPermissionsNeeded")
         val resolveInfos = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             packageManager.queryIntentActivities(
@@ -101,7 +113,8 @@ object LinkExternalAppJump : BaseSwitchFunctionHookItem(), WeStartActivityListen
 
         val context = param.thisObject as Context
         showComposeDialog(context) { onDismiss ->
-            AlertDialog(onDismissRequest = onDismiss,
+            AlertDialog(
+                onDismissRequest = onDismiss,
                 title = { Text("选择打开方式") },
                 text = {
                     LazyColumn {
@@ -128,13 +141,16 @@ object LinkExternalAppJump : BaseSwitchFunctionHookItem(), WeStartActivityListen
                         }
                     }
                 },
-                dismissButton = { TextButton(onClick = {
-                    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                    val clip = ClipData.newPlainText("WeKit_Link", url.toString())
-                    clipboard.setPrimaryClip(clip)
-                    ToastUtils.showToast(context, "已复制链接")
-                    onDismiss()
-                }) { Text("复制链接") } },
+                dismissButton = {
+                    TextButton(onClick = {
+                        val clipboard =
+                            context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                        val clip = ClipData.newPlainText("WeKit_Link", url.toString())
+                        clipboard.setPrimaryClip(clip)
+                        ToastUtils.showToast(context, "已复制链接")
+                        onDismiss()
+                    }) { Text("复制链接") }
+                },
                 confirmButton = { TextButton(onClick = onDismiss) { Text("取消") } })
         }
 
@@ -153,7 +169,9 @@ object LinkExternalAppJump : BaseSwitchFunctionHookItem(), WeStartActivityListen
             Icon(
                 imageVector = Icons.Default.Language,
                 contentDescription = null,
-                modifier = Modifier.size(40.dp).padding(4.dp),
+                modifier = Modifier
+                    .size(40.dp)
+                    .padding(4.dp),
                 tint = MaterialTheme.colorScheme.primary
             )
 
@@ -161,7 +179,11 @@ object LinkExternalAppJump : BaseSwitchFunctionHookItem(), WeStartActivityListen
 
             Column {
                 Text(text = "微信", style = MaterialTheme.typography.bodyLarge)
-                Text(text = "不改变打开方式, 仍使用微信内置 WebView 打开", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                Text(
+                    text = "不改变打开方式, 仍使用微信内置 WebView 打开",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color.Gray
+                )
             }
         }
     }
@@ -185,8 +207,15 @@ object LinkExternalAppJump : BaseSwitchFunctionHookItem(), WeStartActivityListen
             Spacer(modifier = Modifier.width(12.dp))
 
             Column {
-                Text(text = info.loadLabel(pm).toString(), style = MaterialTheme.typography.bodyLarge)
-                Text(text = info.activityInfo.packageName, style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                Text(
+                    text = info.loadLabel(pm).toString(),
+                    style = MaterialTheme.typography.bodyLarge
+                )
+                Text(
+                    text = info.activityInfo.packageName,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color.Gray
+                )
             }
         }
     }

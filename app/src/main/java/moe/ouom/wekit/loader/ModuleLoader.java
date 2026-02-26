@@ -16,11 +16,11 @@ public class ModuleLoader {
     private static final ArrayList<Throwable> sInitErrors = new ArrayList<>(1);
 
     public static void initialize(
-        @NonNull String hostDataDir,
-        @NonNull ClassLoader hostClassLoader,
-        @NonNull ILoaderService loaderService,
-        @Nullable IHookBridge hookBridge,
-        @NonNull String modulePath
+            @NonNull String hostDataDir,
+            @NonNull ClassLoader hostClassLoader,
+            @NonNull ILoaderService loaderService,
+            @Nullable IHookBridge hookBridge,
+            @NonNull String modulePath
     ) throws ReflectiveOperationException {
         if (sLoaded) {
             return;

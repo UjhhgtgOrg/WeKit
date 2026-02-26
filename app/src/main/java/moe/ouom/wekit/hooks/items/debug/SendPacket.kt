@@ -33,23 +33,31 @@ object SendPacket : BaseClickableFunctionHookItem() {
             var routeIdStr by remember { mutableStateOf("0") }
             var jsonPayloadStr by remember { mutableStateOf("{}") }
 
-            AlertDialog(onDismissRequest = onDismiss,
+            AlertDialog(
+                onDismissRequest = onDismiss,
                 title = { Text("发包调试") },
                 text = {
                     Column {
-                        TextField(uri, onValueChange = { uri = it },
+                        TextField(
+                            uri, onValueChange = { uri = it },
                             label = { Text("CGI 路径 (str)") })
                         Spacer(Modifier.height(8.dp))
-                        TextField(cmdIdStr, onValueChange = { cmdIdStr = it },
+                        TextField(
+                            cmdIdStr, onValueChange = { cmdIdStr = it },
                             label = { Text("cmdId (int)") })
                         Spacer(Modifier.height(8.dp))
-                        TextField(funcIdStr, onValueChange = { funcIdStr = it },
+                        TextField(
+                            funcIdStr, onValueChange = { funcIdStr = it },
                             label = { Text("funcId (int)") })
                         Spacer(Modifier.height(8.dp))
-                        TextField(routeIdStr, onValueChange = { routeIdStr = it },
+                        TextField(
+                            routeIdStr, onValueChange = { routeIdStr = it },
                             label = { Text("routeId (int)") })
                         Spacer(Modifier.height(8.dp))
-                        TextField(jsonPayloadStr, onValueChange = { jsonPayloadStr = it }, label = { Text("JSON 载荷 (str)") })
+                        TextField(
+                            jsonPayloadStr,
+                            onValueChange = { jsonPayloadStr = it },
+                            label = { Text("JSON 载荷 (str)") })
                     }
                 },
                 dismissButton = {
@@ -83,7 +91,8 @@ object SendPacket : BaseClickableFunctionHookItem() {
                             onSuccess { json, byteArray ->
                                 WeLogger.i(TAG, "success: $json")
                                 showComposeDialog(context) { onDismiss ->
-                                    AlertDialog(onDismissRequest = onDismiss,
+                                    AlertDialog(
+                                        onDismissRequest = onDismiss,
                                         title = { Text("发送成功, 响应结果:") },
                                         text = { Text("json: $json\n\nbyteArray: ${byteArray?.size ?: 0} 字节") },
                                         confirmButton = {
@@ -95,7 +104,8 @@ object SendPacket : BaseClickableFunctionHookItem() {
                             onFail { type, code, msg ->
                                 WeLogger.e(TAG, "失败: $type, $code, $msg")
                                 showComposeDialog(context) { onDismiss ->
-                                    AlertDialog(onDismissRequest = onDismiss,
+                                    AlertDialog(
+                                        onDismissRequest = onDismiss,
                                         title = { Text("发送失败, 响应结果:") },
                                         text = { Text("type: $type, code: $code, msg: $msg") },
                                         confirmButton = {

@@ -16,8 +16,12 @@ import kotlin.math.log10
 import kotlin.math.pow
 
 @SuppressLint("StaticFieldLeak")
-@HookItem(path = "视频号/查看媒体下载链接", desc = "向视频分享菜单中添加 '复制链接' 菜单项 (下载还没写, 目前先自己手动下载)")
-object DisplayMediaDownloadLinks : BaseSwitchFunctionHookItem(), WeShortVideosShareMenuApi.IMenuItemsProvider {
+@HookItem(
+    path = "视频号/查看媒体下载链接",
+    desc = "向视频分享菜单中添加 '复制链接' 菜单项 (下载还没写, 目前先自己手动下载)"
+)
+object DisplayMediaDownloadLinks : BaseSwitchFunctionHookItem(),
+    WeShortVideosShareMenuApi.IMenuItemsProvider {
 
     override fun entry(classLoader: ClassLoader) {
         WeShortVideosShareMenuApi.addProvider(this)
@@ -42,14 +46,19 @@ object DisplayMediaDownloadLinks : BaseSwitchFunctionHookItem(), WeShortVideosSh
         param: XC_MethodHook.MethodHookParam,
     ): List<WeShortVideosShareMenuApi.MenuItem> {
         return listOf(
-            WeShortVideosShareMenuApi.MenuItem(777001, "复制链接", ModuleRes.getDrawable("link_24px"))
+            WeShortVideosShareMenuApi.MenuItem(
+                777001,
+                "复制链接",
+                ModuleRes.getDrawable("link_24px")
+            )
             { _, mediaType, mediaList ->
                 if (mediaType == 2) {
                     val imageUrls = mediaList.map { json ->
                         json.getString("url") + json.getString("url_token")
                     }
 
-                    val clipboard = HostInfo.getApplication().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                    val clipboard = HostInfo.getApplication()
+                        .getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                     val clip = ClipData.newPlainText("Url", imageUrls.joinToString("\n"))
                     clipboard.setPrimaryClip(clip)
                     ToastUtils.showToast("已复制")
@@ -63,8 +72,10 @@ object DisplayMediaDownloadLinks : BaseSwitchFunctionHookItem(), WeShortVideosSh
 
                     val duration = json.getInt("videoDuration")
                     val size = json.getInt("fileSize")
-                    val displayDuration = "%02d:%02d:%02d".format(Locale.CHINA,
-                        duration / 3600, (duration % 3600) / 60, duration % 60)
+                    val displayDuration = "%02d:%02d:%02d".format(
+                        Locale.CHINA,
+                        duration / 3600, (duration % 3600) / 60, duration % 60
+                    )
                     val displaySize = formatBytesSize(size)
                     clipItems += "时长" to displayDuration
                     clipItems += "大小" to displaySize
@@ -76,13 +87,15 @@ object DisplayMediaDownloadLinks : BaseSwitchFunctionHookItem(), WeShortVideosSh
                         val decodeKey = json.getString("decodeKey")
                         clipItems += "密链" to (url + urlToken)
                         clipItems += "密钥" to decodeKey
-                    }
-                    else {
+                    } else {
                         clipItems += "链接" to json.getString("pcdn_url")
                     }
 
-                    val clipboard = HostInfo.getApplication().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                    val clip = ClipData.newPlainText("Content", clipItems.joinToString("\n") { pair -> "${pair.first}: ${pair.second}" })
+                    val clipboard = HostInfo.getApplication()
+                        .getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                    val clip = ClipData.newPlainText(
+                        "Content",
+                        clipItems.joinToString("\n") { pair -> "${pair.first}: ${pair.second}" })
                     clipboard.setPrimaryClip(clip)
                     ToastUtils.showToast("已复制")
 

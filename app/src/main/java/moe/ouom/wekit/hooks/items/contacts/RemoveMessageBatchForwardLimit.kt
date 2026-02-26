@@ -8,7 +8,8 @@ import moe.ouom.wekit.hooks.sdk.ui.WeStartActivityListenerApi
 import moe.ouom.wekit.utils.log.WeLogger
 
 @HookItem(path = "联系人与群组/移除消息批量转发限制", desc = "移除消息多选目标的 9 个数量限制")
-object RemoveMessageBatchForwardLimit : BaseSwitchFunctionHookItem(), WeStartActivityListenerApi.IStartActivityListener {
+object RemoveMessageBatchForwardLimit : BaseSwitchFunctionHookItem(),
+    WeStartActivityListenerApi.IStartActivityListener {
 
     private const val TAG = "RemoveMessageBatchForwardLimit"
 
@@ -28,7 +29,8 @@ object RemoveMessageBatchForwardLimit : BaseSwitchFunctionHookItem(), WeStartAct
         val className = intent.component?.className ?: return
 
         if (className == "com.tencent.mm.ui.mvvm.MvvmSelectContactUI"
-            || className == "com.tencent.mm.ui.mvvm.MvvmContactListUI") {
+            || className == "com.tencent.mm.ui.mvvm.MvvmContactListUI"
+        ) {
             WeLogger.i(TAG, "removed batch forward limit for $className")
             intent.putExtra("max_limit_num", 999)
         }

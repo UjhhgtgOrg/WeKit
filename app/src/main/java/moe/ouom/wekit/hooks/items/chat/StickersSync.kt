@@ -50,7 +50,10 @@ import kotlin.io.path.readText
 import kotlin.io.path.walk
 import kotlin.io.path.writeText
 
-@HookItem(path = "聊天/贴纸包同步", desc = "从指定路径将所有图片注册为贴纸包\n搭配 Telegram Xposed 模块 StickersSync 使用, 或使用自带此功能的 (例如 Nagram) 的第三方客户端\n注意: 每张贴纸第一次加载由于需要计算 MD5 速度较慢, 后续加载得益于缓存与并发速度将大大加快 (~2000 个贴纸仅需 4 秒)")
+@HookItem(
+    path = "聊天/贴纸包同步",
+    desc = "从指定路径将所有图片注册为贴纸包\n搭配 Telegram Xposed 模块 StickersSync 使用, 或使用自带此功能的 (例如 Nagram) 的第三方客户端\n注意: 每张贴纸第一次加载由于需要计算 MD5 速度较慢, 后续加载得益于缓存与并发速度将大大加快 (~2000 个贴纸仅需 4 秒)"
+)
 object StickersSync : BaseClickableFunctionHookItem(), IDexFind {
 
     private const val TAG = "StickersSync"
@@ -147,15 +150,18 @@ object StickersSync : BaseClickableFunctionHookItem(), IDexFind {
                                 val absPath = actualPath.absolutePathString()
                                 val fileName = actualPath.fileName.toString()
 
-                                val md5 = hashCache.hashes[fileName] ?: getEmojiMd5FromPath(HostInfo.getApplication(), absPath)
+                                val md5 = hashCache.hashes[fileName]
+                                    ?: getEmojiMd5FromPath(HostInfo.getApplication(), absPath)
                                 newHashes[fileName] = md5
 
                                 // 反射调用构造微信对象
                                 val emojiThumb = getEmojiInfoByMd5(md5)
                                 methodSaveEmojiThumb.method.invoke(emojiThumb, null, true)
                                 val groupItemInfo = classGroupItemInfo.clazz
-                                    .getDeclaredConstructor("com.tencent.mm.api.IEmojiInfo".toClass(),
-                                        Int::class.java, String::class.java, Int::class.java)
+                                    .getDeclaredConstructor(
+                                        "com.tencent.mm.api.IEmojiInfo".toClass(),
+                                        Int::class.java, String::class.java, Int::class.java
+                                    )
                                     .newInstance(emojiThumb, 2, "", 0)
                                 stickers.add(groupItemInfo)
                             } catch (e: Exception) {
@@ -186,6 +192,7 @@ object StickersSync : BaseClickableFunctionHookItem(), IDexFind {
             }
         }
     }
+
     private fun convertWebpToPng(webpPath: Path): Path? {
         return try {
             val pngPath = webpPath.resolveSibling("${webpPath.nameWithoutExtension}.png")
@@ -216,6 +223,7 @@ object StickersSync : BaseClickableFunctionHookItem(), IDexFind {
 
     private val methodGetEmojiGroupInfo by dexMethod()
     private val methodAddAllGroupItems by dexMethod()
+
     // this module doesn't provide a builtin dexConstructor, so I have to use dexClass, and then use .createInstance()
     private val classGroupItemInfo by dexClass()
     private val classEmojiMgrImpl by dexClass()
@@ -275,7 +283,10 @@ object StickersSync : BaseClickableFunctionHookItem(), IDexFind {
         methodGetEmojiGroupInfo.toDexMethod {
             hook {
                 afterIfEnabled { param ->
-                    WeLogger.i(TAG, "getEmojiGroupInfo called, result: ${param.result.javaClass.name}")
+                    WeLogger.i(
+                        TAG,
+                        "getEmojiGroupInfo called, result: ${param.result.javaClass.name}"
+                    )
 
                     if (param.result !is java.util.List<*>) {
                         WeLogger.d(TAG, "param result is not list, skipped")
@@ -300,8 +311,10 @@ object StickersSync : BaseClickableFunctionHookItem(), IDexFind {
                         stickersPackData.put("sync", 2)
 
                         val emojiGroupInfo = emojiGroupInfoCls.createInstance()
-                        emojiGroupInfoCls.getMethod("convertFrom",
-                            ContentValues::class.java, Boolean::class.java)
+                        emojiGroupInfoCls.getMethod(
+                            "convertFrom",
+                            ContentValues::class.java, Boolean::class.java
+                        )
                             .invoke(emojiGroupInfo, stickersPackData, true)
 
                         (param.result as java.util.List<Any?>).add(index, emojiGroupInfo)
@@ -344,7 +357,10 @@ object StickersSync : BaseClickableFunctionHookItem(), IDexFind {
                     // Find matching sticker pack
                     val matchingPack = stickerPacks.find { it.packId == packId }
                     if (matchingPack != null) {
-                        WeLogger.d(TAG, "current pack name: $packId, stickers count: ${matchingPack.stickers.size}")
+                        WeLogger.d(
+                            TAG,
+                            "current pack name: $packId, stickers count: ${matchingPack.stickers.size}"
+                        )
                         val stickerList = manager.asResolver().firstMethod {
                             superclass()
                             returnType = List::class.java
@@ -410,7 +426,10 @@ object StickersSync : BaseClickableFunctionHookItem(), IDexFind {
             matcher {
                 methods {
                     add {
-                        usingEqStrings("MicroMsg.emoji.EmojiInfoStorage", "md5 is null or invalue. md5:%s")
+                        usingEqStrings(
+                            "MicroMsg.emoji.EmojiInfoStorage",
+                            "md5 is null or invalue. md5:%s"
+                        )
                     }
                 }
             }
@@ -429,7 +448,8 @@ object StickersSync : BaseClickableFunctionHookItem(), IDexFind {
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onClick(context: Context) {
         showComposeDialog(context) { onDismiss ->
-            AlertDialog(onDismissRequest = onDismiss,
+            AlertDialog(
+                onDismissRequest = onDismiss,
                 title = { Text("贴纸表情同步") },
                 text = {
                     Column {
@@ -442,9 +462,17 @@ object StickersSync : BaseClickableFunctionHookItem(), IDexFind {
                                         WeDatabaseApi.dbInstance!!.asResolver()
                                             .firstMethod {
                                                 name = "delete"
-                                                parameters(String::class, String::class, Array<String>::class)
+                                                parameters(
+                                                    String::class,
+                                                    String::class,
+                                                    Array<String>::class
+                                                )
                                             }
-                                            .invoke("EmojiGroupInfo", "productID = ?", arrayOf(pack.appPackId))
+                                            .invoke(
+                                                "EmojiGroupInfo",
+                                                "productID = ?",
+                                                arrayOf(pack.appPackId)
+                                            )
                                         deletedCount++
                                     }
                                     ToastUtils.showToast("已清除 $deletedCount 个贴纸包缓存!")
@@ -452,7 +480,10 @@ object StickersSync : BaseClickableFunctionHookItem(), IDexFind {
                                 .padding(vertical = 12.dp, horizontal = 8.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            Text("清除应用数据库贴纸包缓存", style = MaterialTheme.typography.bodyLarge)
+                            Text(
+                                "清除应用数据库贴纸包缓存",
+                                style = MaterialTheme.typography.bodyLarge
+                            )
                         }
                     }
                 },

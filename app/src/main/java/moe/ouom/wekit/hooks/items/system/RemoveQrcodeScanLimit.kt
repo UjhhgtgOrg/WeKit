@@ -33,7 +33,8 @@ object RemoveQrcodeScanLimit : BaseSwitchFunctionHookItem(), IDexFind {
                 beforeIfEnabled { param ->
                     val source = param.args[2] as Int
                     val a8KeyScene = param.args[3] as Int
-                    val matchedScene = ScanScene.entries.find { it.source == source && it.a8KeyScene == a8KeyScene }
+                    val matchedScene =
+                        ScanScene.entries.find { it.source == source && it.a8KeyScene == a8KeyScene }
                     if (matchedScene == ScanScene.ALBUM || matchedScene == ScanScene.PICTURE_LONG_PRESS) {
                         param.args[2] = ScanScene.CAMERA.source
                         param.args[3] = ScanScene.CAMERA.a8KeyScene

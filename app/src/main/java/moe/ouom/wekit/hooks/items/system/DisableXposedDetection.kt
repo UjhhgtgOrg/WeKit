@@ -30,7 +30,10 @@ object DisableXposedDetection : BaseSwitchFunctionHookItem(), IDexFind {
         methodCheckStackTraceElements.find(dexKit, descriptors) {
             searchPackages("com.tencent.mm.app")
             matcher {
-                usingEqStrings("de.robv.android.xposed.XposedBridge", "com.zte.heartyservice.SCC.FrameworkBridge")
+                usingEqStrings(
+                    "de.robv.android.xposed.XposedBridge",
+                    "com.zte.heartyservice.SCC.FrameworkBridge"
+                )
             }
         }
 

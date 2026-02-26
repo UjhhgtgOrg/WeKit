@@ -5,7 +5,6 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.os.Process
-import android.widget.Button
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
@@ -55,21 +54,21 @@ import java.io.PrintWriter
 import java.io.StringWriter
 
 private sealed class ScanProgress {
-    data class Start(val path: String)                        : ScanProgress()
-    data class Complete(val path: String)                     : ScanProgress()
+    data class Start(val path: String) : ScanProgress()
+    data class Complete(val path: String) : ScanProgress()
     data class Failed(val path: String, val error: Exception) : ScanProgress()
 }
 
 private sealed class ScanResult {
-    data class Success(val path: String)                      : ScanResult()
+    data class Success(val path: String) : ScanResult()
     data class Failed(val path: String, val error: Exception) : ScanResult()
 }
 
 private sealed class DialogPhase {
-    object Idle     : DialogPhase()
+    object Idle : DialogPhase()
     object Scanning : DialogPhase()
     data class Done(val failed: List<ScanResult.Failed>) : DialogPhase()
-    data class Error(val message: String)                : DialogPhase()
+    data class Error(val message: String) : DialogPhase()
 }
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -81,11 +80,11 @@ fun DexFinderContent(
     scope: CoroutineScope,
     onDismiss: () -> Unit
 ) {
-    var phase       by remember { mutableStateOf<DialogPhase>(DialogPhase.Idle) }
+    var phase by remember { mutableStateOf<DialogPhase>(DialogPhase.Idle) }
     var currentTask by remember { mutableStateOf("") }
     var taskCounter by remember { mutableIntStateOf(0) }
-    var completed   by remember { mutableIntStateOf(0) }
-    val scanResults =  remember { mutableStateMapOf<String, ScanResult>() }
+    var completed by remember { mutableIntStateOf(0) }
+    val scanResults = remember { mutableStateMapOf<String, ScanResult>() }
 
     fun updateProgress(progress: ScanProgress) {
         val total = outdatedItems.size
@@ -94,11 +93,13 @@ fun DexFinderContent(
                 taskCounter++
                 currentTask = "正在适配: ${progress.path} ($taskCounter/$total)..."
             }
+
             is ScanProgress.Complete -> {
                 scanResults[progress.path] = ScanResult.Success(progress.path)
                 completed = scanResults.size
                 currentTask = "已完成: ${progress.path}"
             }
+
             is ScanProgress.Failed -> {
                 scanResults[progress.path] = ScanResult.Failed(progress.path, progress.error)
                 completed = scanResults.size
@@ -116,7 +117,10 @@ fun DexFinderContent(
         return try {
             progressChannel.send(ScanProgress.Start(path))
             val descriptors = item.dexFind(dexKit)
-            WeLogger.i("[DexFinderDialog]", "Total descriptors: ${descriptors.size}, keys: ${descriptors.keys}")
+            WeLogger.i(
+                "[DexFinderDialog]",
+                "Total descriptors: ${descriptors.size}, keys: ${descriptors.keys}"
+            )
             DexCacheManager.saveCache(item, descriptors)
             progressChannel.send(ScanProgress.Complete(path))
             ScanResult.Success(path)
@@ -142,7 +146,15 @@ fun DexFinderContent(
 
                     // parallel scan — same flow/buffer/async structure
                     val results = outdatedItems.asFlow()
-                        .map { item -> async(Dispatchers.IO) { scanItem(item, dexKit, progressChannel) } }
+                        .map { item ->
+                            async(Dispatchers.IO) {
+                                scanItem(
+                                    item,
+                                    dexKit,
+                                    progressChannel
+                                )
+                            }
+                        }
                         .buffer(8)
                         .map { it.await() }
                         .toList()
@@ -212,14 +224,16 @@ fun DexFinderContent(
 
             // Tip text
             val tipText = when (val p = phase) {
-                is DialogPhase.Idle    ->
+                is DialogPhase.Idle ->
                     "检测到 ${outdatedItems.size} 个功能需要更新 DEX 缓存，点击开始适配后将自动扫描并更新。" +
                             "若直接关闭窗口，相关功能将不会被加载"
+
                 is DialogPhase.Scanning -> null
-                is DialogPhase.Done    ->
+                is DialogPhase.Done ->
                     if (p.failed.isEmpty()) "适配完成！所有功能已成功更新 DEX 缓存"
                     else "适配完成，但有 ${p.failed.size} 个功能失败"
-                is DialogPhase.Error   -> p.message
+
+                is DialogPhase.Error -> p.message
             }
             if (tipText != null) {
                 Text(text = tipText, style = MaterialTheme.typography.bodyMedium)
@@ -249,9 +263,16 @@ fun DexFinderContent(
                         failedResults = failed,
                         onCopy = {
                             val text = buildErrorReport(failed)
-                            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                            clipboard.setPrimaryClip(ClipData.newPlainText("WeKit Dex Finder Error", text))
-                            Toast.makeText(context, "错误信息已复制到剪贴板", Toast.LENGTH_SHORT).show()
+                            val clipboard =
+                                context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                            clipboard.setPrimaryClip(
+                                ClipData.newPlainText(
+                                    "WeKit Dex Finder Error",
+                                    text
+                                )
+                            )
+                            Toast.makeText(context, "错误信息已复制到剪贴板", Toast.LENGTH_SHORT)
+                                .show()
                         }
                     )
                 }
@@ -287,7 +308,10 @@ private fun ErrorDetailsSection(
         color = MaterialTheme.colorScheme.errorContainer,
         modifier = Modifier.fillMaxWidth()
     ) {
-        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(
+            modifier = Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
             val errorText = buildString {
                 failedResults.forEachIndexed { i, r ->
                     append("${i + 1}. ${r.path}\n")

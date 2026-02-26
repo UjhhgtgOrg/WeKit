@@ -12,7 +12,10 @@ import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.utils.log.WeLogger
 
 
-@HookItem(path = "界面美化/美化活动过渡动画", desc = "将部分活动过渡动画替换为默认过渡或元素级共享动画 (没做完)")
+@HookItem(
+    path = "界面美化/美化活动过渡动画",
+    desc = "将部分活动过渡动画替换为默认过渡或元素级共享动画 (没做完)"
+)
 object BeautifyActivityTransitionAnimation : BaseSwitchFunctionHookItem() {
 
     private const val TAG = "BeautifyActivityTransitionAnimation"
@@ -90,7 +93,10 @@ object BeautifyActivityTransitionAnimation : BaseSwitchFunctionHookItem() {
                 parameterCount = 3
             }
             .hookBefore { param ->
-                WeLogger.d(TAG, "called Activity.overridePendingTransition on ${param.thisObject.javaClass.name}")
+                WeLogger.d(
+                    TAG,
+                    "called Activity.overridePendingTransition on ${param.thisObject.javaClass.name}"
+                )
                 param.result = null
             }
     }

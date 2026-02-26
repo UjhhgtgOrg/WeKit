@@ -21,9 +21,12 @@ object WeShortVideosShareMenuApi : ApiHookItem(), IDexFind {
     interface IMenuItemsProvider {
         fun getMenuItems(param: XC_MethodHook.MethodHookParam): List<MenuItem>
     }
-    data class MenuItem(val id: Int,
-                        val text: String, val drawable: Drawable,
-                        val onClick: (XC_MethodHook.MethodHookParam, Int, List<JSONObject>) -> Unit)
+
+    data class MenuItem(
+        val id: Int,
+        val text: String, val drawable: Drawable,
+        val onClick: (XC_MethodHook.MethodHookParam, Int, List<JSONObject>) -> Unit
+    )
 
     private const val TAG: String = "WeShortVideosShareMenuApi"
 
@@ -40,7 +43,10 @@ object WeShortVideosShareMenuApi : ApiHookItem(), IDexFind {
 
     fun removeProvider(provider: IMenuItemsProvider) {
         val removed = providers.remove(provider)
-        WeLogger.i(TAG, "provider remove ${if (removed) "succeeded" else "failed"}, current provider count: ${providers.size}")
+        WeLogger.i(
+            TAG,
+            "provider remove ${if (removed) "succeeded" else "failed"}, current provider count: ${providers.size}"
+        )
     }
 
     private val methodCreateMenu by dexMethod()
@@ -60,9 +66,12 @@ object WeShortVideosShareMenuApi : ApiHookItem(), IDexFind {
                                     }
                                     .invoke(item.id, item.text, item.drawable)
                             }
-                        }
-                        catch (ex: Exception) {
-                            WeLogger.e(TAG, "provider ${provider.javaClass.name} threw while providing menu items", ex)
+                        } catch (ex: Exception) {
+                            WeLogger.e(
+                                TAG,
+                                "provider ${provider.javaClass.name} threw while providing menu items",
+                                ex
+                            )
                         }
                     }
                 }
@@ -113,9 +122,12 @@ object WeShortVideosShareMenuApi : ApiHookItem(), IDexFind {
                                     return@beforeIfEnabled
                                 }
                             }
-                        }
-                        catch (ex: Exception) {
-                            WeLogger.e(TAG, "provider ${provider.javaClass.name} threw while handling click event", ex)
+                        } catch (ex: Exception) {
+                            WeLogger.e(
+                                TAG,
+                                "provider ${provider.javaClass.name} threw while handling click event",
+                                ex
+                            )
                         }
                     }
                 }

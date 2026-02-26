@@ -29,7 +29,7 @@ public class StartupHook {
     /**
      * Entry point for static or dynamic initialization. NOTICE: Do NOT change the method name or signature.
      *
-     * @param ctx         Application context for host
+     * @param ctx Application context for host
      */
     public static void execStartupInit(@NonNull Context ctx) {
         if (sSecondStageInit) {

@@ -35,7 +35,10 @@ object AutoViewOriginalMedia : BaseSwitchFunctionHookItem(), IDexFind {
     }
 
     override fun entry(classLoader: ClassLoader) {
-        listOf(methodSetImageHdImgBtnVisibility, methodCheckNeedShowOriginVideoBtn).forEach { method ->
+        listOf(
+            methodSetImageHdImgBtnVisibility,
+            methodCheckNeedShowOriginVideoBtn
+        ).forEach { method ->
             method.toDexMethod {
                 hook {
                     afterIfEnabled { param ->
@@ -48,7 +51,12 @@ object AutoViewOriginalMedia : BaseSwitchFunctionHookItem(), IDexFind {
                                         "查看原图", "Full Image",
                                         "查看原视频", "Original quality",
                                     )
-                                    if (keywords.any { text -> imgBtn.text.contains(text, ignoreCase = true) }) {
+                                    if (keywords.any { text ->
+                                            imgBtn.text.contains(
+                                                text,
+                                                ignoreCase = true
+                                            )
+                                        }) {
                                         imgBtn.performClick()
                                     }
                                 }

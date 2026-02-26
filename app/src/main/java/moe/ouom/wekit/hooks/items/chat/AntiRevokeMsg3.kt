@@ -54,9 +54,12 @@ object AntiRevokeMsg3 : BaseSwitchFunctionHookItem(), IDexFind {
                     val typeKey = $$".sysmsg.$type"
 
                     if (resultMap[typeKey] == "revokemsg") {
-                        val session = resultMap[".sysmsg.revokemsg.session"] as? String? ?: return@afterIfEnabled
-                        val replaceMsg = resultMap[".sysmsg.revokemsg.replacemsg"] as? String? ?: return@afterIfEnabled
-                        val msgSvrId = resultMap[".sysmsg.revokemsg.newmsgid"] as? String? ?: return@afterIfEnabled
+                        val session = resultMap[".sysmsg.revokemsg.session"] as? String?
+                            ?: return@afterIfEnabled
+                        val replaceMsg = resultMap[".sysmsg.revokemsg.replacemsg"] as? String?
+                            ?: return@afterIfEnabled
+                        val msgSvrId = resultMap[".sysmsg.revokemsg.newmsgid"] as? String?
+                            ?: return@afterIfEnabled
 
                         if (!replaceMsg.contains("\"") && !replaceMsg.contains("「")) {
                             WeLogger.i(TAG, "outgoing message, skipping")
@@ -66,12 +69,15 @@ object AntiRevokeMsg3 : BaseSwitchFunctionHookItem(), IDexFind {
                         resultMap[typeKey] = null
 
                         val db = WeDatabaseApi.dbInstance!!
-                        val cursor = WeDatabaseApi.execQueryMethod!!.invoke(db,
+                        val cursor = WeDatabaseApi.execQueryMethod!!.invoke(
+                            db,
                             "SELECT createTime FROM message WHERE msgSvrId = ?",
-                            arrayOf(msgSvrId)) as Cursor
+                            arrayOf(msgSvrId)
+                        ) as Cursor
 
                         if (cursor.moveToFirst()) {
-                            val originalCreateTime = cursor.getLong(cursor.getColumnIndexOrThrow("createTime"))
+                            val originalCreateTime =
+                                cursor.getLong(cursor.getColumnIndexOrThrow("createTime"))
 
                             val matcher = nameRegex.matcher(replaceMsg)
 
@@ -95,14 +101,18 @@ object AntiRevokeMsg3 : BaseSwitchFunctionHookItem(), IDexFind {
                             contentValues.put("talker", session)
                             contentValues.put("content", interceptNotice)
 
-                            val msgInfo = WeMessageApi.createMsgInfoFromContentValues(contentValues, true)
+                            val msgInfo =
+                                WeMessageApi.createMsgInfoFromContentValues(contentValues, true)
                             val msgInfoStorage = WeServiceApi.storageFeatureService.asResolver()
                                 .firstMethod {
                                     parameterCount = 0
                                     returnType = WeMessageApi.classMsgInfoStorage.clazz
                                 }
                                 .invoke()
-                            WeMessageApi.methodMsgInfoStorageInsertMessage.method.invoke(msgInfoStorage, msgInfo)
+                            WeMessageApi.methodMsgInfoStorageInsertMessage.method.invoke(
+                                msgInfoStorage,
+                                msgInfo
+                            )
                             WeLogger.d(TAG, "blocked message revoke")
                         }
                     }

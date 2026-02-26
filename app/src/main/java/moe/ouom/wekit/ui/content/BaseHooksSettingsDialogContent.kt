@@ -29,7 +29,11 @@ import androidx.compose.ui.unit.dp
   对于简单的配置编辑, 建议自行使用 AlertDialog 实现而非使用此样式
  */
 @Composable
-fun BaseHooksSettingsDialogContent(title: String, onDismiss: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
+fun BaseHooksSettingsDialogContent(
+    title: String,
+    onDismiss: () -> Unit,
+    content: @Composable ColumnScope.() -> Unit
+) {
 //    Dialog(
 //        onDismissRequest = onDismiss,
 //        properties = DialogProperties(
@@ -38,49 +42,49 @@ fun BaseHooksSettingsDialogContent(title: String, onDismiss: () -> Unit, content
 //            dismissOnClickOutside = true,
 //        ),
 //    ) {
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth(0.92f)
-                .fillMaxHeight(0.85f),
-            shape = MaterialTheme.shapes.extraLarge,
-            tonalElevation = 6.dp,
-            shadowElevation = 8.dp,
-        ) {
-            Column(modifier = Modifier.fillMaxSize()) {
-                // ── Top bar ──────────────────────────────────────────────
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 4.dp, end = 16.dp, top = 8.dp, bottom = 0.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    IconButton(onClick = onDismiss) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
-                            contentDescription = "Back",
-                        )
-                    }
-                    Spacer(Modifier.width(4.dp))
-                    Text(
-                        text = title,
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Medium,
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth(0.92f)
+            .fillMaxHeight(0.85f),
+        shape = MaterialTheme.shapes.extraLarge,
+        tonalElevation = 6.dp,
+        shadowElevation = 8.dp,
+    ) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            // ── Top bar ──────────────────────────────────────────────
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 4.dp, end = 16.dp, top = 8.dp, bottom = 0.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                IconButton(onClick = onDismiss) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
+                        contentDescription = "Back",
                     )
                 }
-
-                HorizontalDivider(
-                    thickness = 0.5.dp,
-                    color = MaterialTheme.colorScheme.outlineVariant,
-                )
-
-                // ── Scrollable list ───────────────────────────────────────
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState()),
-                    content = content
+                Spacer(Modifier.width(4.dp))
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Medium,
                 )
             }
+
+            HorizontalDivider(
+                thickness = 0.5.dp,
+                color = MaterialTheme.colorScheme.outlineVariant,
+            )
+
+            // ── Scrollable list ───────────────────────────────────────
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState()),
+                content = content
+            )
         }
+    }
 //    }
 }

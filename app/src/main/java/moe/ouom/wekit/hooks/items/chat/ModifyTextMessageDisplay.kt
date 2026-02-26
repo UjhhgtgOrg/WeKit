@@ -42,7 +42,11 @@ object ModifyTextMessageDisplay : BaseSwitchFunctionHookItem(),
         }
 
         return listOf(
-            WeChatMessageContextMenuApi.MenuItem(777002, "修改内容", ModuleRes.getDrawable("edit_24px")) { view, _, _ ->
+            WeChatMessageContextMenuApi.MenuItem(
+                777002,
+                "修改内容",
+                ModuleRes.getDrawable("edit_24px")
+            ) { view, _, _ ->
                 showComposeDialog(view.context) { onDismiss ->
                     var input by remember { mutableStateOf("") } // TODO: figure out how to find initial value
 

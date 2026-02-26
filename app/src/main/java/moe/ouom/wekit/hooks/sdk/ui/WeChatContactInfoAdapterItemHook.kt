@@ -60,7 +60,12 @@ object WeChatContactInfoAdapterItemHook : ApiHookItem() {
     }
 
 
-    data class ContactInfoItem(val key: String, val title: String, val summary: String? = null, val position: Int = -1)
+    data class ContactInfoItem(
+        val key: String,
+        val title: String,
+        val summary: String? = null,
+        val position: Int = -1
+    )
 
     override fun entry(classLoader: ClassLoader) {
         initReflection()
@@ -141,12 +146,22 @@ object WeChatContactInfoAdapterItemHook : ApiHookItem() {
                         for (listener in initCallbacks) {
                             val item = listener.onInitContactInfoView(param.thisObject as Activity)
                             try {
-                                val preference = prefConstructor.newInstance(param.thisObject as Context)
+                                val preference =
+                                    prefConstructor.newInstance(param.thisObject as Context)
                                 item?.let {
                                     setKeyMethod.invoke(preference, it.key)
                                     setTitleMethod.invoke(preference, it.title)
-                                    it.summary?.let { summary -> setSummaryMethod.invoke(preference, summary) }
-                                    addPreferenceMethod.invoke(adapterInstance, preference, it.position)
+                                    it.summary?.let { summary ->
+                                        setSummaryMethod.invoke(
+                                            preference,
+                                            summary
+                                        )
+                                    }
+                                    addPreferenceMethod.invoke(
+                                        adapterInstance,
+                                        preference,
+                                        it.position
+                                    )
                                 }
                             } catch (e: Exception) {
                                 WeLogger.e(TAG, "添加条目失败: ${e.message}")

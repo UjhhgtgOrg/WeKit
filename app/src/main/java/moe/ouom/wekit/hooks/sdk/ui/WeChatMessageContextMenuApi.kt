@@ -24,9 +24,12 @@ object WeChatMessageContextMenuApi : ApiHookItem(), IDexFind {
     interface IMenuItemsProvider {
         fun getMenuItems(param: XC_MethodHook.MethodHookParam, msgInfo: MessageInfo): List<MenuItem>
     }
-    data class MenuItem(val id: Int,
-                            val text: String, val drawable: Drawable,
-                            val onClick: (View, Any, MessageInfo) -> Unit /* ChattingContext, MsgInfoBean */)
+
+    data class MenuItem(
+        val id: Int,
+        val text: String, val drawable: Drawable,
+        val onClick: (View, Any, MessageInfo) -> Unit /* ChattingContext, MsgInfoBean */
+    )
 
     private const val TAG: String = "WeChatMessageContextMenuApi"
 
@@ -43,13 +46,17 @@ object WeChatMessageContextMenuApi : ApiHookItem(), IDexFind {
 
     fun removeProvider(provider: IMenuItemsProvider) {
         val removed = providers.remove(provider)
-        WeLogger.i(TAG, "provider remove ${if (removed) "succeeded" else "failed"}, current provider count: ${providers.size}")
+        WeLogger.i(
+            TAG,
+            "provider remove ${if (removed) "succeeded" else "failed"}, current provider count: ${providers.size}"
+        )
     }
 
     private val methodCreateMenu by dexMethod()
     private val methodSelectMenuItem by dexMethod()
     private val classChattingMessBox by dexClass()
-    private var currentView: View? = null // selectMenu is guaranteed to be called after createMenu, so this will not cause NPE
+    private var currentView: View? =
+        null // selectMenu is guaranteed to be called after createMenu, so this will not cause NPE
 
     override fun entry(classLoader: ClassLoader) {
         methodCreateMenu.toDexMethod {
@@ -79,7 +86,11 @@ object WeChatMessageContextMenuApi : ApiHookItem(), IDexFind {
                                     .invoke(item.id, item.text, item.drawable)
                             }
                         } catch (e: Throwable) {
-                            WeLogger.e(TAG, "provider ${provider.javaClass.name} threw while providing menu items", e)
+                            WeLogger.e(
+                                TAG,
+                                "provider ${provider.javaClass.name} threw while providing menu items",
+                                e
+                            )
                         }
                     }
                 }
@@ -150,7 +161,11 @@ object WeChatMessageContextMenuApi : ApiHookItem(), IDexFind {
                                 }
                             }
                         } catch (e: Throwable) {
-                            WeLogger.e(TAG, "provider ${provider.javaClass.name} threw while handling click event", e)
+                            WeLogger.e(
+                                TAG,
+                                "provider ${provider.javaClass.name} threw while handling click event",
+                                e
+                            )
                         }
                     }
                 }
@@ -178,7 +193,10 @@ object WeChatMessageContextMenuApi : ApiHookItem(), IDexFind {
         classChattingMessBox.find(dexKit, descriptors) {
             searchPackages("com.tencent.mm.ui.chatting.component")
             matcher {
-                usingEqStrings("MicroMsg.ChattingUI.FootComponent", "onNotifyChange event %s talker %s")
+                usingEqStrings(
+                    "MicroMsg.ChattingUI.FootComponent",
+                    "onNotifyChange event %s talker %s"
+                )
             }
         }
 

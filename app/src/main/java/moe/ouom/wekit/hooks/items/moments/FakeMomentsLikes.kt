@@ -22,7 +22,7 @@ import java.util.LinkedList
     path = "朋友圈/朋友圈伪集赞",
     desc = "自定义朋友圈点赞用户列表"
 )
-object FakeMomentsLikes : BaseSwitchFunctionHookItem(), WeDatabaseListenerApi.IUpdateListener  {
+object FakeMomentsLikes : BaseSwitchFunctionHookItem(), WeDatabaseListenerApi.IUpdateListener {
 
     private const val TAG = "FakeMomentsLikes"
     private const val MENU_ID_FAKE_LIKES = 20001
@@ -86,7 +86,12 @@ object FakeMomentsLikes : BaseSwitchFunctionHookItem(), WeDatabaseListenerApi.IU
                 parseFromMethod = clazz.getMethod("parseFrom", ByteArray::class.java)
                 toByteArrayMethod = clazz.getMethod("toByteArray")
 
-                listOf("LikeUserList", "LikeUserListCount", "LikeCount", "LikeFlag").forEach { name ->
+                listOf(
+                    "LikeUserList",
+                    "LikeUserListCount",
+                    "LikeCount",
+                    "LikeFlag"
+                ).forEach { name ->
                     clazz.getDeclaredField(name).also { field ->
                         field.isAccessible = true
                         when (name) {
@@ -165,7 +170,8 @@ object FakeMomentsLikes : BaseSwitchFunctionHookItem(), WeDatabaseListenerApi.IU
             }
 
             val snsInfo = context.snsInfo
-            val snsId = context.snsInfo!!.javaClass.superclass!!.getDeclaredField("field_snsId").apply { isAccessible = true }.get(snsInfo) as Long
+            val snsId = context.snsInfo!!.javaClass.superclass!!.getDeclaredField("field_snsId")
+                .apply { isAccessible = true }.get(snsInfo) as Long
             val currentSelected = fakeLikeWxids[snsId] ?: emptySet()
 
             val currentIndices = allFriends.mapIndexedNotNull { index, contact ->

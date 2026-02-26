@@ -18,8 +18,7 @@ public class ToastUtils {
         WeLogger.i(TAG, "showToast: " + msg);
         try {
             Toast.makeText(HostInfo.getApplication(), msg, Toast.LENGTH_SHORT).show();
-        }
-        catch (NullPointerException e) {
+        } catch (NullPointerException e) {
             WeLogger.e(TAG, "failed to show toast: " + e.getMessage());
         }
     }

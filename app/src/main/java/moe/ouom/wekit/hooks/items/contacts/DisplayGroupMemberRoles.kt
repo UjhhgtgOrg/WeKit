@@ -21,7 +21,10 @@ import moe.ouom.wekit.utils.common.SimpleLruCache
 import org.luckypray.dexkit.DexKitBridge
 import kotlin.math.roundToInt
 
-@HookItem(path = "联系人与群组/显示群成员身份", desc = "在群聊中显示群成员的身份: 群主, 管理员, 成员")
+@HookItem(
+    path = "联系人与群组/显示群成员身份",
+    desc = "在群聊中显示群成员的身份: 群主, 管理员, 成员"
+)
 object DisplayGroupMemberRoles : BaseSwitchFunctionHookItem(), IDexFind,
     WeChatItemCreateViewListenerApi.ICreateViewListener {
 
@@ -64,8 +67,8 @@ object DisplayGroupMemberRoles : BaseSwitchFunctionHookItem(), IDexFind,
 
             if (senderIsGroupOwner) return@getOrPut 1
 
-            val groupData = methodGetChatroomData.method.invoke(group, sender)
-            val memberRoleFlags = groupData.asResolver()
+            val memberData = methodGetChatroomData.method.invoke(group, sender)
+            val memberRoleFlags = memberData.asResolver()
                 .firstField {
                     type = Int::class
                 }
@@ -139,11 +142,27 @@ private class RoundedBackgroundSpan(
     private val padding: Float = 16f
 ) : ReplacementSpan() {
 
-    override fun getSize(paint: Paint, text: CharSequence, start: Int, end: Int, fm: Paint.FontMetricsInt?): Int {
+    override fun getSize(
+        paint: Paint,
+        text: CharSequence,
+        start: Int,
+        end: Int,
+        fm: Paint.FontMetricsInt?
+    ): Int {
         return (paint.measureText(text, start, end) + padding * 2).roundToInt()
     }
 
-    override fun draw(canvas: Canvas, text: CharSequence, start: Int, end: Int, x: Float, top: Int, y: Int, bottom: Int, paint: Paint) {
+    override fun draw(
+        canvas: Canvas,
+        text: CharSequence,
+        start: Int,
+        end: Int,
+        x: Float,
+        top: Int,
+        y: Int,
+        bottom: Int,
+        paint: Paint
+    ) {
         val width = paint.measureText(text, start, end)
 
         val rect = RectF(x, top.toFloat(), x + width + padding * 2, bottom.toFloat())

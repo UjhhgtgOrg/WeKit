@@ -7,7 +7,10 @@ import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.hooks.sdk.base.WeDatabaseApi
 import org.luckypray.dexkit.DexKitBridge
 
-@HookItem(path = "联系人与群组/禁用置顶聊天折叠", desc = "隐藏 '折叠置顶聊天' 选项\n启用本功能后, 需重启应用 2 次以使更改完全生效")
+@HookItem(
+    path = "联系人与群组/禁用置顶聊天折叠",
+    desc = "隐藏 '折叠置顶聊天' 选项\n启用本功能后, 需重启应用 2 次以使更改完全生效"
+)
 object DisablePinnedChatsCollapsing : BaseSwitchFunctionHookItem(), IDexFind {
 
     private val methodAddCollapseChatItem by dexMethod()

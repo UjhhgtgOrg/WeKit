@@ -59,11 +59,11 @@ public class LibXposedNewApiByteCodeGenerator {
     public static byte[] call(int version, Object[] args) {
         if (version == 1) {
             return impl1(
-                (String) args[0],
-                (Integer) args[1],
-                (String) args[2],
-                (String) args[3],
-                (String) args[4]
+                    (String) args[0],
+                    (Integer) args[1],
+                    (String) args[2],
+                    (String) args[3],
+                    (String) args[4]
             );
         }
         throw new UnsupportedOperationException("Unsupported version: " + version);
@@ -77,11 +77,11 @@ public class LibXposedNewApiByteCodeGenerator {
 
     @NonNull
     public static byte[] impl1(
-        @NonNull String targetClassName,
-        @NonNull Integer tagValue,
-        @NonNull String classNameXposedInterfaceHooker,
-        @NonNull String classBeforeHookCallback,
-        @NonNull String classAfterHookCallback
+            @NonNull String targetClassName,
+            @NonNull Integer tagValue,
+            @NonNull String classNameXposedInterfaceHooker,
+            @NonNull String classBeforeHookCallback,
+            @NonNull String classAfterHookCallback
     ) {
         Objects.requireNonNull(targetClassName, "targetClassName");
         Objects.requireNonNull(tagValue, "tagValue");
@@ -117,14 +117,14 @@ public class LibXposedNewApiByteCodeGenerator {
             var insBefore = new ArrayList<Instruction>();
             insBefore.add(new ImmutableInstruction31i(Opcode.CONST, 0, tagValue));
             insBefore.add(new ImmutableInstruction35c(Opcode.INVOKE_STATIC, 2, 1, 0, 0, 0, 0,
-                new ImmutableMethodReference(typeLsp100HookAgent, "handleBeforeHookedMethod",
-                    List.of(typeBeforeHookCallback, "I"), typeInvocationParamWrapper)));
+                    new ImmutableMethodReference(typeLsp100HookAgent, "handleBeforeHookedMethod",
+                            List.of(typeBeforeHookCallback, "I"), typeInvocationParamWrapper)));
 
             insBefore.add(new ImmutableInstruction11x(Opcode.MOVE_RESULT_OBJECT, 0));
             insBefore.add(new ImmutableInstruction11x(Opcode.RETURN_OBJECT, 0));
             var beforeMethodImpl = new ImmutableMethodImplementation(2, insBefore, null, null);
             var beforeMethod = new ImmutableMethod(typeTargetClass, "before", List.of(
-                new ImmutableMethodParameter(typeBeforeHookCallback, null, "c")
+                    new ImmutableMethodParameter(typeBeforeHookCallback, null, "c")
             ), typeInvocationParamWrapper, Modifier.PUBLIC | Modifier.STATIC, null, null, beforeMethodImpl);
             methods.add(beforeMethod);
         }
@@ -132,8 +132,8 @@ public class LibXposedNewApiByteCodeGenerator {
             var insAfter = new ArrayList<Instruction>();
             insAfter.add(new ImmutableInstruction31i(Opcode.CONST, 0, tagValue));
             insAfter.add(new ImmutableInstruction35c(Opcode.INVOKE_STATIC, 3, 1, 2, 0, 0, 0,
-                new ImmutableMethodReference(typeLsp100HookAgent, "handleAfterHookedMethod",
-                    List.of(typeAfterHookCallback, typeInvocationParamWrapper, "I"), "V")));
+                    new ImmutableMethodReference(typeLsp100HookAgent, "handleAfterHookedMethod",
+                            List.of(typeAfterHookCallback, typeInvocationParamWrapper, "I"), "V")));
             // return-void
             insAfter.add(new ImmutableInstruction10x(Opcode.RETURN_VOID));
             var afterMethodImpl = new ImmutableMethodImplementation(3, insAfter, null, null);

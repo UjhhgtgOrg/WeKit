@@ -20,29 +20,31 @@ object ShowWxIdInContactDetails : BaseSwitchFunctionHookItem() {
     private const val TAG = "ShowWxIdInContactDetails"
     private const val PREF_KEY = "wechat_id_display"
 
-    private val initCallback = WeChatContactInfoAdapterItemHook.InitContactInfoViewCallback { activity ->
-        val wechatId = try {
-            "微信 ID: ${activity.intent.getStringExtra("Contact_User") ?: "未知"}"
-        } catch (e: Exception) {
-            WeLogger.e(TAG, "获取微信 ID 失败", e)
-            "微信 ID: 获取失败"
+    private val initCallback =
+        WeChatContactInfoAdapterItemHook.InitContactInfoViewCallback { activity ->
+            val wechatId = try {
+                "微信 ID: ${activity.intent.getStringExtra("Contact_User") ?: "未知"}"
+            } catch (e: Exception) {
+                WeLogger.e(TAG, "获取微信 ID 失败", e)
+                "微信 ID: 获取失败"
+            }
+
+            ContactInfoItem(
+                key = PREF_KEY,
+                title = wechatId,
+                position = 1
+            )
         }
 
-        ContactInfoItem(
-            key = PREF_KEY,
-            title = wechatId,
-            position = 1
-        )
-    }
-
-    private val clickListener = WeChatContactInfoAdapterItemHook.OnContactInfoItemClickListener { activity, key ->
-        if (key == PREF_KEY) {
-            handleWeChatIdClick(activity)
-            true
-        } else {
-            false
+    private val clickListener =
+        WeChatContactInfoAdapterItemHook.OnContactInfoItemClickListener { activity, key ->
+            if (key == PREF_KEY) {
+                handleWeChatIdClick(activity)
+                true
+            } else {
+                false
+            }
         }
-    }
 
     override fun entry(classLoader: ClassLoader) {
         try {
