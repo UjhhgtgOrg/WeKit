@@ -3,6 +3,7 @@ package moe.ouom.wekit.hooks.sdk.base.model
 import com.google.gson.Gson
 import com.google.gson.JsonElement
 import com.highcapable.kavaref.KavaRef.Companion.asResolver
+import moe.ouom.wekit.hooks.sdk.base.WeDatabaseApi
 import moe.ouom.wekit.utils.getByPath
 
 class MessageInfo(val instance: Any) {
@@ -41,11 +42,19 @@ class MessageInfo(val instance: Any) {
             return@lazy patMsg.fromUser ?: throw IllegalArgumentException("could not determine pat message's from user")
         }
 
+        if (isSend()) {
+            return@lazy WeDatabaseApi.getSelfProfileField(SelfProfileField.WXID) as String
+        }
+
         if (!isInGroupChat) {
             return@lazy talker
         }
 
         return@lazy content.split(':')[0]
+    }
+
+    fun isSend(): Boolean {
+        return isSend == 1
     }
 
     fun isType(type: MessageType): Boolean {

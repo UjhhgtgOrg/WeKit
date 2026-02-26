@@ -8,6 +8,7 @@ import moe.ouom.wekit.core.dsl.dexMethod
 import moe.ouom.wekit.core.model.ApiHookItem
 import moe.ouom.wekit.dexkit.intf.IDexFind
 import moe.ouom.wekit.hooks.core.annotation.HookItem
+import moe.ouom.wekit.hooks.sdk.base.model.SelfProfileField
 import moe.ouom.wekit.hooks.sdk.base.model.WeContact
 import moe.ouom.wekit.hooks.sdk.base.model.WeGroup
 import moe.ouom.wekit.hooks.sdk.base.model.WeMessage
@@ -24,8 +25,10 @@ import java.lang.reflect.Modifier
 @HookItem(path = "API/数据库服务", desc = "提供数据库直接查询能力")
 object WeDatabaseApi : ApiHookItem(), IDexFind {
 
-    private val classMmKernel by dexClass()
+    val classMmKernel by dexClass()
     private val methodGetStorage by dexMethod()
+    private val classCoreStorage by dexClass()
+    private val classConfigStorage by dexClass()
 
     var dbInstance: Any? = null
     private var getStorageMethod: Method? = null
@@ -33,6 +36,32 @@ object WeDatabaseApi : ApiHookItem(), IDexFind {
     var execStatementMethod: Method? = null
 
     private const val TAG = "WeDatabaseApi"
+
+    val coreStorage by lazy {
+        classMmKernel.clazz.asResolver()
+            .firstMethod {
+                parameterCount = 0
+                returnType = classCoreStorage.clazz
+            }
+            .invoke()!!
+    }
+
+    val configStorage by lazy {
+        coreStorage.asResolver()
+            .firstMethod {
+                parameterCount = 0
+                returnType = classConfigStorage.clazz
+            }
+            .invoke()!!
+    }
+
+    fun getSelfProfileField(field: SelfProfileField) =
+        configStorage.asResolver()
+        .firstMethod {
+            parameters(Int::class, Any::class)
+            returnType = Any::class
+        }
+        .invoke(field.code, null)!!
 
     private object SqlStatements {
         // 基础字段 - 联系人查询常用字段
@@ -153,12 +182,25 @@ object WeDatabaseApi : ApiHookItem(), IDexFind {
             }
         }
 
+        classCoreStorage.find(dexKit, descriptors) {
+            matcher {
+                usingEqStrings("MMKernel.CoreStorage", "CheckData path[%s] blocksize:%s blockcount:%s availcount:%s")
+            }
+        }
+
         methodGetStorage.find(dexKit, descriptors, true) {
             matcher {
                 declaredClass(classMmKernel.clazz)
                 modifiers = Modifier.PUBLIC or Modifier.STATIC
                 paramCount = 0
                 usingStrings("mCoreStorage not initialized!")
+            }
+        }
+
+        classConfigStorage.find(dexKit, descriptors) {
+            searchPackages("com.tencent.mm.storage")
+            matcher {
+                usingEqStrings("MicroMsg.ConfigStorage", "shouldProcessEvent db is close :%s")
             }
         }
 

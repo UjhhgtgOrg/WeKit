@@ -66,7 +66,7 @@ object LinkExternalAppJump : BaseSwitchFunctionHookItem(), WeStartActivityListen
     }
 
     override fun onStartActivity(
-        hookParam: XC_MethodHook.MethodHookParam,
+        param: XC_MethodHook.MethodHookParam,
         intent: Intent
     ) {
         // prevent loop
@@ -99,7 +99,7 @@ object LinkExternalAppJump : BaseSwitchFunctionHookItem(), WeStartActivityListen
             packageManager.queryIntentActivities(newIntent, PackageManager.MATCH_DEFAULT_ONLY)
         }
 
-        val context = hookParam.thisObject as Context
+        val context = param.thisObject as Context
         showComposeDialog(context) { onDismiss ->
             AlertDialog(onDismissRequest = onDismiss,
                 title = { Text("选择打开方式") },
@@ -138,7 +138,7 @@ object LinkExternalAppJump : BaseSwitchFunctionHookItem(), WeStartActivityListen
                 confirmButton = { TextButton(onClick = onDismiss) { Text("取消") } })
         }
 
-        hookParam.result = null
+        param.result = null
     }
 
     @Composable

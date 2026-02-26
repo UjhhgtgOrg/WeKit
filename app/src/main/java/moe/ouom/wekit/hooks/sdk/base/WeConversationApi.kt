@@ -18,13 +18,34 @@ object WeConversationApi : ApiHookItem(), IDexFind {
     val methodUpdateUnreadByTalker by dexMethod()
     val methodHiddenConvParent by dexMethod()
     val methodGetConvByName by dexMethod()
+    private val methodChatroomStorageGetMemberCount by dexMethod()
+    private val classChatroomMember by dexClass()
 
-    fun getConversationStorage(): Any {
-        return WeServiceApi.storageFeatureService.asResolver()
+    val conversationStorage by lazy {
+        WeServiceApi.storageFeatureService.asResolver()
             .firstMethod {
                 returnType = classConversationStorage.clazz
             }
             .invoke()!!
+    }
+
+    val chatroomStorage by lazy {
+        WeServiceApi.chatroomService.asResolver()
+            .firstMethod {
+                returnType = methodChatroomStorageGetMemberCount.method.declaringClass
+            }
+            .invoke()!!
+    }
+
+    // this is NOT chatroom 'member'
+    // this is the chatroom itself
+    fun getGroup(groupId: String): Any {
+        return chatroomStorage.asResolver()
+            .firstMethod {
+                parameters(String::class)
+                returnType = classChatroomMember.clazz
+            }
+            .invoke(groupId)!!
     }
 
     fun markAllAsRead() {
@@ -33,7 +54,7 @@ object WeConversationApi : ApiHookItem(), IDexFind {
         while (cursor.moveToNext()) {
             val talker = cursor.getString(0)
             try {
-                methodUpdateUnreadByTalker.method.invoke(getConversationStorage(), talker)
+                methodUpdateUnreadByTalker.method.invoke(conversationStorage, talker)
                 WeLogger.d(TAG, "marked $talker as read")
             }
             catch (ex: Exception) {
@@ -45,7 +66,7 @@ object WeConversationApi : ApiHookItem(), IDexFind {
 
     fun markAsRead(talker: String) {
         try {
-            methodUpdateUnreadByTalker.method.invoke(getConversationStorage(), talker)
+            methodUpdateUnreadByTalker.method.invoke(conversationStorage, talker)
             WeLogger.d(TAG, "marked $talker as read")
         }
         catch (ex: Exception) {
@@ -81,6 +102,20 @@ object WeConversationApi : ApiHookItem(), IDexFind {
             matcher {
                 declaredClass(classConversationStorage.clazz)
                 usingEqStrings("MicroMsg.ConversationStorage", "get null with username:")
+            }
+        }
+
+        methodChatroomStorageGetMemberCount.find(dexKit, descriptors) {
+            searchPackages("com.tencent.mm.storage")
+            matcher {
+                usingEqStrings("MicroMsg.ChatroomStorage", "[getMemberCount] cost:%sms")
+            }
+        }
+
+        classChatroomMember.find(dexKit, descriptors) {
+            searchPackages("com.tencent.mm.storage")
+            matcher {
+                usingEqStrings("MicroMsg.ChatRoomMember", "service is null")
             }
         }
 

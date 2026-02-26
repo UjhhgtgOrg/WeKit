@@ -17,7 +17,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 object WeChatItemCreateViewListenerApi : ApiHookItem(), IDexFind {
 
     interface ICreateViewListener {
-        fun onCreateView(hookParam: XC_MethodHook.MethodHookParam, view: View,
+        fun onCreateView(param: XC_MethodHook.MethodHookParam, view: View,
                          chattingContext: Any, msgInfo: MessageInfo)
     }
 

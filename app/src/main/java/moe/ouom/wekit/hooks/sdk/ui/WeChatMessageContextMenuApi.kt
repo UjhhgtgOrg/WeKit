@@ -22,7 +22,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 object WeChatMessageContextMenuApi : ApiHookItem(), IDexFind {
 
     interface IMenuItemsProvider {
-        fun getMenuItems(hookParam: XC_MethodHook.MethodHookParam, msgInfo: MessageInfo): List<MenuItem>
+        fun getMenuItems(param: XC_MethodHook.MethodHookParam, msgInfo: MessageInfo): List<MenuItem>
     }
     data class MenuItem(val id: Int,
                             val text: String, val drawable: Drawable,

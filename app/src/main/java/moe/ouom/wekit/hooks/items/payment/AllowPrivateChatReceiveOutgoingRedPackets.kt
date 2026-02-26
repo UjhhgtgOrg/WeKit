@@ -21,7 +21,7 @@ object AllowPrivateChatReceiveOutgoingRedPackets : BaseSwitchFunctionHookItem(),
     }
 
     override fun onStartActivity(
-        hookParam: XC_MethodHook.MethodHookParam,
+        param: XC_MethodHook.MethodHookParam,
         intent: Intent
     ) {
         val className = intent.component?.className ?: return

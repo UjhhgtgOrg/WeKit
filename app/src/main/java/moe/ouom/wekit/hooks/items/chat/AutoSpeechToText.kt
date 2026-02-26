@@ -28,7 +28,7 @@ object AutoSpeechToText : BaseSwitchFunctionHookItem(), WeChatItemCreateViewList
     }
 
     override fun onCreateView(
-        hookParam: XC_MethodHook.MethodHookParam,
+        param: XC_MethodHook.MethodHookParam,
         view: View,
         chattingContext: Any,
         msgInfo: MessageInfo

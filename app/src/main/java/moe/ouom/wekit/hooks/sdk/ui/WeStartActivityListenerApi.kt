@@ -14,7 +14,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 object WeStartActivityListenerApi : ApiHookItem() {
 
     interface IStartActivityListener {
-        fun onStartActivity(hookParam: XC_MethodHook.MethodHookParam, intent: Intent)
+        fun onStartActivity(param: XC_MethodHook.MethodHookParam, intent: Intent)
     }
 
     private const val TAG: String = "WeStartActivityListenerApi"

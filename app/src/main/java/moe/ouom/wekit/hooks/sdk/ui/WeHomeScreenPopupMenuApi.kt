@@ -19,7 +19,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 object WeHomeScreenPopupMenuApi : ApiHookItem(), IDexFind {
 
     interface IMenuItemsProvider {
-        fun getMenuItems(hookParam: XC_MethodHook.MethodHookParam): List<MenuItem>
+        fun getMenuItems(param: XC_MethodHook.MethodHookParam): List<MenuItem>
     }
 
     data class MenuItem(val id: Int,

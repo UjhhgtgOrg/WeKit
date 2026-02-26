@@ -49,7 +49,7 @@
 
 ## 已知问题
 
-- 每次 DEX 解析缓存清空后, WeMessageApi.classChattingContext 第一次将会必定解析失败, 重启应用重试即可恢复正常, 原因暂时未知
+- ~~每次 DEX 解析缓存清空后, WeServiceApi 第一次将会必定解析失败, 重启应用重试即可恢复正常, 原因暂时未知~~ 解析 DEX 时不能使用其他类已解析好的 DEX, 其他场景比如 hook 内可以使用
 
 ## lol
 

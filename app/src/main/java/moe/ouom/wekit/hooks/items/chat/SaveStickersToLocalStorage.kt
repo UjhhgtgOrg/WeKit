@@ -52,7 +52,7 @@ object SaveStickersToLocalStorage : BaseSwitchFunctionHookItem(), IDexFind, WeCh
     }
 
     override fun getMenuItems(
-        hookParam: XC_MethodHook.MethodHookParam,
+        param: XC_MethodHook.MethodHookParam,
         msgInfo: MessageInfo
     ): List<WeChatMessageContextMenuApi.MenuItem> {
         val type = msgInfo.type

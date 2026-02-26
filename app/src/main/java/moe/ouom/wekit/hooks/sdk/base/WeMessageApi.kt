@@ -67,7 +67,7 @@ object WeMessageApi : ApiHookItem(), IDexFind {
     private val classVfs by dexClass()             // VFS 文件操作 (原 w6)
     private val classPathUtil by dexClass()        // 路径计算工具 (原 h1)
     private val classMmKernel by dexClass()          // 核心 Kernel (原 j1)
-    private val methodKernelGetStorage by dexMethod() // Kernel.getStorage
+    private val methodMmKernelGetStorage by dexMethod() // Kernel.getStorage
 
     // 查找 Service 接口 (sc0.e)
     private val dexClassVoiceServiceInterface by dexClass()
@@ -406,7 +406,7 @@ object WeMessageApi : ApiHookItem(), IDexFind {
                 }
             }
 
-            methodKernelGetStorage.find(dexKit, descriptors, true) {
+            methodMmKernelGetStorage.find(dexKit, descriptors, true) {
                 matcher {
                     declaredClass(classMmKernel.clazz)
                     modifiers = Modifier.PUBLIC or Modifier.STATIC
@@ -557,7 +557,7 @@ object WeMessageApi : ApiHookItem(), IDexFind {
                 }
 
                 // Kernel
-                kernelStorageMethod = methodKernelGetStorage.method
+                kernelStorageMethod = methodMmKernelGetStorage.method
 
                 // PathUtil
                 classPathUtil.clazz.let { pathClazz ->
