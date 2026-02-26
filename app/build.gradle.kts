@@ -107,8 +107,8 @@ configure<ApplicationExtension> {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
-            isShrinkResources = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             signingConfig = signingConfigs.getByName("debug")
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
@@ -414,11 +414,11 @@ dependencies {
     implementation(libs.okhttp3.okhttp)
 
     implementation(libs.rhino.android)
-    implementation(libs.kotlin.scripting.common)
-    implementation(libs.kotlin.scripting.jvm)
-    implementation(libs.kotlin.scripting.jvm.host)
-    implementation(libs.kotlin.compiler.embeddable)
-    implementation(libs.kotlinx.coroutines.core)
+    // implementation(libs.kotlin.scripting.common)
+    // implementation(libs.kotlin.scripting.jvm)
+    // implementation(libs.kotlin.scripting.jvm.host)
+    // implementation(libs.kotlin.compiler.embeddable)
+    // implementation(libs.kotlinx.coroutines.core)
 
     compileOnly(libs.lombok)
     annotationProcessor(libs.lombok)
