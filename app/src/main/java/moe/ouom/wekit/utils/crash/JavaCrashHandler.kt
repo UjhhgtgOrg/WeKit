@@ -3,6 +3,7 @@ package moe.ouom.wekit.utils.crash
 import android.content.Context
 import android.os.Process
 import moe.ouom.wekit.utils.crash.CrashInfoCollector.collectCrashInfo
+import moe.ouom.wekit.utils.getThreadId
 import moe.ouom.wekit.utils.log.WeLogger
 import kotlin.system.exitProcess
 
@@ -61,7 +62,7 @@ class JavaCrashHandler(context: Context) : Thread.UncaughtExceptionHandler {
             WeLogger.e("JavaCrashHandler", "Uncaught exception detected!")
             WeLogger.e(
                 "JavaCrashHandler",
-                "Thread: " + thread.name + " (ID: " + thread.id + ")"
+                "Thread: " + thread.name + " (ID: " + thread.getThreadId() + ")"
             )
             WeLogger.e("JavaCrashHandler", "Exception: " + throwable.javaClass.name)
             WeLogger.e("JavaCrashHandler", "Message: " + throwable.message)

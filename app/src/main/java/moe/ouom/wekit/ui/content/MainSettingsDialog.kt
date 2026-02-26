@@ -30,7 +30,7 @@ class MainSettingsDialog(context: Context) : BaseRikkaDialog(context, "WeKit") {
             "视频号" to "movie_24px",
             "个人资料" to "account_circle_24px",
             "调试" to "bug_report_24px",
-            "自动化" to "terminal_24px",
+            "脚本" to "terminal_24px",
         )
         categories.forEach { (name, iconName) ->
             addPreference(

@@ -656,7 +656,7 @@ object WeMessageApi : ApiHookItem(), IDexFind {
         var scanCount = 0
 
         // 递归扫描类继承链
-        while (currentClass != null && currentClass != Object::class.java) {
+        while (currentClass != null && currentClass != Any::class.java) {
             val methods = currentClass.declaredMethods.filter {
                 it.parameterCount == 0 && it.returnType == String::class.java
             }
@@ -735,16 +735,16 @@ object WeMessageApi : ApiHookItem(), IDexFind {
     }
 
     /** 发送文件消息 */
-    fun sendFile(talker: String, filePath: String, title: String, appid: String? = null): Boolean {
+    fun sendFile(talker: String, filePath: String, title: String, appId: String? = null): Boolean {
         return try {
             WeLogger.i(TAG, "[sendFile] 准备发送文件消息: $filePath")
             if (shareFileMethod == null || wxFileObjectClass == null || wxMediaMessageClass == null) return false
-            val fileObject = wxFileObjectClass?.newInstance() ?: return false
+            val fileObject = wxFileObjectClass?.createInstance() ?: return false
             wxFileObjectClass?.getField("filePath")?.set(fileObject, filePath)
-            val mediaMessage = wxMediaMessageClass?.newInstance() ?: return false
+            val mediaMessage = wxMediaMessageClass?.createInstance() ?: return false
             wxMediaMessageClass?.getField("mediaObject")?.set(mediaMessage, fileObject)
             wxMediaMessageClass?.getField("title")?.set(mediaMessage, title)
-            shareFileMethod?.invoke(null, mediaMessage, appid ?: "", "", talker, 2, null)
+            shareFileMethod?.invoke(null, mediaMessage, appId ?: "", "", talker, 2, null)
             true
         } catch (e: Exception) {
             WeLogger.e(TAG, "[sendFile] File 发送失败", e)

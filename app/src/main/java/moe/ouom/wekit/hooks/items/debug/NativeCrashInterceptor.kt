@@ -337,6 +337,7 @@ object NativeCrashInterceptor : BaseSwitchFunctionHookItem() {
                     // 使用 CommonContextWrapper 包装 Activity Context
                     val wrappedContext = CommonContextWrapper.Companion.createAppCompatContext(activity)
 
+                    @Suppress("DEPRECATION")
                     pendingDialog = MaterialDialog(wrappedContext)
                         .title(text = "Native 崩溃详情")
                         .message(text = crashInfo)

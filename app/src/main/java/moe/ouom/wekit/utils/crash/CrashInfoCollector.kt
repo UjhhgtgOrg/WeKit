@@ -5,6 +5,7 @@ import android.content.Context
 import android.os.Build
 import android.os.Debug
 import android.os.Process
+import moe.ouom.wekit.utils.getThreadId
 import moe.ouom.wekit.utils.log.WeLogger
 import java.io.BufferedReader
 import java.io.FileReader
@@ -118,7 +119,7 @@ object CrashInfoCollector {
             sb.append("Version Name: ").append(packageInfo.versionName).append("\n")
             sb.append("Version Code: ").append(packageInfo.longVersionCode).append("\n")
             sb.append("Process ID: ").append(Process.myPid()).append("\n")
-            sb.append("Thread ID: ").append(Thread.currentThread().id).append("\n")
+            sb.append("Thread ID: ").append(Thread.currentThread().getThreadId()).append("\n")
             sb.append("Process Name: ").append(getProcessName(context)).append("\n")
         } catch (e: Exception) {
             sb.append("Failed to collect app info: ").append(e.message).append("\n")
@@ -219,7 +220,7 @@ object CrashInfoCollector {
                 val stackTrace = entry.value
 
                 sb.append("Thread: ").append(thread.name)
-                    .append(" (ID: ").append(thread.id)
+                    .append(" (ID: ").append(thread.getThreadId())
                     .append(", State: ").append(thread.state)
                     .append(", Priority: ").append(thread.priority)
                     .append(")\n")

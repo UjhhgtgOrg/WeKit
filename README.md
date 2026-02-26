@@ -18,7 +18,8 @@
 
 ## 特色功能
 
-- 基于 JavaScript 的脚本自动化引擎, [API ~~文档~~参考](app/src/main/java/moe/ouom/wekit/hooks/items/automation/globals.d.ts)
+- 基于 JavaScript 的脚本引擎, [API ~~文档~~参考](app/src/main/java/moe/ouom/wekit/hooks/items/scripting_js/globals.d.ts)
+- 实验性的基于 Kotlin Scripting 的脚本引擎 (直接与宿主与模块互通)
 - 贴纸包同步 (Telegram Stickers Sync)
 - 通知进化
 - 引用消息直达 (支持新版微信)

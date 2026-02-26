@@ -1,4 +1,4 @@
-package moe.ouom.wekit.hooks.items.automation
+package moe.ouom.wekit.hooks.items.scripting_js
 
 import android.content.ContentValues
 import android.content.Context
@@ -27,21 +27,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import moe.ouom.wekit.core.model.BaseClickableFunctionHookItem
 import moe.ouom.wekit.hooks.core.annotation.HookItem
-import moe.ouom.wekit.hooks.item.automation.EmbeddedBuiltinJs
+import moe.ouom.wekit.hooks.item.scripting_js.EmbeddedBuiltinJs
 import moe.ouom.wekit.hooks.sdk.base.WeDatabaseListenerApi
 import moe.ouom.wekit.hooks.sdk.protocol.intf.IWePkgInterceptor
-import moe.ouom.wekit.ui.utils.showComposeDialog
 import moe.ouom.wekit.ui.content.BaseHooksSettingsDialogContent
+import moe.ouom.wekit.ui.utils.showComposeDialog
 import moe.ouom.wekit.utils.WeProtoData
 import moe.ouom.wekit.utils.log.WeLogger
 import java.util.concurrent.CopyOnWriteArrayList
 
-@HookItem(path = "自动化/自动化引擎", desc = "点击管理自动化规则")
-object AutomationHook : BaseClickableFunctionHookItem(),
+@HookItem(path = "脚本/脚本引擎", desc = "点击管理脚本")
+object JsScriptingHook : BaseClickableFunctionHookItem(),
     WeDatabaseListenerApi.IInsertListener,
     IWePkgInterceptor
 {
-    private const val TAG = "AutomationRuleManager"
+    private const val TAG = "ScriptingHook"
 
     // type=0 post
     // type=1 plain text
@@ -64,7 +64,7 @@ object AutomationHook : BaseClickableFunctionHookItem(),
 
     val rules = CopyOnWriteArrayList(
         listOf(
-            AutomationRule(
+            JsScript(
                 id = 0,
                 name = "builtin_js",
                 script = EmbeddedBuiltinJs.SCRIPT,
@@ -75,7 +75,6 @@ object AutomationHook : BaseClickableFunctionHookItem(),
 
     // --- ui ---
     override fun onClick(context: Context) {
-        if (context == null) return
         showComposeDialog(context) { onDismiss ->
             BaseHooksSettingsDialogContent("管理规则", onDismiss) {
                 AutomationSettingsDialogContent(rules)
@@ -107,7 +106,7 @@ object AutomationHook : BaseClickableFunctionHookItem(),
 
         WeLogger.i(TAG, "message received: talker=$talker type=$type content.length=${content.length}")
 
-        AutomationEngine.executeAllOnMessage(rules, talker, content, type, isSend)
+        JsEngine.executeAllOnMessage(rules, talker, content, type, isSend)
     }
 
     override fun unload(classLoader: ClassLoader) {
@@ -128,7 +127,7 @@ object AutomationHook : BaseClickableFunctionHookItem(),
             val data = WeProtoData()
             data.fromBytes(reqBytes)
             val json = data.toJSON()
-            val modifiedJson = AutomationEngine.executeAllOnRequest(uri, cgiId, json)
+            val modifiedJson = JsEngine.executeAllOnRequest(uri, cgiId, json)
             data.applyViewJSON(modifiedJson, true)
             return data.toPacketBytes()
         } catch (e: Exception) {
@@ -150,7 +149,7 @@ object AutomationHook : BaseClickableFunctionHookItem(),
             val data = WeProtoData()
             data.fromBytes(respBytes)
             val json = data.toJSON()
-            val modifiedJson = AutomationEngine.executeAllOnResponse(uri, cgiId, json)
+            val modifiedJson = JsEngine.executeAllOnResponse(uri, cgiId, json)
             data.applyViewJSON(modifiedJson, true)
             return data.toPacketBytes()
         } catch (e: Exception) {
@@ -161,7 +160,7 @@ object AutomationHook : BaseClickableFunctionHookItem(),
 }
 
 @Composable
-private fun AutomationSettingsDialogContent(rules: MutableList<AutomationRule>) {
+private fun AutomationSettingsDialogContent(rules: MutableList<JsScript>) {
     var snapshot by remember { mutableStateOf(rules.toList()) }
     var showAddDialog by remember { mutableStateOf(false) }
 
@@ -219,7 +218,7 @@ private fun AutomationSettingsDialogContent(rules: MutableList<AutomationRule>) 
 }
 
 @Composable
-private fun AutomationRuleCard(rule: AutomationRule, onToggle: () -> Unit, onDelete: () -> Unit) {
+private fun AutomationRuleCard(rule: JsScript, onToggle: () -> Unit, onDelete: () -> Unit) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier
@@ -245,7 +244,7 @@ private fun AutomationRuleCard(rule: AutomationRule, onToggle: () -> Unit, onDel
 }
 
 @Composable
-private fun AddAutomationRuleDialog(onConfirm: (AutomationRule) -> Unit, onDismiss: () -> Unit) {
+private fun AddAutomationRuleDialog(onConfirm: (JsScript) -> Unit, onDismiss: () -> Unit) {
     var ruleName by remember { mutableStateOf("") }
     var script by remember { mutableStateOf("") }
 
@@ -284,7 +283,7 @@ private fun AddAutomationRuleDialog(onConfirm: (AutomationRule) -> Unit, onDismi
                 onClick = {
                     if (ruleName.isBlank() || script.isBlank()) return@TextButton
                     onConfirm(
-                        AutomationRule(
+                        JsScript(
                             id = System.currentTimeMillis(),
                             name = ruleName,
                             script = script,

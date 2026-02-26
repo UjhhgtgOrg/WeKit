@@ -245,6 +245,7 @@ object CrashInterceptor : BaseSwitchFunctionHookItem() {
                         crashInfo
                     }
 
+                    @Suppress("DEPRECATION")
                     pendingDialog = MaterialDialog(wrappedContext)
                         .title(text = "Java 崩溃详情")
                         .message(text = displayInfo) {

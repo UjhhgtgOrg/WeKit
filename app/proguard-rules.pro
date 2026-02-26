@@ -39,11 +39,6 @@
     public void onSystemServerLoaded(...);
 }
 
--keep,allowoptimization,allowobfuscation @io.github.libxposed.api.annotations.* class * {
-    @io.github.libxposed.api.annotations.BeforeInvocation <methods>;
-    @io.github.libxposed.api.annotations.AfterInvocation <methods>;
-}
-
 # ==========================================================
 # Kotlin 标准库优化
 # ==========================================================
@@ -54,6 +49,7 @@
 # 保留 Kotlin 标准库核心类（Hidden Dex 依赖）
 -keep class kotlin.** { *; }
 -keep class kotlinx.** { *; }
+-keep class org.jetbrains.kotlin.** { *; }
 -keep class org.intellij.lang.annotations.** { *; }
 -keep class org.jetbrains.annotations.** { *; }
 
@@ -193,3 +189,5 @@
 -dontobfuscate
 
 -dontwarn java.lang.reflect.AnnotatedType
+
+-keep class moe.ouom.wekit.hooks.items.scripting_kts.** { *; }

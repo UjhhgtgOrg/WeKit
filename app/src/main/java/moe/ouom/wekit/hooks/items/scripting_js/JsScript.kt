@@ -1,6 +1,6 @@
-package moe.ouom.wekit.hooks.items.automation
+package moe.ouom.wekit.hooks.items.scripting_js
 
-data class AutomationRule(
+data class JsScript(
     val id: Long = System.currentTimeMillis(),
     val name: String,
     val script: String,

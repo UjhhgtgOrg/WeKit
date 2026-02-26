@@ -107,8 +107,8 @@ configure<ApplicationExtension> {
 
     buildTypes {
         release {
-            isMinifyEnabled = true
-            isShrinkResources = true
+            isMinifyEnabled = false
+            isShrinkResources = false
             signingConfig = signingConfigs.getByName("debug")
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
@@ -149,6 +149,10 @@ kotlin {
         jvmTarget.set(JvmTarget.fromTarget(libs.versions.jdk.get()))
     }
     jvmToolchain(libs.versions.jdk.get().toInt())
+}
+
+tasks.withType<KotlinCompile>().configureEach {
+    exclude("**/scripts/**")
 }
 
 val adbProvider = androidComponents.sdkComponents.adb
@@ -331,10 +335,10 @@ abstract class EmbedJsTask : DefaultTask() {
     fun generate() {
         val jsContent = sourceJsFile.get().asFile.readText()
         val outDir = outputDir.get().asFile
-        val outputFile = outDir.resolve("moe/ouom/wekit/hooks/items/automation/BuiltinJs.kt")
+        val outputFile = outDir.resolve("moe/ouom/wekit/hooks/items/scripting_js/BuiltinJs.kt")
 
         val ktCode = """
-            package moe.ouom.wekit.hooks.item.automation
+            package moe.ouom.wekit.hooks.item.scripting_js
 
             object EmbeddedBuiltinJs {
                 const val SCRIPT: String = ""${'"'}
@@ -350,7 +354,7 @@ $jsContent
 
 val embedBuiltinJavaScript = tasks.register<EmbedJsTask>("embedBuiltinJavaScript") {
     group = "wekit"
-    sourceJsFile.set(file("src/main/java/moe/ouom/wekit/hooks/items/automation/script.js"))
+    sourceJsFile.set(file("src/main/java/moe/ouom/wekit/hooks/items/scripting_js/script.js"))
     outputDir.set(layout.buildDirectory.dir("generated/sources/embeddedJs/kotlin"))
 }
 
@@ -410,6 +414,11 @@ dependencies {
     implementation(libs.okhttp3.okhttp)
 
     implementation(libs.rhino.android)
+    implementation(libs.kotlin.scripting.common)
+    implementation(libs.kotlin.scripting.jvm)
+    implementation(libs.kotlin.scripting.jvm.host)
+    implementation(libs.kotlin.compiler.embeddable)
+    implementation(libs.kotlinx.coroutines.core)
 
     compileOnly(libs.lombok)
     annotationProcessor(libs.lombok)

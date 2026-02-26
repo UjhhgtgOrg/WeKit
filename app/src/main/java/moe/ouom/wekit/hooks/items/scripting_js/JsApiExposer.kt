@@ -1,4 +1,4 @@
-package moe.ouom.wekit.hooks.items.automation
+package moe.ouom.wekit.hooks.items.scripting_js
 
 import android.os.Handler
 import android.os.Looper

@@ -1,4 +1,4 @@
-package moe.ouom.wekit.hooks.items.automation
+package moe.ouom.wekit.hooks.items.scripting_js
 
 import moe.ouom.wekit.hooks.sdk.base.WeMessageApi
 import moe.ouom.wekit.utils.log.WeLogger
@@ -8,12 +8,12 @@ import org.mozilla.javascript.Function
 import org.mozilla.javascript.NativeObject
 import org.mozilla.javascript.ScriptableObject
 
-object AutomationEngine {
+object JsEngine {
 
     private const val TAG = "AutomationEngine"
 
     fun executeAllOnMessage(
-        rules: List<AutomationRule>,
+        rules: List<JsScript>,
         talker: String,
         content: String,
         type: Int,
@@ -99,7 +99,7 @@ object AutomationEngine {
     ): JSONObject {
         var modifiedJson = json
 
-        for (rule in AutomationHook.rules) {
+        for (rule in JsScriptingHook.rules) {
             if (!rule.enabled) continue
             try {
                 val result = executeOnRequest(rule.script, uri, cgiId, modifiedJson)
@@ -164,7 +164,7 @@ object AutomationEngine {
     ): JSONObject {
         var modifiedJson = json
 
-        for (rule in AutomationHook.rules) {
+        for (rule in JsScriptingHook.rules) {
             if (!rule.enabled) continue
             try {
                 val result = executeOnResponse(rule.script, uri, cgiId, modifiedJson)

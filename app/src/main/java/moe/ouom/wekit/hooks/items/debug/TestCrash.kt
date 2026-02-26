@@ -62,11 +62,6 @@ object TestCrash : BaseClickableFunctionHookItem() {
     }
 
     override fun onClick(context: Context) {
-        if (context == null) {
-            WeLogger.e("TestCrash", "Context is null")
-            return
-        }
-
         showCrashCategoryDialog(context)
     }
 

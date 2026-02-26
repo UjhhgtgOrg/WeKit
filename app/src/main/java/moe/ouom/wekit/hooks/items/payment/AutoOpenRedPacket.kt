@@ -252,7 +252,7 @@ object AutoOpenRedPacket : BaseClickableFunctionHookItem(),
     }
 
     override fun onClick(context: Context) {
-        context?.let { ConfigDialog(it).show() }
+        context.let { ConfigDialog(it).show() }
     }
 
     override fun dexFind(dexKit: DexKitBridge): Map<String, String> {

@@ -112,14 +112,12 @@ object Initiator {
         if (clazz != null) {
             return clazz
         }
-        if (index != null) {
-            for (i in index) {
-                val cref = load("$className$$i")
-                if (cref != null) {
-                    try {
-                        return cref.getDeclaredField("this$0").type
-                    } catch (_: ReflectiveOperationException) { }
-                }
+        for (i in index) {
+            val cref = load("$className$$i")
+            if (cref != null) {
+                try {
+                    return cref.getDeclaredField("this$0").type
+                } catch (_: ReflectiveOperationException) { }
             }
         }
         return null
