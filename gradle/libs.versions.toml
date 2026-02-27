@@ -4,6 +4,7 @@ namespace = "moe.ouom.wekit"
 # noinspection UnusedVersionCatalogEntry
 minSdk = "29"
 # noinspection UnusedVersionCatalogEntry
+silkdecoder = "1.0"
 targetSdk = "36"
 # noinspection UnusedVersionCatalogEntry
 jdk = "21"
@@ -95,6 +96,7 @@ ksp = { module = "com.google.devtools.ksp:symbol-processing-api", version.ref = 
 kotlin-gradle = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
 kotlinpoet-ksp = { module = "com.squareup:kotlinpoet-ksp", version = "2.2.0" }
 androidx-compose-runtime = { group = "androidx.compose.runtime", name = "runtime", version.ref = "runtime" }
+silkdecoder = { module = "com.github.xxinPro:SilkDecoder", version.ref = "silkdecoder" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

@@ -388,6 +388,8 @@ dependencies {
     implementation(libs.mmkv)
     implementation(libs.fastjson2)
 
+    implementation(libs.silkdecoder)
+
     compileOnly(libs.derobv.xposed.api)
     compileOnly(libs.libxposed.api)
     // 哪个智障发明的 Gradle

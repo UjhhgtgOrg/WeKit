@@ -18,15 +18,11 @@ import moe.ouom.wekit.utils.common.ModuleRes
 import moe.ouom.wekit.utils.common.ToastUtils
 import moe.ouom.wekit.utils.log.WeLogger
 import org.luckypray.dexkit.DexKitBridge
-import java.io.FileInputStream
-import java.io.FileOutputStream
+import xyz.xxin.silkdecoder.SilkDecoder
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
 import java.nio.file.Path
 import kotlin.io.path.Path
-import kotlin.io.path.exists
 import kotlin.io.path.extension
 import kotlin.io.path.inputStream
 
@@ -96,98 +92,13 @@ object SaveVoicesToLocalStorage : BaseSwitchFunctionHookItem(), IDexFind,
                 if (!Modifier.isStatic(methodGetAmrFullPath.method.modifiers)) {
                     service = WeServiceApi.getServiceByClass(methodGetAmrFullPath.method.declaringClass)
                 }
-                val srcPath = Path(methodGetAmrFullPath.method.invoke(service, null, encPath, true) as String)
-
-                saveAudio(srcPath)
-
-                val dstPath = srcPath.resolveSibling(srcPath.fileName.toString() + ".pcm")
-
-                decodeWeChatSilkToPcm(srcPath, dstPath)
-
-                saveAudio(Path("${srcPath}.pcm"))
+                val amrPath = Path(methodGetAmrFullPath.method.invoke(service, null, encPath, true) as String)
+                val mp3Path = amrPath.resolveSibling(amrPath.fileName.toString() + ".mp3")
+                SilkDecoder.decodeToMp3(amrPath.toString(), mp3Path.toString())
+                saveAudio(mp3Path)
+                WeLogger.d(TAG, "mp3: $mp3Path")
             }
         )
-    }
-
-    private fun decodeWeChatSilkToPcm(srcPath: Path, dstPath: Path) {
-        if (!srcPath.exists()) return
-
-        val fis = FileInputStream(srcPath.toString())
-        val fos = FileOutputStream(dstPath.toString())
-
-        try {
-            // 1. Handle the WeChat Header
-            // WeChat files usually start with 0x02 followed by "#!SILK_V3"
-            val firstByte = fis.read()
-            if (firstByte == 0x02) {
-                // It's a standard WeChat Silk file, skip this byte and continue
-            } else {
-                // If it doesn't start with 0x02, it might be a raw Silk file.
-                // We reset to start or handle accordingly.
-                fis.channel.position(0)
-            }
-
-            // Skip the Silk Magic Header ("#!SILK_V3" is 9 bytes)
-            val magicHeader = ByteArray(9)
-            fis.read(magicHeader)
-
-            // 2. Initialize the Decoder
-            // 24000 is the standard sample rate for WeChat voice.
-            // 0L is the default initial state/flag.
-            val handle = methodStreamSilkDecInit.invoke(null, 24000, 0L) as Long
-
-            if (handle == 0L) {
-                WeLogger.e(TAG, "Failed to initialize Silk decoder handle")
-                return
-            }
-
-            // 3. Prepare Buffers
-            // Silk frames are prefixed with a 2-byte (Short) length in Little-Endian
-            val sizeBuffer = ByteBuffer.allocate(2).order(ByteOrder.LITTLE_ENDIAN)
-            val outLenArray = IntArray(1)
-            val pcmBuffer = ByteArray(2048) // 2048 bytes is more than enough for one Silk frame
-
-            // 4. Decoding Loop
-            while (fis.read(sizeBuffer.array()) != -1) {
-                val frameSize = sizeBuffer.short.toInt()
-                sizeBuffer.clear()
-
-                if (frameSize <= 0) break
-
-                val silkFrame = ByteArray(frameSize)
-                val readCount = fis.read(silkFrame)
-
-                if (readCount == frameSize) {
-                    // native int StreamSilkDoDec(byte[] in, int inLen, byte[] out, int[] outLen, boolean z, long handle)
-                    val result = methodStreamSilkDoDec.invoke(
-                        null,
-                        silkFrame,
-                        frameSize,
-                        pcmBuffer,
-                        outLenArray,
-                        false, // z16: False (standard decoding)
-                        handle
-                    ) as Int
-
-                    if (result == 0) {
-                        val decodedBytes = outLenArray[0]
-                        if (decodedBytes > 0) {
-                            fos.write(pcmBuffer, 0, decodedBytes)
-                        }
-                    }
-                }
-            }
-
-            // 5. Cleanup
-            methodStreamSilkDecUnInit.invoke(null, handle)
-
-        } catch (e: Exception) {
-            WeLogger.e(TAG, "Critical error during Silk decoding", e)
-        } finally {
-            fis.close()
-            fos.flush()
-            fos.close()
-        }
     }
 
     private fun saveAudio(sourceFile: Path) {
