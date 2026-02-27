@@ -24,6 +24,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -126,62 +128,70 @@ object StickersSync : BaseClickableFunctionHookItem(), IDexFind {
                 }
 
                 // 1. 并发处理每一个贴纸包 (Pack)
+                // use a semaphore to limit the max amount of sticker packs being processed at the same time
+                val semaphore = Semaphore(6)
+
                 val packs = packDirs.map { packDir ->
                     async {
-                        val packId = packDir.name
-                        val packPath = packDir.toPath()
-                        val stickers = mutableListOf<Any>()
+                        semaphore.withPermit {
+                            val packId = packDir.name
+                            val packPath = packDir.toPath()
+                            val stickers = mutableListOf<Any>()
 
-                        val hashCache = loadHashCache(packPath)
-                        val newHashes = mutableMapOf<String, String>()
+                            val hashCache = loadHashCache(packPath)
+                            val newHashes = mutableMapOf<String, String>()
 
-                        val images = packPath.walk()
-                            .filter { it.isRegularFile() && it.extension.lowercase() in ALLOWED_STICKER_EXTENSIONS }
-                            .toList()
+                            val images = packPath.walk()
+                                .filter { it.isRegularFile() && it.extension.lowercase() in ALLOWED_STICKER_EXTENSIONS }
+                                .toList()
 
-                        images.forEach { path ->
-                            try {
-                                val actualPath = if (path.extension.lowercase() == "webp") {
-                                    convertWebpToPng(path) ?: return@forEach
-                                } else {
-                                    path
+                            images.forEach { path ->
+                                try {
+                                    val actualPath = if (path.extension.lowercase() == "webp") {
+                                        convertWebpToPng(path) ?: return@forEach
+                                    } else {
+                                        path
+                                    }
+
+                                    val absPath = actualPath.absolutePathString()
+                                    val fileName = actualPath.fileName.toString()
+
+                                    val md5 = hashCache.hashes[fileName]
+                                        ?: getEmojiMd5FromPath(HostInfo.getApplication(), absPath)
+                                    newHashes[fileName] = md5
+
+                                    // 反射调用构造微信对象
+                                    val emojiThumb = getEmojiInfoByMd5(md5)
+                                    methodSaveEmojiThumb.method.invoke(emojiThumb, null, true)
+                                    val groupItemInfo = classGroupItemInfo.clazz
+                                        .getDeclaredConstructor(
+                                            "com.tencent.mm.api.IEmojiInfo".toClass(),
+                                            Int::class.java, String::class.java, Int::class.java
+                                        )
+                                        .newInstance(emojiThumb, 2, "", 0)
+                                    stickers.add(groupItemInfo)
+                                } catch (e: Exception) {
+                                    WeLogger.e(TAG, "Failed to load sticker: $path", e)
                                 }
-
-                                val absPath = actualPath.absolutePathString()
-                                val fileName = actualPath.fileName.toString()
-
-                                val md5 = hashCache.hashes[fileName]
-                                    ?: getEmojiMd5FromPath(HostInfo.getApplication(), absPath)
-                                newHashes[fileName] = md5
-
-                                // 反射调用构造微信对象
-                                val emojiThumb = getEmojiInfoByMd5(md5)
-                                methodSaveEmojiThumb.method.invoke(emojiThumb, null, true)
-                                val groupItemInfo = classGroupItemInfo.clazz
-                                    .getDeclaredConstructor(
-                                        "com.tencent.mm.api.IEmojiInfo".toClass(),
-                                        Int::class.java, String::class.java, Int::class.java
-                                    )
-                                    .newInstance(emojiThumb, 2, "", 0)
-                                stickers.add(groupItemInfo)
-                            } catch (e: Exception) {
-                                WeLogger.e(TAG, "Failed to load sticker: $path", e)
                             }
-                        }
 
-                        if (newHashes.isNotEmpty()) {
-                            saveHashCache(packPath, HashCache(newHashes))
-                        }
+                            if (newHashes.isNotEmpty()) {
+                                saveHashCache(packPath, HashCache(newHashes))
+                            }
 
-                        if (stickers.isNotEmpty()) {
-                            WeLogger.i(TAG, "loaded pack '$packId' with ${stickers.size} stickers")
-                            StickerPack(
-                                appPackId = "$STICKER_PACK_ID_PREFIX.$packId",
-                                packId = packId,
-                                packName = packId,
-                                stickers = stickers
-                            )
-                        } else null
+                            if (stickers.isNotEmpty()) {
+                                WeLogger.i(
+                                    TAG,
+                                    "loaded pack '$packId' with ${stickers.size} stickers"
+                                )
+                                StickerPack(
+                                    appPackId = "$STICKER_PACK_ID_PREFIX.$packId",
+                                    packId = packId,
+                                    packName = packId,
+                                    stickers = stickers
+                                )
+                            } else null
+                        }
                     }
                 }.awaitAll().filterNotNull()
 
