@@ -33,11 +33,12 @@ object AutoCleanCache : BaseClickableFunctionHookItem() {
 
     private val cleanPaths = run {
         val paths = mutableListOf<Path>()
+
         val dataDir = HostInfo.getApplication().filesDir.parentFile!!.toPath()
-        val storageDataDir = HostInfo.getApplication().externalCacheDir?.toPath()?.parent ?: return@run paths
+        val storageDataDir = HostInfo.getApplication().externalCacheDir!!.toPath().parent!!
 
         paths.add(dataDir/"cache")
-        paths.add(storageDataDir/"Cache")
+        paths.add(storageDataDir/"cache")
         paths.add(dataDir/"MicroMsg"/"crash")
         paths.add(storageDataDir/"files"/"onelog")
         paths.add(storageDataDir/"files"/"tbslog")
@@ -74,13 +75,13 @@ object AutoCleanCache : BaseClickableFunctionHookItem() {
         var totalDeletedBytes = 0L
         cleanPaths.forEach { path ->
             try {
+                WeLogger.d(TAG, "deleting $path")
                 if (path.exists()) {
                     totalDeletedBytes += calculateSize(path)
                     path.deleteRecursively()
-                    WeLogger.d(TAG, "deleted $path")
                 }
             } catch (e: Exception) {
-                WeLogger.w(TAG, "Exception during cleaning: ${path.fileName}, ${e.message}")
+                WeLogger.w(TAG, "exception during cleaning: ${path.fileName}, ${e.message}")
             }
         }
         return totalDeletedBytes
@@ -103,11 +104,11 @@ object AutoCleanCache : BaseClickableFunctionHookItem() {
             val deletedSize = performClean()
             val sizeText = formatBytesSize(deletedSize)
 
-            val timeText = if (isEnabled) "下次自动清理将在 ${formatEpoch(System.currentTimeMillis() + CLEAN_INTERVAL)} 进行"
-                else "未启用自动清理"
+            val timeText = if (isEnabled) "\n下次自动清理将在 ${formatEpoch(System.currentTimeMillis() + CLEAN_INTERVAL)} 进行"
+                else ""
 
             withContext(Dispatchers.Main) {
-                Toast.makeText(context, "缓存清理完成, 共释放 $sizeText\n$timeText", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "缓存清理完成, 共释放 $sizeText$timeText", Toast.LENGTH_SHORT).show()
             }
 
             if (isEnabled) startCleaningJob()
