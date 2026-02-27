@@ -13,14 +13,12 @@ import moe.ouom.wekit.core.model.BaseClickableFunctionHookItem
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.ui.utils.CommonContextWrapper
 import moe.ouom.wekit.utils.common.ToastUtils
-import moe.ouom.wekit.utils.common.Utils
 import moe.ouom.wekit.utils.crash.CrashLogManager
+import moe.ouom.wekit.utils.formatBytesSize
+import moe.ouom.wekit.utils.formatEpoch
 import moe.ouom.wekit.utils.io.SafUtils
 import moe.ouom.wekit.utils.log.WeLogger
 import java.io.File
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 @HookItem(
     path = "调试/崩溃日志查看器",
@@ -65,8 +63,8 @@ object CrashLogViewer : BaseClickableFunctionHookItem() {
 
             // 构建日志列表
             val logItems = logFiles.map { file ->
-                val time = formatTime(file.lastModified())
-                val size = Utils.formatFileSize(file.length())
+                val time = formatEpoch(file.lastModified(), true)
+                val size = formatBytesSize(file.length())
                 "$time ($size)"
             }
 
@@ -424,8 +422,8 @@ object CrashLogViewer : BaseClickableFunctionHookItem() {
 
             val summary = StringBuilder()
             summary.append("文件名: ${logFile.name}\n")
-            summary.append("时间: ${formatTime(logFile.lastModified())}\n")
-            summary.append("大小: ${Utils.formatFileSize(logFile.length())}\n\n")
+            summary.append("时间: ${formatEpoch(logFile.lastModified(), true)}\n")
+            summary.append("大小: ${formatBytesSize(logFile.length())}\n\n")
 
             // 提取关键信息
             val lines = crashInfo.lines()
@@ -474,14 +472,6 @@ object CrashLogViewer : BaseClickableFunctionHookItem() {
             WeLogger.e("[CrashLogViewer] Failed to copy text to clipboard", e)
             ToastUtils.showToast(context, "复制失败: ${e.message}")
         }
-    }
-
-    /**
-     * 格式化时间
-     */
-    private fun formatTime(timestamp: Long): String {
-        val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-        return sdf.format(Date(timestamp))
     }
 
     /**

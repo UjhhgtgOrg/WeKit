@@ -5,24 +5,18 @@ import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
 import android.content.Intent
-import android.os.Handler
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.net.toUri
 import androidx.core.view.size
 import de.robv.android.xposed.XposedBridge
 import moe.ouom.wekit.utils.log.WeLogger
-import org.json.JSONArray
-import org.json.JSONObject
-import java.lang.reflect.Method
-import java.net.URL
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Objects
 import java.util.regex.Pattern
 
 object Utils {
-    private val sHandler: Handler? = null
 
     fun getAllViews(act: Activity): MutableList<View> {
         return getAllChildViews(act.window.decorView)
@@ -55,8 +49,6 @@ object Utils {
             Thread.sleep(200)
         }
 
-
-
         return null
     }
 
@@ -75,7 +67,6 @@ object Utils {
             WeLogger.e(e)
         }
 
-
         return null
     }
 
@@ -89,13 +80,13 @@ object Utils {
     }
 
 
-    fun printIntentExtras(TAG: String?, intent: Intent?) {
+    fun printIntentExtras(tag: String?, intent: Intent?) {
         if (intent == null) {
             WeLogger.e("Intent is null or has no extras.")
             return
         }
 
-        WeLogger.i("*-------------------- $TAG --------------------*")
+        WeLogger.i("*-------------------- $tag --------------------*")
         val extras = intent.extras
         if (extras != null) {
             for (key in extras.keySet()) {
@@ -144,33 +135,6 @@ object Utils {
         return sdf.format(date)
     }
 
-    fun findMethodByName(clazz: Class<*>, methodName: String?): Method {
-        for (method in clazz.declaredMethods) {
-            if (method.name == methodName) {
-                return method
-            }
-        }
-        throw IllegalArgumentException("Method not found: $methodName")
-    }
-
-    fun timeToFormat(time: Long): String? {
-        @SuppressLint("SimpleDateFormat") val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
-        return sdf.format(time)
-    }
-
-    fun parseURLComponents(url: String?): Array<String?> {
-        var host: String? = ""
-        var type: String? = ""
-        try {
-            val Url = URL(url)
-            host = Url.host
-            type = Url.toURI().scheme
-        } catch (e: Exception) {
-            XposedBridge.log(e)
-        }
-        return arrayOf<String?>(host, type)
-    }
-
     fun bytesToHex(bytes: ByteArray): String {
         val hexString = StringBuilder()
         for (b in bytes) {
@@ -181,51 +145,6 @@ object Utils {
             hexString.append(hex)
         }
         return hexString.toString()
-    }
-
-    fun deepGet(obj: Any?, path: String, def: Any?): Any? {
-        try {
-            val keys = path.split("\\.".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-
-            var current = obj
-
-            for (key in keys) {
-                if (current == null) return def
-
-                if (current is JSONObject) {
-                    if (current.has(key)) {
-                        current = current.opt(key)
-                        continue
-                    }
-
-                    return def
-                } else if (current is JSONArray) {
-                    if (!key.matches("\\d+".toRegex())) return def
-
-                    val index = key.toInt()
-                    if (index < 0 || index >= current.length()) return def
-
-                    current = current.opt(index)
-                } else {
-                    return def
-                }
-            }
-
-            return current ?: def
-        } catch (e: Exception) {
-            return def
-        }
-    }
-
-    /**
-     * 格式化文件大小
-     */
-    fun formatFileSize(size: Long): String {
-        return when {
-            size < 1024 -> "$size B"
-            size < 1024 * 1024 -> "${size / 1024} KB"
-            else -> "${size / 1024 / 1024} MB"
-        }
     }
 
     /**

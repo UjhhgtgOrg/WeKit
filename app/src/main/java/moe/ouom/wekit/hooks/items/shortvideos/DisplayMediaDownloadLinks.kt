@@ -11,9 +11,8 @@ import moe.ouom.wekit.hooks.sdk.ui.WeShortVideosShareMenuApi
 import moe.ouom.wekit.host.HostInfo
 import moe.ouom.wekit.utils.common.ModuleRes
 import moe.ouom.wekit.utils.common.ToastUtils
+import moe.ouom.wekit.utils.formatBytesSize
 import java.util.Locale
-import kotlin.math.log10
-import kotlin.math.pow
 
 @SuppressLint("StaticFieldLeak")
 @HookItem(
@@ -30,16 +29,6 @@ object DisplayMediaDownloadLinks : BaseSwitchFunctionHookItem(),
     override fun unload(classLoader: ClassLoader) {
         WeShortVideosShareMenuApi.removeProvider(this)
         super.unload(classLoader)
-    }
-
-    private fun formatBytesSize(bytes: Int): String {
-        if (bytes <= 0) return "0 B"
-        val units = arrayOf("B", "KiB", "MiB", "GiB", "TiB", "PiB")
-        val digitGroups = (log10(bytes.toDouble()) / log10(1024.0)).toInt()
-
-        // Format to 2 decimal places
-        val value = bytes / 1024.0.pow(digitGroups.toDouble())
-        return "%.2f %s".format(value, units[digitGroups])
     }
 
     override fun getMenuItems(
@@ -76,7 +65,7 @@ object DisplayMediaDownloadLinks : BaseSwitchFunctionHookItem(),
                         Locale.CHINA,
                         duration / 3600, (duration % 3600) / 60, duration % 60
                     )
-                    val displaySize = formatBytesSize(size)
+                    val displaySize = formatBytesSize(size.toLong())
                     clipItems += "时长" to displayDuration
                     clipItems += "大小" to displaySize
 

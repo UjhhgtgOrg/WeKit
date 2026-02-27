@@ -1,5 +1,6 @@
 package moe.ouom.wekit.hooks.items.debug
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -25,6 +26,7 @@ import java.io.File
     path = "调试/崩溃拦截",
     desc = "拦截 Java 层崩溃并记录详细信息，支持查看和导出日志"
 )
+@SuppressLint("StaticFieldLeak")
 object CrashInterceptor : BaseSwitchFunctionHookItem() {
 
     private var javaCrashHandler: JavaCrashHandler? = null

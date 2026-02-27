@@ -1,4 +1,4 @@
-package moe.ouom.wekit.hooks.items.profile
+package moe.ouom.wekit.hooks.items.system
 
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -18,6 +18,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -30,7 +31,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
@@ -50,6 +50,7 @@ import moe.ouom.wekit.ui.utils.showComposeDialog
 import moe.ouom.wekit.utils.common.ToastUtils
 import moe.ouom.wekit.utils.log.WeLogger
 import org.luckypray.dexkit.DexKitBridge
+import java.lang.reflect.Modifier
 
 @HookItem(path = "系统与隐私/灰度测试管理器", desc = "覆盖应用灰度测试 (Feature Flag) 的值")
 object FeatureFlagManager : BaseClickableFunctionHookItem(), IDexFind {
@@ -194,7 +195,7 @@ object FeatureFlagManager : BaseClickableFunctionHookItem(), IDexFind {
                                     superClass = superClassName
                                 }
                             }
-                            modifiers(java.lang.reflect.Modifier.FINAL)
+                            modifiers(Modifier.FINAL)
                         }
                     }
                     featureFlagClasses = results.map { it.name }.sorted()
@@ -208,20 +209,24 @@ object FeatureFlagManager : BaseClickableFunctionHookItem(), IDexFind {
                 title = { Text("灰度测试管理器") },
                 text = {
                     Column(
-                        modifier = Modifier
+                        modifier = androidx.compose.ui.Modifier
                             .fillMaxWidth()
                             .heightIn(min = 100.dp, max = 500.dp)
                     ) {
                         if (isLoading) {
                             Box(
-                                Modifier
+                                androidx.compose.ui.Modifier
                                     .fillMaxWidth()
                                     .weight(1f),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                     CircularWavyProgressIndicator()
-                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Spacer(
+                                        modifier = androidx.compose.ui.Modifier.height(
+                                            8.dp
+                                        )
+                                    )
                                     Text("正在扫描灰度测试类, 请稍等...")
                                 }
                             }
@@ -230,14 +235,14 @@ object FeatureFlagManager : BaseClickableFunctionHookItem(), IDexFind {
                             OutlinedTextField(
                                 value = searchQuery,
                                 onValueChange = { searchQuery = it },
-                                modifier = Modifier
+                                modifier = androidx.compose.ui.Modifier
                                     .fillMaxWidth()
                                     .padding(bottom = 8.dp),
                                 placeholder = { Text("搜索类名...") },
                                 singleLine = true,
                                 trailingIcon = {
                                     if (searchQuery.isNotEmpty()) {
-                                        androidx.compose.material3.IconButton(onClick = {
+                                        IconButton(onClick = {
                                             searchQuery = ""
                                         }) {
                                             Text("×") // 简单的清除按钮
@@ -248,7 +253,7 @@ object FeatureFlagManager : BaseClickableFunctionHookItem(), IDexFind {
 
                             if (filteredClasses.isEmpty()) {
                                 Box(
-                                    Modifier
+                                    androidx.compose.ui.Modifier
                                         .fillMaxWidth()
                                         .weight(1f),
                                     contentAlignment = Alignment.Center
@@ -259,9 +264,11 @@ object FeatureFlagManager : BaseClickableFunctionHookItem(), IDexFind {
                                     )
                                 }
                             } else {
-                                LazyColumn(modifier = Modifier
-                                    .fillMaxWidth()
-                                    .weight(1f)) {
+                                LazyColumn(
+                                    modifier = androidx.compose.ui.Modifier
+                                        .fillMaxWidth()
+                                        .weight(1f)
+                                ) {
                                     items(filteredClasses) { className ->
                                         var showActionDialog by remember { mutableStateOf(false) }
 
@@ -281,7 +288,9 @@ object FeatureFlagManager : BaseClickableFunctionHookItem(), IDexFind {
                                                     className.toClass().createInstance()
                                                 flagInstance
                                                     .asResolver()
-                                                    .method { returnType = String::class }.apply {
+                                                    .method {
+                                                        returnType = String::class
+                                                    }.apply {
                                                         internalName = this[0].invoke()!! as String
                                                         description = this[1].invoke()!! as String
                                                         for (m in this) {
@@ -303,7 +312,7 @@ object FeatureFlagManager : BaseClickableFunctionHookItem(), IDexFind {
                                                 },
                                                 text = {
                                                     Column(
-                                                        modifier = Modifier
+                                                        modifier = androidx.compose.ui.Modifier
                                                             .fillMaxWidth()
                                                             .clip(MaterialTheme.shapes.large)
                                                     ) {
@@ -315,7 +324,7 @@ object FeatureFlagManager : BaseClickableFunctionHookItem(), IDexFind {
                                                                 )
                                                             },
                                                             supportingContent = { Text(className) },
-                                                            modifier = Modifier.clickable {
+                                                            modifier = androidx.compose.ui.Modifier.clickable {
                                                                 val clipboard =
                                                                     context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                                                                 clipboard.setPrimaryClip(
@@ -334,7 +343,7 @@ object FeatureFlagManager : BaseClickableFunctionHookItem(), IDexFind {
                                                                 )
                                                             },
                                                             supportingContent = { Text(internalName) },
-                                                            modifier = Modifier.clickable {
+                                                            modifier = androidx.compose.ui.Modifier.clickable {
                                                                 val clipboard =
                                                                     context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                                                                 clipboard.setPrimaryClip(
@@ -353,7 +362,7 @@ object FeatureFlagManager : BaseClickableFunctionHookItem(), IDexFind {
                                                                 )
                                                             },
                                                             supportingContent = { Text(description) },
-                                                            modifier = Modifier.clickable {
+                                                            modifier = androidx.compose.ui.Modifier.clickable {
                                                                 val clipboard =
                                                                     context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                                                                 clipboard.setPrimaryClip(
@@ -372,7 +381,7 @@ object FeatureFlagManager : BaseClickableFunctionHookItem(), IDexFind {
                                                                 )
                                                             },
                                                             supportingContent = { Text(configKey) },
-                                                            modifier = Modifier.clickable {
+                                                            modifier = androidx.compose.ui.Modifier.clickable {
                                                                 val clipboard =
                                                                     context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                                                                 clipboard.setPrimaryClip(
@@ -391,7 +400,7 @@ object FeatureFlagManager : BaseClickableFunctionHookItem(), IDexFind {
                                                                 )
                                                             },
                                                             supportingContent = { Text("为该灰度测试项覆盖其当前取值") },
-                                                            modifier = Modifier.clickable {
+                                                            modifier = androidx.compose.ui.Modifier.clickable {
                                                                 showOverrideDialog = true
                                                             })
                                                     }
@@ -456,7 +465,11 @@ object FeatureFlagManager : BaseClickableFunctionHookItem(), IDexFind {
                                                                 onValueChange = { type = it },
                                                                 singleLine = true,
                                                                 label = { Text("类型 ([s]tring/[f]loat/[i]nt/[l]ong)") })
-                                                            Spacer(Modifier.height(8.dp))
+                                                            Spacer(
+                                                                androidx.compose.ui.Modifier.height(
+                                                                    8.dp
+                                                                )
+                                                            )
                                                             TextField(
                                                                 value = rawValue,
                                                                 onValueChange = { rawValue = it },
@@ -553,13 +566,17 @@ object FeatureFlagManager : BaseClickableFunctionHookItem(), IDexFind {
                                         // 列表条目
                                         Text(
                                             text = className.substringAfterLast('.'),
-                                            modifier = Modifier
+                                            modifier = androidx.compose.ui.Modifier
                                                 .fillMaxWidth()
                                                 .clickable { showActionDialog = true }
                                                 .padding(vertical = 12.dp),
                                             style = MaterialTheme.typography.bodyMedium
                                         )
-                                        HorizontalDivider(Modifier.alpha(0.3f))
+                                        HorizontalDivider(
+                                            androidx.compose.ui.Modifier.alpha(
+                                                0.3f
+                                            )
+                                        )
                                     }
                                 }
                             }

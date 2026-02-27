@@ -13,10 +13,7 @@ import moe.ouom.wekit.core.model.BaseSwitchFunctionHookItem
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.hooks.sdk.base.model.MessageInfo
 import moe.ouom.wekit.hooks.sdk.ui.WeChatItemCreateViewApi
-import java.time.Instant
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import java.util.Locale
+import moe.ouom.wekit.utils.formatEpoch
 
 
 @HookItem(path = "聊天/显示消息时间", desc = "显示精确消息时间")
@@ -30,15 +27,6 @@ object DisplayAbsoluteMessageSendTime : BaseSwitchFunctionHookItem(),
     override fun unload(classLoader: ClassLoader) {
         WeChatItemCreateViewApi.removeListener(this)
         super.unload(classLoader)
-    }
-
-    fun formatEpoch(epochMs: Long): String {
-//        val formatter = DateTimeFormatter.ofPattern("yyyy:MM:dd HH:mm:ss")
-        val formatter = DateTimeFormatter.ofPattern("HH:mm:ss")
-            .withZone(ZoneId.of("Asia/Shanghai"))
-            .withLocale(Locale.CHINA)
-
-        return formatter.format(Instant.ofEpochMilli(epochMs))
     }
 
     private const val VIEW_TAG = "wekit_message_send_time"
