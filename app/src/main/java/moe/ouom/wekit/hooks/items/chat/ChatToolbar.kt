@@ -54,14 +54,12 @@ object ChatToolbar : BaseSwitchFunctionHookItem(), IDexFind {
     private val methodAppPanelLoadData by dexMethod()
 
     private lateinit var appPanel: LinearLayout
-    private lateinit var onItemClickListener: AdapterView.OnItemClickListener
-    private lateinit var onItemLongClickListener: AdapterView.OnItemLongClickListener
 
     // TODO: match menu item by text instead of undeterministic index
     override fun entry(classLoader: ClassLoader) {
         methodAppPanelInitAppGrid.toDexMethod {
             hook {
-                afterIfEnabled { param ->
+                beforeIfEnabled { param ->
                     WeLogger.d(TAG, "called initAppGrid")
                     appPanel = param.args[0] as LinearLayout
                 }
@@ -166,7 +164,6 @@ object ChatToolbar : BaseSwitchFunctionHookItem(), IDexFind {
 
     private fun clickItem(gridIndex: Int, itemIndex: Int) {
         try {
-            methodAppPanelLoadData.method.invoke(appPanel)
             val appPanelGrids = appPanel.asResolver()
                 .firstField { type = "com.tencent.mm.ui.base.MMFlipper" }
                 .get()!! as ViewGroup
@@ -184,7 +181,6 @@ object ChatToolbar : BaseSwitchFunctionHookItem(), IDexFind {
 
     private fun longClickItem(gridIndex: Int, itemIndex: Int) {
         try {
-            methodAppPanelLoadData.method.invoke(appPanel)
             val appPanelGrids = appPanel.asResolver()
                 .firstField { type = "com.tencent.mm.ui.base.MMFlipper" }
                 .get()!! as ViewGroup
