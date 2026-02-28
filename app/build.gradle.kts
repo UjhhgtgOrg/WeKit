@@ -416,11 +416,10 @@ dependencies {
     implementation(libs.okhttp3.okhttp)
 
     implementation(libs.rhino.android)
-    // implementation(libs.kotlin.scripting.common)
-    // implementation(libs.kotlin.scripting.jvm)
-    // implementation(libs.kotlin.scripting.jvm.host)
-    // implementation(libs.kotlin.compiler.embeddable)
-    // implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.kotlin.scripting.common)
+    implementation(libs.kotlin.scripting.jvm)
+    implementation(libs.kotlin.scripting.jvm.host)
+    implementation(libs.kotlin.script.runtime)
 
     compileOnly(libs.lombok)
     annotationProcessor(libs.lombok)

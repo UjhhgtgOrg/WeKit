@@ -86,11 +86,10 @@ libxposed-api = { module = "com.github.libxposed:api", version.ref = "libxposed"
 libxposed-service = { module = "com.github.libxposed:service", version.ref = "libxposed" }
 
 rhino-android = { module = "io.apisense:rhino-android", version.ref = "rhino" }
+kotlin-scripting-common = { module = "org.jetbrains.kotlin:kotlin-scripting-common" }
 kotlin-scripting-jvm = { module = "org.jetbrains.kotlin:kotlin-scripting-jvm" }
 kotlin-scripting-jvm-host = { module = "org.jetbrains.kotlin:kotlin-scripting-jvm-host" }
-kotlin-scripting-common = { module = "org.jetbrains.kotlin:kotlin-scripting-common" }
-kotlin-compiler-embeddable = { module = "org.jetbrains.kotlin:kotlin-compiler-embeddable" }
-kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android" }
+kotlin-script-runtime = { module = "org.jetbrains.kotlin:kotlin-script-runtime" }
 
 ksp = { module = "com.google.devtools.ksp:symbol-processing-api", version.ref = "ksp" }
 kotlin-gradle = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
