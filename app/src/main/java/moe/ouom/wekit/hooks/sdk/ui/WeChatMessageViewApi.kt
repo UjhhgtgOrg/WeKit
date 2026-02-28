@@ -57,7 +57,7 @@ object WeChatMessageViewApi : ApiHookItem(), IDexFind {
                             superclass()
                         }
                         .get()!! as View
-                    val num = param.args[2] as Int
+                    val msgId = param.args[2] as Int
                     val chattingContext = param.thisObject.asResolver()
                         .firstField { type = WeMessageApi.classChattingContext.clazz }
                         .get()!!
@@ -66,7 +66,7 @@ object WeChatMessageViewApi : ApiHookItem(), IDexFind {
                         .get()!!
                     val msgInfo = chattingDataAdapter.asResolver()
                         .firstMethod { name = "getItem" }
-                        .invoke(num)!!
+                        .invoke(msgId)!!
 
                     for (listener in listeners) {
                         try {
