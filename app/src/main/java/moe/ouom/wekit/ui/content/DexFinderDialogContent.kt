@@ -231,7 +231,7 @@ fun DexFinderContent(
                 is DialogPhase.Scanning -> null
                 is DialogPhase.Done ->
                     if (p.failed.isEmpty()) "适配完成！所有功能已成功更新 DEX 缓存"
-                    else "适配完成，但有 ${p.failed.size} 个功能失败"
+                    else "适配完成，但有 ${p.failed.size} 个功能失败 (不影响其他功能使用)"
 
                 is DialogPhase.Error -> p.message
             }

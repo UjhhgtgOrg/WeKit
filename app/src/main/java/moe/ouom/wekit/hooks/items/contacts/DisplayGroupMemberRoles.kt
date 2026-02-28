@@ -53,7 +53,7 @@ object DisplayGroupMemberRoles : BaseSwitchFunctionHookItem(), IDexFind,
         msgInfo: MessageInfo
     ) {
         if (!msgInfo.isInGroupChat) return
-        val sender = msgInfo.sender
+        val sender = runCatching { msgInfo.sender }.getOrNull() ?: return
         val groupId = msgInfo.talker
 
         val role = cache.getOrPut(groupId to sender) {
