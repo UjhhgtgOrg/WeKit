@@ -16,17 +16,17 @@ class DisableCommentSizeLimit : BaseSwitchFunctionHookItem() {
             .asResolver().apply {
                 firstMethod { name = "getCommentTextLimit" }
                     .hookBefore { param ->
-                        param.result = Int.MAX_VALUE
+                        param.result = 9999
                     }
 
                 firstMethod { name = "getCommentTextLimitStart" }
                     .hookBefore { param ->
-                        param.result = Int.MAX_VALUE
+                        param.result = 9999
                     }
 
                 firstMethod { name = "getCommentTextLineLimit" }
                     .hookBefore { param ->
-                        param.result = Int.MAX_VALUE
+                        param.result = 9999
                     }
             }
     }

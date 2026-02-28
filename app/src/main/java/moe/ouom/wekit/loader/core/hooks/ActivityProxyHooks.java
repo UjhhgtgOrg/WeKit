@@ -462,10 +462,6 @@ public class ActivityProxyHooks {
 
         @Override
         public void callActivityOnCreate(Activity activity, Bundle icicle) {
-            WeLogger.d("ProxyInst",
-                    "callActivityOnCreate: " + activity.getClass().getName() +
-                            " isModule=" + ActProxyMgr.isModuleProxyActivity(activity.getClass().getName()));
-
             var isModuleAct = ActProxyMgr.isModuleProxyActivity(activity.getClass().getName());
 
             if (isModuleAct) {

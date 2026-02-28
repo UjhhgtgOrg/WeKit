@@ -41,6 +41,10 @@ object WeServiceApi : ApiHookItem(), IDexFind {
         return methodMmKernelGetServiceImpl.method.invoke(null, clazz)!!
     }
 
+    fun getApiByClass(apiManager: Any, clazz: Class<*>): Any {
+        return methodApiManagerGetApi.method.invoke(apiManager, clazz.interfaces[0])!!
+    }
+
     override fun dexFind(dexKit: DexKitBridge): Map<String, String> {
         val descriptors = mutableMapOf<String, String>()
 

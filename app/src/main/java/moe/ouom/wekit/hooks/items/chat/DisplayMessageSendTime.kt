@@ -12,20 +12,20 @@ import de.robv.android.xposed.XC_MethodHook
 import moe.ouom.wekit.core.model.BaseSwitchFunctionHookItem
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.hooks.sdk.base.model.MessageInfo
-import moe.ouom.wekit.hooks.sdk.ui.WeChatItemCreateViewApi
+import moe.ouom.wekit.hooks.sdk.ui.WeChatMessageViewApi
 import moe.ouom.wekit.utils.formatEpoch
 
 
-@HookItem(path = "聊天/显示消息时间", desc = "显示精确消息时间")
-object DisplayAbsoluteMessageSendTime : BaseSwitchFunctionHookItem(),
-    WeChatItemCreateViewApi.ICreateViewListener {
+@HookItem(path = "聊天/显示消息时间", desc = "显示精确消息发送时间")
+object DisplayMessageSendTime : BaseSwitchFunctionHookItem(),
+    WeChatMessageViewApi.ICreateViewListener {
 
     override fun entry(classLoader: ClassLoader) {
-        WeChatItemCreateViewApi.addListener(this)
+        WeChatMessageViewApi.addListener(this)
     }
 
     override fun unload(classLoader: ClassLoader) {
-        WeChatItemCreateViewApi.removeListener(this)
+        WeChatMessageViewApi.removeListener(this)
         super.unload(classLoader)
     }
 

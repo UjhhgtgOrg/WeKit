@@ -283,11 +283,13 @@ fun DexFinderContent(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)
             ) {
+                if (phase !is DialogPhase.Scanning) {
+                    TextButton(onClick = onDismiss) { Text("关闭") }
+                }
                 if (phase is DialogPhase.Idle) {
                     Button(onClick = ::startScanning) { Text("开始适配") }
                 }
                 if (phase is DialogPhase.Done || phase is DialogPhase.Error) {
-                    TextButton(onClick = onDismiss) { Text("关闭") }
                     Button(onClick = {
                         onDismiss()
                         Process.killProcess(Process.myPid())

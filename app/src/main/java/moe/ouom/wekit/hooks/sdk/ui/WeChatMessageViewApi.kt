@@ -14,7 +14,7 @@ import org.luckypray.dexkit.DexKitBridge
 import java.util.concurrent.CopyOnWriteArrayList
 
 @HookItem(path = "API/消息 View 创建监听服务", desc = "为其他功能提供消息 View 创建监听能力")
-object WeChatItemCreateViewApi : ApiHookItem(), IDexFind {
+object WeChatMessageViewApi : ApiHookItem(), IDexFind {
 
     interface ICreateViewListener {
         fun onCreateView(

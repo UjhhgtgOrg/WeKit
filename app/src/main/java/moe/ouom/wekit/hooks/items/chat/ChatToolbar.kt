@@ -60,7 +60,7 @@ object ChatToolbar : BaseSwitchFunctionHookItem(), IDexFind {
         methodAppPanelInitAppGrid.toDexMethod {
             hook {
                 beforeIfEnabled { param ->
-                    WeLogger.d(TAG, "called initAppGrid")
+//                    WeLogger.d(TAG, "called initAppGrid")
                     appPanel = param.args[0] as LinearLayout
                 }
             }
