@@ -18,6 +18,7 @@ import moe.ouom.wekit.hooks.sdk.base.WeMessageApi
 import moe.ouom.wekit.hooks.sdk.base.WeServiceApi
 import moe.ouom.wekit.hooks.sdk.base.model.MessageInfo
 import moe.ouom.wekit.hooks.sdk.ui.WeChatMessageViewApi
+import moe.ouom.wekit.utils.common.SimpleLruCache
 import moe.ouom.wekit.utils.findHostViewByIdStr
 import org.luckypray.dexkit.DexKitBridge
 import kotlin.math.PI
@@ -25,58 +26,12 @@ import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.exp
 
-//@HookItem(path = "聊天/左划引用消息", desc = "在消息上左划以引用")
-//object SwipeToQuote : BaseSwitchFunctionHookItem(),
-//    WeChatMessageViewApi.ICreateViewListener {
-//
-//    override fun entry(classLoader: ClassLoader) {
-//        WeChatMessageViewApi.addListener(this)
-//    }
-//
-//    override fun unload(classLoader: ClassLoader) {
-//        WeChatMessageViewApi.removeListener(this)
-//        super.unload(classLoader)
-//    }
-//
-//    override fun onCreateView(
-//        param: XC_MethodHook.MethodHookParam,
-//        view: View,
-//        chattingContext: Any,
-//        msgInfo: MessageInfo
-//    ) {
-//        val viewGroup = view as ViewGroup
-//        val messageView = runCatching { viewGroup.findHostViewByIdStr<View>("bkj") }.getOrNull() ?: return
-//        val messageViewGroup = messageView.parent as ViewGroup
-//        messageViewGroup.removeView(messageView)
-//        val lifecycleOwner = XposedLifecycleOwner().apply { onCreate(); onResume() }
-//        // FIXME: this is soooooo fucking cursed
-//        try {
-//            val messageHolder = ComposeView(messageView.context).apply {
-//                setViewTreeLifecycleOwner(lifecycleOwner)
-//                setViewTreeViewModelStoreOwner(lifecycleOwner)
-//                setViewTreeSavedStateRegistryOwner(lifecycleOwner)
-//
-//                setContent {
-//                    AppTheme {
-//                        AndroidView(
-//                            factory = {
-//                                messageView
-//                            }
-//                        )
-//                    }
-//                }
-//            }
-//            viewGroup.addView(messageHolder)
-//        }
-//        catch (ex: Exception) {
-//            WeLogger.e("SwipeToQuote", "exception while wrapping message view inside Compose")
-//        }
-//    }
-//}
-
+@SuppressLint("StaticFieldLeak")
 @HookItem(path = "聊天/左划引用消息", desc = "在消息上左划以引用")
 object SwipeToQuote : BaseSwitchFunctionHookItem(), IDexFind,
     WeChatMessageViewApi.ICreateViewListener {
+
+    private val cache = SimpleLruCache<Pair<String, Long>, Boolean>()
 
     override fun entry(classLoader: ClassLoader) {
         WeChatMessageViewApi.addListener(this)
@@ -93,20 +48,20 @@ object SwipeToQuote : BaseSwitchFunctionHookItem(), IDexFind,
         chattingContext: Any,
         msgInfo: MessageInfo
     ) {
+        if (cache[msgInfo.talker to msgInfo.id] == true) return
+
         val viewGroup = view as? ViewGroup ?: return
-        val messageView = runCatching { viewGroup.findHostViewByIdStr<View>("bkj") }.getOrNull() ?: return
+        val messageView = runCatching { viewGroup.findHostViewByIdStr<View>("bkj") as ViewGroup }.getOrNull() ?: return
 
         attachSwipeGesture(messageView, chattingContext, msgInfo)
     }
 
     @SuppressLint("ClickableViewAccessibility")
     private fun attachSwipeGesture(
-        messageView: View,
+        messageView: ViewGroup,
         chattingContext: Any,
         msgInfo: MessageInfo
     ) {
-        if (messageView !is ViewGroup) return
-
         var startX = 0f
         var startY = 0f
         var isDragging = false
@@ -168,10 +123,11 @@ object SwipeToQuote : BaseSwitchFunctionHookItem(), IDexFind,
                 when (event.action) {
                     MotionEvent.ACTION_MOVE -> {
                         if (isDragging) {
-                            val dx = (event.x - startX).coerceIn(-triggerThreshold, 0f)
+                            val rawDx = event.x - startX
+                            val dx = rawDx.coerceIn(-triggerThreshold, 0f)
                             v.translationX = dx
 
-                            if (!triggered && (event.x - startX) < -triggerThreshold) {
+                            if (!triggered && rawDx < -triggerThreshold) {
                                 triggered = true
                                 v.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
                             }
@@ -192,6 +148,7 @@ object SwipeToQuote : BaseSwitchFunctionHookItem(), IDexFind,
 
                             v.parent?.requestDisallowInterceptTouchEvent(false)
                             isDragging = false
+
                             param.result = true
                         }
                     }
@@ -204,11 +161,14 @@ object SwipeToQuote : BaseSwitchFunctionHookItem(), IDexFind,
                                 .start()
 
                             v.parent?.requestDisallowInterceptTouchEvent(false)
+
                             isDragging = false
                         }
                     }
                 }
         }
+
+        cache[msgInfo.talker to msgInfo.id] = true
     }
 
     // Poor man's spring: decelerates then slightly overshoots back to 0
