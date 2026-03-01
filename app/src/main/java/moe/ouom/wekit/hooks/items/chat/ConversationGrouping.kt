@@ -45,7 +45,6 @@ import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.hooks.sdk.base.WeConversationApi
 import moe.ouom.wekit.ui.utils.AppTheme
 import moe.ouom.wekit.ui.utils.XposedLifecycleOwner
-import moe.ouom.wekit.utils.log.WeLogger
 import org.luckypray.dexkit.DexKitBridge
 
 @HookItem(path = "聊天/对话分组", desc = "向主页顶部添加 Tab 栏, 将对话分组")
@@ -105,7 +104,6 @@ object ConversationGrouping : BaseSwitchFunctionHookItem(), IDexFind {
                                                 1 -> {
                                                     WeConversationApi.onlyShowFilteredConversations(
                                                         "WHERE unReadCount>0 OR unReadMuteCount>0")
-                                                    WeLogger.d("ConversationGrouping", "scrollY: " + listView.scrollY)
                                                 }
                                                 2 -> {
                                                     WeConversationApi.onlyShowFilteredConversations(
@@ -118,7 +116,6 @@ object ConversationGrouping : BaseSwitchFunctionHookItem(), IDexFind {
                                                 4 -> {
                                                     WeConversationApi.onlyShowFilteredConversations(
                                                         "WHERE username LIKE 'gh_%'")
-                                                    listView.scrollTo(0, 0)
                                                 }
                                             }
                                         }
