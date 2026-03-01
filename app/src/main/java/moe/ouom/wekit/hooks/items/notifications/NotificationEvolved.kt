@@ -148,7 +148,7 @@ object NotificationEvolved : BaseSwitchFunctionHookItem() {
                         return@hookBefore
                     }
 
-                    WeLogger.i(TAG, "Enhancing notification for $title ($targetWxid)")
+                    WeLogger.i(TAG, "enhancing notification for $title ($targetWxid)")
 
                     // 2. Build the MessagingStyle
                     // TODO: add cropping
