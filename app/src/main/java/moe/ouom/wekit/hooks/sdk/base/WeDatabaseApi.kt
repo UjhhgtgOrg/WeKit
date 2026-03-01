@@ -71,11 +71,11 @@ object WeDatabaseApi : ApiHookItem(), IDexFind {
         """
 
         // 基础字段 - 群聊查询常用字段
-        const val CHATROOM_FIELDS =
+        const val GROUP_FIELDS =
             "r.username, r.nickname, r.pyInitial, r.quanPin, i.reserved2 AS avatarUrl"
 
         // 基础字段 - 公众号查询常用字段
-        const val OFFICIAL_FIELDS = "r.username, r.alias, r.nickname, i.reserved2 AS avatarUrl"
+        const val OFFICIAL_ACCOUNT_FIELDS = "r.username, r.alias, r.nickname, i.reserved2 AS avatarUrl"
 
         // 基础 JOIN 语句
         const val LEFT_JOIN_IMG_FLAG = "LEFT JOIN img_flag i ON r.username = i.username"
@@ -120,7 +120,7 @@ object WeDatabaseApi : ApiHookItem(), IDexFind {
 
         /** 所有群聊 */
         val GROUPS = """
-            SELECT $CHATROOM_FIELDS
+            SELECT $GROUP_FIELDS
             FROM rcontact r 
             $LEFT_JOIN_IMG_FLAG 
             WHERE r.username LIKE '%@chatroom'
@@ -140,7 +140,7 @@ object WeDatabaseApi : ApiHookItem(), IDexFind {
 
         /** 所有公众号 */
         val OFFICIAL_LIST = """
-            SELECT $OFFICIAL_FIELDS
+            SELECT $OFFICIAL_ACCOUNT_FIELDS
             FROM rcontact r 
             $LEFT_JOIN_IMG_FLAG 
             WHERE r.username LIKE 'gh_%'
@@ -163,7 +163,7 @@ object WeDatabaseApi : ApiHookItem(), IDexFind {
         // 头像查询
         // =========================================
 
-        /** 获取头像URL */
+        /** 获取头像 URL */
         fun avatar(wxid: String) = """
             SELECT i.reserved2 AS avatarUrl 
             FROM img_flag i 

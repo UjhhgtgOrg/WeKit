@@ -37,8 +37,8 @@ object WeConversationApi : ApiHookItem(), IDexFind {
             .invoke()!!
     }
 
-    // this is NOT chatroom 'member'
-    // this is the chatroom itself
+    // this is NOT group 'member'
+    // this is the group itself
     fun getGroup(groupId: String): Any {
         return chatroomStorage.asResolver()
             .firstMethod {
@@ -73,6 +73,78 @@ object WeConversationApi : ApiHookItem(), IDexFind {
         } catch (ex: Exception) {
             WeLogger.w(TAG, "exception while updating unread count for $talker", ex)
         }
+    }
+
+    fun setConversationsVisibility(visible: Boolean, talkers: List<String>) {
+        val operation = if (visible) "" else "hidden_conv_parent"
+        if (methodHiddenConvParent.method.parameterCount == 4) {
+            methodHiddenConvParent.method.invoke(conversationStorage, talkers.toTypedArray(), operation, true, false)
+        }
+        else {
+            methodHiddenConvParent.method.invoke(conversationStorage, talkers.toTypedArray(), operation)
+        }
+    }
+
+    fun setAllConversationVisibility(visible: Boolean) {
+        val cursor = WeDatabaseApi.execQueryMethod!!.invoke(
+            WeDatabaseApi.dbInstance,
+            "SELECT username FROM rconversation",
+            arrayOf<String>()
+        ) as Cursor
+        val talkers = mutableListOf<String>()
+        while (cursor.moveToNext()) {
+            talkers += cursor.getString(0)
+        }
+        cursor.close()
+        setConversationsVisibility(visible, talkers)
+    }
+
+//    private fun debugCursor(cursor: Cursor?) {
+//        if (cursor == null) {
+//            WeLogger.d("CursorDebug", "Cursor is null")
+//            return
+//        }
+//
+//        WeLogger.d("CursorDebug", "Rows: ${cursor.count} | Columns: ${cursor.columnCount}")
+//
+//        // Save current position to restore it later
+//        val initialPosition = cursor.position
+//
+//        if (cursor.moveToFirst()) {
+//            do {
+//                val rowString = StringBuilder()
+//                for (i in 0 until cursor.columnCount) {
+//                    val columnName = cursor.getColumnName(i)
+//                    val value = try {
+//                        cursor.getString(i) ?: "NULL"
+//                    } catch (_: Exception) {
+//                        "BLOB/Internal Error"
+//                    }
+//                    rowString.append("[$columnName: $value] ")
+//                }
+//                WeLogger.d("CursorDebug", "Row ${cursor.position}: $rowString")
+//            } while (cursor.moveToNext())
+//        } else {
+//            WeLogger.d("CursorDebug", "Cursor is empty")
+//        }
+//
+//        // Restore the cursor to its original position
+//        cursor.moveToPosition(initialPosition)
+//    }
+
+    fun onlyShowFilteredConversations(queryFilter: String, selectedColumns: String = "username") {
+        setAllConversationVisibility(false)
+        val cursor = WeDatabaseApi.execQueryMethod!!.invoke(
+            WeDatabaseApi.dbInstance,
+            "SELECT $selectedColumns FROM rconversation $queryFilter",
+            arrayOf<String>()
+        ) as Cursor
+        val visibleTalkers = mutableListOf<String>()
+        while (cursor.moveToNext()) {
+            visibleTalkers += cursor.getString(0)
+        }
+        cursor.close()
+        setConversationsVisibility(true, visibleTalkers)
     }
 
     override fun dexFind(dexKit: DexKitBridge): Map<String, String> {
