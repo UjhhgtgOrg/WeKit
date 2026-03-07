@@ -1,6 +1,7 @@
 package moe.ouom.wekit.constants
 
-object MMVersion {
+object WeChatVersion {
+    const val MM_8_0_69 = 3040
     const val MM_8_0_67 = 3000
     const val MM_8_0_66 = 2980
     const val MM_8_0_65 = 2960

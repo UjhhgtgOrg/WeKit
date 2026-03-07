@@ -5,7 +5,7 @@ import android.content.ContentValues
 import de.robv.android.xposed.XposedHelpers
 import moe.ouom.wekit.config.WeConfig
 import moe.ouom.wekit.constants.Constants
-import moe.ouom.wekit.constants.MMVersion
+import moe.ouom.wekit.constants.WeChatVersion
 import moe.ouom.wekit.core.model.ApiHookItem
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.host.HostInfo
@@ -158,8 +158,8 @@ object WeDatabaseListenerApi : ApiHookItem() {
         try {
             val isPlay = HostInfo.isGooglePlayVersion
             val version = HostInfo.getVersionCode()
-            val isNewVersion = (!isPlay && version >= MMVersion.MM_8_0_43) ||
-                    (isPlay && version >= MMVersion.MM_8_0_48_PLAY)
+            val isNewVersion = (!isPlay && version >= WeChatVersion.MM_8_0_43) ||
+                    (isPlay && version >= WeChatVersion.MM_8_0_48_PLAY)
 
             val clsName =
                 if (isNewVersion) Constants.CLAZZ_COMPAT_SQLITE_DATABASE else Constants.CLAZZ_SQLITE_DATABASE
@@ -182,6 +182,7 @@ object WeDatabaseListenerApi : ApiHookItem() {
                     val table = param.args[0] as String
                     val values = param.args[1] as ContentValues
                     param.args[2] as? String
+                    @Suppress("UNCHECKED_CAST")
                     param.args[3] as? Array<String>
 
                     logWithStack("Update", table, param.args)
@@ -212,8 +213,8 @@ object WeDatabaseListenerApi : ApiHookItem() {
         try {
             val isPlay = HostInfo.isGooglePlayVersion
             val version = HostInfo.getVersionCode()
-            val isNewVersion = (!isPlay && version >= MMVersion.MM_8_0_43) ||
-                    (isPlay && version >= MMVersion.MM_8_0_48_PLAY)
+            val isNewVersion = (!isPlay && version >= WeChatVersion.MM_8_0_43) ||
+                    (isPlay && version >= WeChatVersion.MM_8_0_48_PLAY)
 
             if (isNewVersion) {
                 hookNewVersionQuery()

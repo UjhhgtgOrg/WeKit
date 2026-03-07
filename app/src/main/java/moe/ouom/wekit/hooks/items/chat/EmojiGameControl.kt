@@ -66,11 +66,9 @@ object EmojiGameControl : BaseSwitchFunctionHookItem(), IDexFind {
         FOUR(3, "四"), FIVE(4, "五"), SIX(5, "六")
     }
 
-    // ================== Dex Finding ==================
     override fun dexFind(dexKit: DexKitBridge): Map<String, String> {
         val descriptors = mutableMapOf<String, String>()
 
-        // Find Random Method
         methodRandom.find(dexKit, descriptors) {
             searchPackages("com.tencent.mm.sdk.platformtools")
             matcher {
@@ -84,10 +82,8 @@ object EmojiGameControl : BaseSwitchFunctionHookItem(), IDexFind {
             }
         }
 
-        // Find Panel Click Method
         methodPanelClick.find(dexKit, descriptors) {
             matcher {
-//                usingStrings("penn send capture emoji click emoji: %s status: %d.")
                 usingEqStrings("MicroMsg.EmojiPanelClickListener")
             }
         }
@@ -96,7 +92,6 @@ object EmojiGameControl : BaseSwitchFunctionHookItem(), IDexFind {
     }
 
     override fun entry(classLoader: ClassLoader) {
-        // Hook 1: Control the Random Result
         methodRandom.toDexMethod {
             hook {
                 afterIfEnabled { param ->
@@ -111,15 +106,12 @@ object EmojiGameControl : BaseSwitchFunctionHookItem(), IDexFind {
             }
         }
 
-        // Hook 2: Intercept Click to show In-App Selection
         methodPanelClick.toDexMethod {
             hook {
                 beforeIfEnabled { param ->
                     try {
-                        // Arg 3 is the Emoji Info Object
                         val obj = param.args[3] ?: return@beforeIfEnabled
 
-                        // Reflection: Check if status is 0 (first final int field)
                         val fields = obj.javaClass.declaredFields
                         var infoType = -1
                         for (field in fields) {
@@ -134,7 +126,6 @@ object EmojiGameControl : BaseSwitchFunctionHookItem(), IDexFind {
                         }
 
                         if (infoType == 0) {
-                            // Reflection: Get EmojiInfo inner object to check MD5
                             val emojiInfoField =
                                 fields.firstOrNull { it.type.name.contains("IEmojiInfo") }
 
@@ -173,8 +164,8 @@ object EmojiGameControl : BaseSwitchFunctionHookItem(), IDexFind {
             return
         }
 
-        showComposeDialog(activity) { onDismiss ->
-            EmojiGameDialog(
+        showComposeDialog(activity, true) { onDismiss ->
+            EmojiGameDialogContent(
                 isDice = isDice,
                 onSend = { isSingle, inputText ->
                     try {
@@ -189,7 +180,7 @@ object EmojiGameControl : BaseSwitchFunctionHookItem(), IDexFind {
                             if (values.isEmpty()) {
                                 Toast.makeText(activity, "输入格式错误，请重试", Toast.LENGTH_SHORT)
                                     .show()
-                                return@EmojiGameDialog
+                                return@EmojiGameDialogContent
                             }
                             sendMultiple(param, values, isDice, activity)
                         }
@@ -226,7 +217,7 @@ object EmojiGameControl : BaseSwitchFunctionHookItem(), IDexFind {
     }
 
     @Composable
-    private fun EmojiGameDialog(
+    private fun EmojiGameDialogContent(
         isDice: Boolean,
         onSend: (isSingle: Boolean, inputText: String) -> Unit,
         onRandom: (isSingle: Boolean) -> Unit,

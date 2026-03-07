@@ -25,6 +25,7 @@ import moe.ouom.wekit.host.HostInfo
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 fun showComposeDialog(
     context: Context? = null,
+    directlyDismissable: Boolean = false,
     content: @Composable (onDismiss: () -> Unit) -> Unit
 ) {
     var ctx = context
@@ -40,8 +41,8 @@ fun showComposeDialog(
     dialog.apply {
         window?.setBackgroundDrawable(Color.TRANSPARENT.toDrawable())
         window?.requestFeature(Window.FEATURE_NO_TITLE)
-        setCanceledOnTouchOutside(false)
-        setCancelable(false)
+        setCanceledOnTouchOutside(directlyDismissable)
+        setCancelable(directlyDismissable)
 
         setContentView(
             ComposeView(ctx).apply {
@@ -53,7 +54,7 @@ fun showComposeDialog(
                             modifier = Modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center
                         ) {
-                            content { dismiss() }
+                            content(::dismiss)
                         }
                     }
                 }

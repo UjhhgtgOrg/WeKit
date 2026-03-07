@@ -36,9 +36,9 @@ import moe.ouom.wekit.core.model.BaseSwitchFunctionHookItem
 import moe.ouom.wekit.dexkit.intf.IDexFind
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.ui.utils.AppTheme
-import moe.ouom.wekit.ui.utils.XposedLifecycleOwner
+import moe.ouom.wekit.ui.utils.MainActivityLifecycleOwnerProvider
+import moe.ouom.wekit.ui.utils.findViewByIdStr
 import moe.ouom.wekit.ui.utils.setLifecycleOwner
-import moe.ouom.wekit.utils.findHostViewByIdStr
 import moe.ouom.wekit.utils.log.WeLogger
 import org.luckypray.dexkit.DexKitBridge
 
@@ -72,16 +72,15 @@ object ChatToolbar : BaseSwitchFunctionHookItem(), IDexFind {
             .hookAfter { param ->
                 val frameLayout = param.thisObject as FrameLayout
                 // FIXME: change with wechat version
-                val linearLayout = frameLayout.findHostViewByIdStr<LinearLayout>("bl8") // LinearLayout
+                val linearLayout = frameLayout.findViewByIdStr<LinearLayout>("bl8") // LinearLayout
                 if (linearLayout.findViewWithTag<ComposeView>(VIEW_TAG) != null) return@hookAfter
 
-                val activity = frameLayout.asResolver()
-                    .firstField { type = Activity::class }
-                    .get()!! as Activity
-                val lifecycleOwner = XposedLifecycleOwner().apply { onCreate(); onResume() }
-                activity.window.decorView.setLifecycleOwner(lifecycleOwner)
+                val context = linearLayout.context
+                val lifecycleOwner = MainActivityLifecycleOwnerProvider.lifecycleOwner
                 linearLayout.setLifecycleOwner(lifecycleOwner)
-                linearLayout.addView(ComposeView(activity).apply {
+                (context as Activity).window.decorView.setLifecycleOwner(lifecycleOwner)
+
+                linearLayout.addView(ComposeView(context).apply {
                     tag = VIEW_TAG
                     setLifecycleOwner(lifecycleOwner)
 

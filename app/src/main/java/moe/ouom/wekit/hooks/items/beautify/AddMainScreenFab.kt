@@ -51,13 +51,9 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.setViewTreeLifecycleOwner
-import androidx.lifecycle.setViewTreeViewModelStoreOwner
-import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.highcapable.kavaref.KavaRef.Companion.asResolver
 import moe.ouom.wekit.constants.PackageConstants
 import moe.ouom.wekit.core.model.BaseSwitchFunctionHookItem
@@ -65,7 +61,7 @@ import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.hooks.sdk.base.WeConversationApi
 import moe.ouom.wekit.hooks.sdk.ui.WeMainActivityBeautifyApi
 import moe.ouom.wekit.ui.content.MainSettingsDialog
-import moe.ouom.wekit.ui.utils.XposedLifecycleOwner
+import moe.ouom.wekit.ui.utils.MainActivityLifecycleOwnerProvider
 import moe.ouom.wekit.ui.utils.setLifecycleOwner
 import moe.ouom.wekit.utils.common.ToastUtils
 import moe.ouom.wekit.utils.log.WeLogger
@@ -177,8 +173,7 @@ object AddMainScreenFab : BaseSwitchFunctionHookItem() {
                         }
                     }
 
-
-                    val lifecycleOwner = XposedLifecycleOwner().apply { onCreate(); onResume() }
+                    val lifecycleOwner = MainActivityLifecycleOwnerProvider.lifecycleOwner
 
                     val decorView = activity.window.decorView
                     decorView.setLifecycleOwner(lifecycleOwner)

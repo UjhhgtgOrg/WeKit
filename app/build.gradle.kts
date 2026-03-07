@@ -15,6 +15,8 @@ plugins {
     alias(libs.plugins.google.devtools.ksp)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.aboutlibraries)
+    alias(libs.plugins.aboutlibraries.android)
 }
 
 private fun getBuildVersionCode(): Int {
@@ -288,7 +290,6 @@ abstract class GenerateMethodHashesTask : DefaultTask() {
             val className = Regex("""(?:class|object)\s+(\w+)""").find(content)?.groupValues?.get(1) ?: return@forEach
             val fullClassName = if (packageName != null) "$packageName.$className" else className
 
-            // 你的逻辑保持不变...
             val dexFindMatch = Regex("""override\s+fun\s+dexFind\s*\(""").find(content)
             if (dexFindMatch != null) {
                 val start = content.indexOf('{', dexFindMatch.range.last)
@@ -378,6 +379,8 @@ dependencies {
     implementation(libs.androidx.compose.runtime)
     implementation(libs.androidx.preference)
     implementation(libs.accompanist.drawablepainter)
+    implementation(libs.aboutlibraries.core)
+    implementation(libs.aboutlibraries.compose.m3)
 
     implementation(libs.kotlinx.io.jvm)
     implementation(libs.gson)
@@ -395,7 +398,7 @@ dependencies {
     // 哪个智障发明的 Gradle
     // 不是他 libxposed AndroidManifest package 定义冲突就冲突关你屁事啊
     // 要你管吗
-    // FIXME: change this when libxposed is publishes to maven
+    // FIXME: change this when libxposed is published to maven
     implementation(files("../files/libxposed-service-interfaces-classes.jar"))
     implementation(libs.libxposed.service) {
         exclude(group = "com.github.libxposed.service", module = "interface")

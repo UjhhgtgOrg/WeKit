@@ -41,7 +41,7 @@ import moe.ouom.wekit.dexkit.intf.IDexFind
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.hooks.sdk.base.WeConversationApi
 import moe.ouom.wekit.ui.utils.AppTheme
-import moe.ouom.wekit.ui.utils.XposedLifecycleOwner
+import moe.ouom.wekit.ui.utils.MainActivityLifecycleOwnerProvider
 import moe.ouom.wekit.ui.utils.setLifecycleOwner
 import org.luckypray.dexkit.DexKitBridge
 
@@ -59,7 +59,7 @@ object ConversationGrouping : BaseSwitchFunctionHookItem(), IDexFind {
                         .get()!! as ListView
 
                     val composeView = ComposeView(listView.context).apply {
-                        val lifecycleOwner = XposedLifecycleOwner().apply { onCreate(); onResume() }
+                        val lifecycleOwner = MainActivityLifecycleOwnerProvider.lifecycleOwner
                         setLifecycleOwner(lifecycleOwner)
 
                         // the value gets lost when ComposeView becomes invisible,

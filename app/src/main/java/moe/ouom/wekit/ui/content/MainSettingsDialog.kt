@@ -1,8 +1,38 @@
 package moe.ouom.wekit.ui.content
 
 import android.content.Context
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SuggestionChip
+import androidx.compose.material3.SuggestionChipDefaults
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import com.mikepenz.aboutlibraries.entity.Library
+import com.mikepenz.aboutlibraries.ui.compose.android.produceLibraries
 import moe.ouom.wekit.BuildConfig
+import moe.ouom.wekit.R
 import moe.ouom.wekit.constants.Constants
+import moe.ouom.wekit.ui.utils.showComposeDialog
 import moe.ouom.wekit.utils.common.Utils.jumpUrl
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -35,7 +65,7 @@ class MainSettingsDialog(context: Context) : BaseRikkaDialog(context, "WeKit") {
         categories.forEach { (name, iconName) ->
             addPreference(
                 title = name, iconName = iconName,
-                onClick = { _, _ ->
+                onClick = {
                     CategorySettingsDialog(context, name).show()
                 })
         }
@@ -119,16 +149,137 @@ class MainSettingsDialog(context: Context) : BaseRikkaDialog(context, "WeKit") {
         )
 
         addPreference(
+            title = "开放源代码许可",
+            summary = "本项目使用的开放源代码库许可",
+            iconName = "license_24px",
+            onClick = {
+                showComposeDialog(context, true) {
+                    Surface(
+                        shape = MaterialTheme.shapes.extraLarge,
+                        tonalElevation = 6.dp
+                    ) {
+                        val libraries by produceLibraries(R.raw.aboutlibraries)
+                        val libraryList = libraries?.libraries ?: emptyList()
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            items(libraryList) { library ->
+                                LibraryCard(library = library)
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        addPreference(
             title = "GitHub",
             summary = "修改于 Ujhhgtg/WeKit (原始: cwuom/WeKit)",
             iconName = "ic_github",
-            onClick = { _, _ -> jumpUrl(context, "https://github.com/Ujhhgtg/WeKit") }
+            onClick = { jumpUrl(context, "https://github.com/Ujhhgtg/WeKit") }
         )
         addPreference(
             title = "Telegram",
             summary = "@ouom_pub",
             iconName = "ic_telegram",
-            onClick = { _, _ -> jumpUrl(context, "https://t.me/ouom_pub") }
+            onClick = { jumpUrl(context, "https://t.me/ouom_pub") }
         )
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun LibraryCard(library: Library) {
+    // AboutLibraries usually stores the creator in developers or organization
+    val authorName = library.developers.joinToString { it.name ?: "" }
+        .takeIf { it.isNotBlank() } ?: library.organization?.name
+
+    ElevatedCard(
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.extraLarge,
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+        ),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            // Header: Library Name and Version Badge
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
+            ) {
+                Text(
+                    text = library.name,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.weight(1f)
+                )
+
+                library.artifactVersion?.let { version ->
+                    SuggestionChip(
+                        onClick = { },
+                        label = { Text(version) },
+                        shape = MaterialTheme.shapes.medium,
+                        colors = SuggestionChipDefaults.suggestionChipColors(
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                            labelColor = MaterialTheme.colorScheme.onSecondaryContainer
+                        ),
+                        border = null,
+                        modifier = Modifier.padding(start = 8.dp)
+                    )
+                }
+            }
+
+            // Author / Organization
+            authorName?.let { author ->
+                Text(
+                    text = "by $author",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            // Description
+            library.description?.takeIf { it.isNotBlank() }?.let { description ->
+                Text(
+                    text = description,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 3,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+
+            // Licenses
+            if (library.licenses.isNotEmpty()) {
+                // FlowRow allows dual-licenses to wrap neatly to the next line
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    library.licenses.forEach { license ->
+                        AssistChip(
+                            onClick = { },
+                            label = { Text(license.name) },
+                            colors = AssistChipDefaults.assistChipColors(
+                                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                                labelColor = MaterialTheme.colorScheme.onTertiaryContainer
+                            ),
+                            border = null,
+                            shape = MaterialTheme.shapes.large
+                        )
+                    }
+                }
+            }
+        }
     }
 }

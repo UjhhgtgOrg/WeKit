@@ -474,7 +474,7 @@ abstract class BaseHookItem {
     ): XC_MethodHook.Unhook {
         val m = XposedHelpers.findConstructorExact(
             clazz,
-            *getParameterClasses(clazz.classLoader, parameterTypesAndCallback)
+            *getParameterClasses(clazz.classLoader!!, parameterTypesAndCallback)
         )
 
         return XposedBridge.hookMethod(

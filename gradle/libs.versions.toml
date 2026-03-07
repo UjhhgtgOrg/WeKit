@@ -40,6 +40,8 @@ libsu = "5.2.2"
 libxposed = "master-SNAPSHOT"
 dexlib2 = "2.5.2"
 silkdecoder = "master-SNAPSHOT"
+aboutlibraries = "14.0.0-b02"
+kotlinpoet = "2.2.0"
 
 [libraries]
 android-tools = { module = "com.android.tools.build:gradle", version.ref = "agp" }
@@ -94,12 +96,17 @@ kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-a
 
 ksp = { module = "com.google.devtools.ksp:symbol-processing-api", version.ref = "ksp" }
 kotlin-gradle = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
-kotlinpoet-ksp = { module = "com.squareup:kotlinpoet-ksp", version = "2.2.0" }
+kotlinpoet-ksp = { module = "com.squareup:kotlinpoet-ksp", version.ref = "kotlinpoet" }
 androidx-compose-runtime = { group = "androidx.compose.runtime", name = "runtime", version.ref = "runtime" }
 silkdecoder = { module = "com.github.Ujhhgtg:SilkDecoder", version.ref = "silkdecoder" }
+
+aboutlibraries-core = { module = "com.mikepenz:aboutlibraries-core", version.ref = "aboutlibraries" }
+aboutlibraries-compose-m3 = { module = "com.mikepenz:aboutlibraries-compose-m3", version.ref = "aboutlibraries" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 google-devtools-ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+aboutlibraries = { id = "com.mikepenz.aboutlibraries.plugin", version.ref = "aboutlibraries" }
+aboutlibraries-android = { id = "com.mikepenz.aboutlibraries.plugin.android", version.ref = "aboutlibraries" }

@@ -3,8 +3,6 @@ package moe.ouom.wekit.ui.content
 import android.content.Context
 import android.content.SharedPreferences
 import android.text.InputType
-import android.view.View
-import android.widget.TextView
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -117,7 +115,7 @@ private sealed class PrefRow {
         val title: String,
         val summary: String?,
         val iconName: String?,
-        val onClick: ((View, TextView?) -> Unit)?,
+        val onClick: (() -> Unit)?,
     ) : PrefRow()
 }
 
@@ -246,8 +244,8 @@ abstract class BaseRikkaDialog(
         title: String,
         summary: String? = null,
         iconName: String? = null,
-        onClick: ((View, TextView?) -> Unit)? = null,
-    ) {           // return type preserved for API compat
+        onClick: (() -> Unit)? = null,
+    ) {
         val rk = nextKey("pref_$title")
         rows += PrefRow.Plain(rk, title, summary, iconName, onClick)
     }
@@ -475,7 +473,7 @@ private fun DialogContent(
                                         enabled = enabled,
                                         showArrow = row.onClick != null,
                                         onClick = if (row.onClick != null) {
-                                            { row.onClick.invoke(View(context), null) }
+                                            { row.onClick.invoke() }
                                         } else null,
                                     )
                                 }

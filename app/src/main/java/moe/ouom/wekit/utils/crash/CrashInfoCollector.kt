@@ -178,7 +178,7 @@ object CrashInfoCollector {
         try {
             val currentThread = Thread.currentThread()
             sb.append("Current Thread: ").append(currentThread.name).append("\n")
-            sb.append("Thread ID: ").append(currentThread.id).append("\n")
+            sb.append("Thread ID: ").append(currentThread.getThreadId()).append("\n")
             sb.append("Thread Priority: ").append(currentThread.priority).append("\n")
             sb.append("Thread State: ").append(currentThread.state).append("\n")
             sb.append("Thread Group: ").append(currentThread.threadGroup!!.name ?: "null")

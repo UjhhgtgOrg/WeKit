@@ -44,7 +44,6 @@ object WeChatFooterApi : ApiHookItem() {
                             FIELD_TO_USER,
                             toUser
                         )
-                        WeLogger.d(TAG, "捕获并缓存 toUser: $toUser")
                     }
                 }
             } catch (e: Throwable) {
@@ -69,7 +68,6 @@ object WeChatFooterApi : ApiHookItem() {
                 val text = button.text?.toString()?.trim() ?: ""
 
                 if (text == "发送" || text.equals("Send", ignoreCase = true)) {
-                    WeLogger.i(TAG, "定位到发送按钮 -> 字段名: ${field.name}")
                     button.setOnLongClickListener { view ->
                         try {
                             handleLongClickLogic(chatFooter, view)

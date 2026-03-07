@@ -19,7 +19,7 @@ import moe.ouom.wekit.hooks.sdk.base.WeServiceApi
 import moe.ouom.wekit.hooks.sdk.base.model.MessageInfo
 import moe.ouom.wekit.hooks.sdk.ui.WeChatMessageViewApi
 import moe.ouom.wekit.utils.common.SimpleLruCache
-import moe.ouom.wekit.utils.findHostViewByIdStr
+import moe.ouom.wekit.ui.utils.findViewByIdStr
 import org.luckypray.dexkit.DexKitBridge
 import kotlin.math.PI
 import kotlin.math.abs
@@ -51,7 +51,7 @@ object SwipeToQuote : BaseSwitchFunctionHookItem(), IDexFind,
         if (cache[msgInfo.talker to msgInfo.id] == true) return
 
         val viewGroup = view as? ViewGroup ?: return
-        val messageView = runCatching { viewGroup.findHostViewByIdStr<View>("bkj") as ViewGroup }.getOrNull() ?: return
+        val messageView = runCatching { viewGroup.findViewByIdStr<View>("bkj") as ViewGroup }.getOrNull() ?: return
 
         attachSwipeGesture(messageView, chattingContext, msgInfo)
     }
