@@ -165,7 +165,7 @@ object EmojiGameControl : BaseSwitchFunctionHookItem(), IDexFind {
             return
         }
 
-        showComposeDialog(activity, true) { onDismiss ->
+        showComposeDialog(activity) { onDismiss ->
             EmojiGameDialogContent(
                 isDice = isDice,
                 onSend = { isSingle, inputText ->

@@ -12,7 +12,7 @@ import moe.ouom.wekit.ui.utils.showComposeDialog
 @HookItem(path = "调试/清除适配信息", desc = "点击清除适配信息")
 object ClearDexCache : BaseClickableFunctionHookItem() {
     override fun onClick(context: Context) {
-        showComposeDialog(context, true) { onDismiss ->
+        showComposeDialog(context) { onDismiss ->
             AlertDialogContent(
                 title = { Text("清除适配信息") },
                 text = {

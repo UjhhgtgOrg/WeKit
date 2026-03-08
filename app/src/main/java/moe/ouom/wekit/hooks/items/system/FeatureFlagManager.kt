@@ -173,7 +173,7 @@ object FeatureFlagManager : BaseClickableFunctionHookItem(), IDexFind {
 
     @OptIn(ExperimentalMaterial3ExpressiveApi::class)
     override fun onClick(context: Context) {
-        showComposeDialog(context, true) { onDismiss ->
+        showComposeDialog(context) { onDismiss ->
             var isLoading by remember { mutableStateOf(true) }
             var featureFlagClasses by remember { mutableStateOf<List<String>>(emptyList()) }
             // 1. 搜索状态

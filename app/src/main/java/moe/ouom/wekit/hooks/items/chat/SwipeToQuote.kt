@@ -52,7 +52,7 @@ object SwipeToQuote : BaseSwitchFunctionHookItem(), IDexFind,
 
         val viewGroup = view as? ViewGroup ?: return
         // TODO: might change with WeChat version
-        val messageView = viewGroup.findViewByIdStr<View>("bkj") as ViewGroup
+        val messageView = runCatching { viewGroup.findViewByIdStr<View>("bkj") as ViewGroup }.getOrNull() ?: return
 
         attachSwipeGesture(messageView, chattingContext, msgInfo)
     }

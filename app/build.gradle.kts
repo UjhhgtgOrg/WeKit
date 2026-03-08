@@ -1,3 +1,4 @@
+
 import com.android.build.api.dsl.ApplicationExtension
 import com.android.build.gradle.internal.api.ApkVariantOutputImpl
 import org.gradle.internal.extensions.core.serviceOf
@@ -6,10 +7,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 import java.io.ByteArrayOutputStream
 import java.security.MessageDigest
-import java.text.SimpleDateFormat
-import java.util.Date
 import java.util.Locale
-import java.util.UUID
 
 plugins {
     alias(libs.plugins.android.application)
@@ -20,43 +18,25 @@ plugins {
     alias(libs.plugins.aboutlibraries.android)
 }
 
-private fun getBuildVersionCode(): Int {
-    val appVerCode: Int by lazy {
-        val versionCode = SimpleDateFormat("yyMMddHH", Locale.ENGLISH).format(Date())
-        versionCode.toInt()
-    }
-    return appVerCode
+fun getCommitCount(): Int {
+    return providers.exec {
+        commandLine("git", "rev-list", "--count", "HEAD")
+    }.standardOutput.asText.get().trim().toInt()
 }
 
-private fun getCurrentDate(): String {
-    val sdf = SimpleDateFormat("MMddHHmm", Locale.getDefault())
-    return sdf.format(Date())
-}
-
-private fun getShortGitRevision(): String {
-    val command = "git rev-parse --short HEAD"
-    val processBuilder = ProcessBuilder(*command.split(" ").toTypedArray())
-    val process = processBuilder.start()
-
-    val output = process.inputStream.bufferedReader().use { it.readText() }
-    val exitCode = process.waitFor()
-
-    return if (exitCode == 0) {
-        output.trim()
-    } else {
-        "no_commit"
-    }
-}
-
-private fun getBuildVersionName(): String {
-    return "${getShortGitRevision()}.${getCurrentDate()}"
+fun getGitHash(): String {
+    return providers.exec {
+        commandLine("git", "rev-parse", "--short", "HEAD")
+    }.standardOutput.asText.get().trim()
 }
 
 configure<ApplicationExtension> {
     namespace = libs.versions.namespace.get()
     compileSdk = libs.versions.targetSdk.get().toInt()
 
-    val buildUuid = UUID.randomUUID()
+    val commitCount = getCommitCount()
+    val gitHash = getGitHash()
+
     println(
         """
         __        __  _____   _  __  ___   _____ 
@@ -69,16 +49,16 @@ configure<ApplicationExtension> {
         """
     )
 
-    println("build uuid: $buildUuid")
+    println("git hash: $gitHash")
 
     defaultConfig {
         applicationId = libs.versions.namespace.get()
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
-        versionCode = getBuildVersionCode()
-        versionName = getBuildVersionName()
+        versionCode = commitCount
+        versionName = "git+$gitHash"
 
-        buildConfigField("String", "BUILD_UUID", "\"${buildUuid}\"")
+        buildConfigField("String", "GIT_HASH", "\"${gitHash}\"")
         buildConfigField("String", "TAG", "\"WeKit\"")
         buildConfigField("long", "BUILD_TIMESTAMP", "${System.currentTimeMillis()}L")
 

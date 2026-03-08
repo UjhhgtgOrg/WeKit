@@ -16,7 +16,7 @@ object SendCustomAppMessage : BaseSwitchFunctionHookItem() {
 
     override fun onBeforeToggle(newState: Boolean, context: Context): Boolean {
         if (newState) {
-            showComposeDialog(context, true) { onDismiss ->
+            showComposeDialog(context) { onDismiss ->
                 AlertDialogContent(
                     title = { Text(text = "警告") },
                     text = { Text(text = "此功能可能导致账号异常, 确定要启用吗?") },

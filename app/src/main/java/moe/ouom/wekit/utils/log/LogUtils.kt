@@ -1,15 +1,13 @@
 package moe.ouom.wekit.utils.log
 
-import android.annotation.SuppressLint
 import de.robv.android.xposed.XposedBridge
 import moe.ouom.wekit.config.WeConfig
 import moe.ouom.wekit.constants.Constants
 import moe.ouom.wekit.loader.core.NativeCoreBridge
+import moe.ouom.wekit.utils.formatEpoch
 import moe.ouom.wekit.utils.io.FileUtils
 import moe.ouom.wekit.utils.io.PathUtils
 import java.nio.file.Path
-import java.text.SimpleDateFormat
-import java.util.Calendar
 import kotlin.io.path.createDirectories
 
 object LogUtils {
@@ -119,12 +117,7 @@ object LogUtils {
     }
 
     val time: String
-        get() {
-            @SuppressLint("SimpleDateFormat") val df =
-                SimpleDateFormat("[yyyy/MM/dd HH:mm:ss]")
-            val calendar = Calendar.getInstance()
-            return df.format(calendar.getTime())
-        }
+        get() = formatEpoch(System.currentTimeMillis(), true)
 
     fun addError(tag: String, msg: String?) {
         addLog(tag, msg, null, true)

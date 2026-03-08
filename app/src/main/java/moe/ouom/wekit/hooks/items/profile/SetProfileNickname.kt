@@ -1,7 +1,6 @@
 package moe.ouom.wekit.hooks.items.profile
 
 import android.content.Context
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
@@ -20,7 +19,7 @@ import moe.ouom.wekit.utils.log.WeLogger
 object SetProfileNickname : BaseClickableFunctionHookItem() {
 
     override fun onClick(context: Context) {
-        showComposeDialog(context, true) { onDismiss ->
+        showComposeDialog(context) { onDismiss ->
             var nickname by remember { mutableStateOf("") }
 
             AlertDialogContent(
@@ -46,8 +45,7 @@ object SetProfileNickname : BaseClickableFunctionHookItem() {
                             onSuccess { json, _ ->
                                 WeLogger.i("WeProfileNameSetter", "成功，回包: $json")
                                 showComposeDialog(context) { onDismiss ->
-                                    AlertDialog(
-                                        onDismissRequest = onDismiss,
+                                    AlertDialogContent(
                                         title = { Text("发送成功, 响应结果:") },
                                         text = { Text(json) },
                                         confirmButton = {
@@ -59,8 +57,7 @@ object SetProfileNickname : BaseClickableFunctionHookItem() {
 
                             onFail { type, code, msg ->
                                 showComposeDialog(context) { onDismiss ->
-                                    AlertDialog(
-                                        onDismissRequest = onDismiss,
+                                    AlertDialogContent(
                                         title = { Text("发送失败, 响应结果:") },
                                         text = { Text("type: $type, code: $code, msg: $msg") },
                                         confirmButton = {

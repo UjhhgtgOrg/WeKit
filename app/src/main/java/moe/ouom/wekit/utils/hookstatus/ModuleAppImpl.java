@@ -21,8 +21,6 @@ public class ModuleAppImpl extends Application {
         // init host info, this is required for nearly all operations
         HostInfo.init(this);
         initStartupInfo();
-
-        WeLogger.d("ModuleAppImpl onCreate");
     }
 
     private void initStartupInfo() {

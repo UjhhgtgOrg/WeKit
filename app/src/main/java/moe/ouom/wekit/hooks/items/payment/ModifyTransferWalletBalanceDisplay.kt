@@ -140,7 +140,7 @@ object ModifyTransferWalletBalanceDisplay : BaseClickableFunctionHookItem(), IWe
     private val config = WeConfig.getDefaultConfig()
 
     override fun onClick(context: Context) {
-        showComposeDialog(context, true) { onDismiss ->
+        showComposeDialog(context) { onDismiss ->
             var cftInput by remember {
                 mutableStateOf(
                     config.getStringPref(KEY_CFT_BALANCE, null) ?: ""

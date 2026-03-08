@@ -34,9 +34,7 @@ import moe.ouom.wekit.R
 import moe.ouom.wekit.constants.Constants
 import moe.ouom.wekit.ui.utils.showComposeDialog
 import moe.ouom.wekit.utils.common.Utils.openUrl
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import moe.ouom.wekit.utils.formatEpoch
 
 class MainSettingsDialog(context: Context) : BasePrefDialog(context, "WeKit") {
     // 定义优先级 映射关系 (值 -> 显示文本)
@@ -131,16 +129,8 @@ class MainSettingsDialog(context: Context) : BasePrefDialog(context, "WeKit") {
         // 关于 (About)
         // ==========================================
         addCategory("关于")
-        addPreference(title = "版本", summary = BuildConfig.VERSION_NAME)
-
-        val buildTimeStr = try {
-            val date = Date(BuildConfig.BUILD_TIMESTAMP)
-            SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(date)
-        } catch (_: Exception) {
-            "N/A"
-        }
-        addPreference("构建时间", buildTimeStr)
-        addPreference("构建 UUID", BuildConfig.BUILD_UUID)
+        addPreference(title = "版本", summary = "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})")
+        addPreference("构建时间", formatEpoch(BuildConfig.BUILD_TIMESTAMP, true))
         addPreference(
             "提示",
             "牙膏要一点一点挤, 显卡要一刀一刀切, PPT 要一张一张放, 代码要一行一行写, 单个功能预计自出现在 commit 之日起, 三年内开发完毕"
@@ -151,7 +141,7 @@ class MainSettingsDialog(context: Context) : BasePrefDialog(context, "WeKit") {
             summary = "本项目使用的开放源代码库许可",
             iconName = "license_24px",
             onClick = {
-                showComposeDialog(context, true) {
+                showComposeDialog(context) {
                     Surface(
                         shape = MaterialTheme.shapes.extraLarge,
                         tonalElevation = 6.dp

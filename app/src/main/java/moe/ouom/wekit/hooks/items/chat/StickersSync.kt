@@ -458,7 +458,7 @@ object StickersSync : BaseClickableFunctionHookItem(), IDexFind {
 
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onClick(context: Context) {
-        showComposeDialog(context, true) { onDismiss ->
+        showComposeDialog(context) { onDismiss ->
             AlertDialogContent(
                 title = { Text("贴纸包同步") },
                 text = {

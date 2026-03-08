@@ -17,9 +17,9 @@ fun formatBytesSize(bytes: Long): String {
     return "%.2f %s".format(value, units[digitGroups])
 }
 
-fun formatEpoch(epochMs: Long, shouldPrependDate: Boolean = false): String {
+fun formatEpoch(epochMs: Long, includeDate: Boolean = false): String {
     val formatter =
-        DateTimeFormatter.ofPattern(if (shouldPrependDate) "yyyy:MM:dd HH:mm:ss" else "HH:mm:ss")
+        DateTimeFormatter.ofPattern(if (includeDate) "yyyy/MM/dd HH:mm:ss" else "HH:mm:ss")
             .withZone(ZoneId.of("Asia/Shanghai"))
             .withLocale(Locale.CHINA)
 

@@ -109,7 +109,7 @@ object RemoveChatMessageContextMenuItems : BaseClickableFunctionHookItem(), IDex
     }
 
     override fun onClick(context: Context) {
-        showComposeDialog(context, true) { onDismiss ->
+        showComposeDialog(context) { onDismiss ->
             var removedNames by remember {
                 mutableStateOf(
                     config.getStringPref(

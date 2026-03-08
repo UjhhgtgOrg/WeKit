@@ -39,7 +39,7 @@ object ModifyTextMessageDisplay : BaseSwitchFunctionHookItem(),
                 lazy { ModuleRes.getDrawable("edit_24px") },
                 { msgInfo -> msgInfo.isText }
             ) { view, _, _ ->
-                showComposeDialog(view.context, true) { onDismiss ->
+                showComposeDialog(view.context) { onDismiss ->
                     var input by remember { mutableStateOf("") } // TODO: figure out how to find initial value
 
                     AlertDialogContent(

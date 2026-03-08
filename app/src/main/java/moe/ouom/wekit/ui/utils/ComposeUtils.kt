@@ -3,8 +3,10 @@ package moe.ouom.wekit.ui.utils
 import android.app.Dialog
 import android.content.Context
 import android.graphics.Color
+import android.os.Build
 import android.view.View
 import android.view.Window
+import android.view.WindowManager
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -16,16 +18,21 @@ import androidx.core.graphics.drawable.toDrawable
 import androidx.lifecycle.setViewTreeLifecycleOwner
 import androidx.lifecycle.setViewTreeViewModelStoreOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
+import dev.ujhhgtg.nameof.nameof
 import moe.ouom.wekit.host.HostInfo
+import moe.ouom.wekit.utils.log.WeLogger
+
+private val TAG = nameof(::showComposeDialog)
 
 // useful for showing a compose dialog in non-compose context,
-// or when you don't want to manage the state for a dialog inside a composable;
-// although technically you shouldn't use AlertDialog inside this function since both Dialog and AlertDialog create a new Window,
-// there don't seem to be any problems if you insist on doing that
+// or when you don't want to manage the state for a dialog inside a composable
+//
+// note that you should use AlertDialogContent instead of AlertDialog inside 'content' to avoid
+// creating multiple windows
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 fun showComposeDialog(
     context: Context? = null,
-    directlyDismissable: Boolean = false,
+    dismissable: Boolean = true,
     content: @Composable (onDismiss: () -> Unit) -> Unit
 ) {
     var ctx = context
@@ -39,10 +46,18 @@ fun showComposeDialog(
     val lifecycleOwner = XposedLifecycleOwner().apply { onCreate(); onResume() }
 
     dialog.apply {
-        window?.setBackgroundDrawable(Color.TRANSPARENT.toDrawable())
-        window?.requestFeature(Window.FEATURE_NO_TITLE)
-        setCanceledOnTouchOutside(directlyDismissable)
-        setCancelable(directlyDismissable)
+        window?.apply {
+            setBackgroundDrawableResource(android.R.color.transparent)
+            requestFeature(Window.FEATURE_NO_TITLE)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                addFlags(WindowManager.LayoutParams.FLAG_BLUR_BEHIND)
+                attributes.blurBehindRadius = 20
+            } else {
+                WeLogger.w(TAG, "sdk < 31, not applying blur behind dialog")
+            }
+        }
+        setCanceledOnTouchOutside(dismissable)
+        setCancelable(dismissable)
 
         setContentView(
             ComposeView(ctx).apply {

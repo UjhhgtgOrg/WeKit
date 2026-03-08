@@ -46,7 +46,7 @@ object DisplayMessageDetails : BaseSwitchFunctionHookItem(),
                 displayItems += "真实发送者 ID" to msgInfo.sender
                 displayItems += "内容" to msgInfo.content
 
-                showComposeDialog(view.context, true) {
+                showComposeDialog(view.context) {
                     AlertDialogContent(
                         title = { Text("消息详情") },
                         text = {

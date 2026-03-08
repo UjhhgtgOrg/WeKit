@@ -75,7 +75,7 @@ object ModifyWalletBalanceDisplay : BaseClickableFunctionHookItem(), IDexFind {
     }
 
     override fun onClick(context: Context) {
-        showComposeDialog(context, true) { onDismiss ->
+        showComposeDialog(context) { onDismiss ->
             var input by remember {
                 mutableStateOf(
                     config.getStringPref(KEY_BALANCE, null) ?: ""

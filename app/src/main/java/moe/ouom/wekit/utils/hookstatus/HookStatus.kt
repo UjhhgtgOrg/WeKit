@@ -16,7 +16,6 @@ import moe.ouom.wekit.host.HostInfo
 import moe.ouom.wekit.loader.LoaderExtensionHelper
 import moe.ouom.wekit.utils.common.SyncUtils
 import moe.ouom.wekit.utils.hookstatus.AbiUtils.getApplicationActiveAbi
-import moe.ouom.wekit.utils.log.WeLogger.d
 import java.io.File
 
 /**
@@ -29,12 +28,10 @@ object HookStatus {
     private var xposedServiceListenerRegistered = false
     private val xposedServiceListener = object : OnServiceListener {
         override fun onServiceBind(service: XposedService) {
-            d("on XPOSED ServiceBind")
             xposedService.value = service
         }
 
         override fun onServiceDied(service: XposedService) {
-            d("on XPOSED ServiceDied")
             xposedService.value = null
         }
     }
@@ -54,7 +51,7 @@ object HookStatus {
                 ClassLoader.getSystemClassLoader()
                     .loadClass("de.robv.android.xposed.XposedBridge")
                 return true
-            } catch (e: ClassNotFoundException) {
+            } catch (_: ClassNotFoundException) {
                 return false
             }
         }
@@ -62,7 +59,7 @@ object HookStatus {
     val isElderDriverXposed: Boolean
         get() = File("/system/framework/edxp.jar").exists()
 
-    fun callTaichiContentProvider(context: Context): Boolean {
+    fun callTaiChiContentProvider(context: Context): Boolean {
         try {
             val contentResolver = context.contentResolver
             val uri = "content://me.weishu.exposed.CP/".toUri()
@@ -98,7 +95,7 @@ object HookStatus {
                 xposedServiceListenerRegistered = true
             }
             SyncUtils.async {
-                expCpCalled = callTaichiContentProvider(context)
+                expCpCalled = callTaiChiContentProvider(context)
                 expCpResult = expCpCalled
             }
         } else {

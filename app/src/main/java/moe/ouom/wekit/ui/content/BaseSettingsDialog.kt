@@ -31,8 +31,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import moe.ouom.wekit.ui.utils.showComposeDialog
 
 // ---------------------------------------------------------------------------
@@ -104,11 +102,6 @@ abstract class BaseSettingsDialog(
             )
         }
     }
-
-    open fun dismiss() {
-        _dismissCallback?.invoke()
-        _dismissCallback = null
-    }
 }
 
 // ---------------------------------------------------------------------------
@@ -133,107 +126,98 @@ internal fun BaseSettingsDialogContent(
         }
     }
 
-    Dialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(
-            usePlatformDefaultWidth = false,
-            dismissOnBackPress = true,
-            dismissOnClickOutside = true,
-        ),
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth(0.92f)
+            .fillMaxHeight(0.85f),
+        shape = RoundedCornerShape(28.dp),
+        tonalElevation = 6.dp,
+        shadowElevation = 8.dp,
     ) {
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth(0.92f)
-                .fillMaxHeight(0.85f),
-            shape = RoundedCornerShape(28.dp),
-            tonalElevation = 6.dp,
-            shadowElevation = 8.dp,
-        ) {
-            Column(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize()) {
 
-                // ── Top bar ──────────────────────────────────────────────
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 4.dp, end = 16.dp, top = 8.dp, bottom = 0.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    IconButton(onClick = onDismiss) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
-                            contentDescription = "Back",
-                        )
-                    }
-                    Spacer(Modifier.width(4.dp))
-                    Text(
-                        text = title,
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Medium,
+            // ── Top bar ──────────────────────────────────────────────
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 4.dp, end = 16.dp, top = 8.dp, bottom = 0.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                IconButton(onClick = onDismiss) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
+                        contentDescription = "Back",
                     )
                 }
-
-                HorizontalDivider(
-                    thickness = 0.5.dp,
-                    color = MaterialTheme.colorScheme.outlineVariant,
+                Spacer(Modifier.width(4.dp))
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Medium,
                 )
+            }
 
-                // ── Scrollable list ───────────────────────────────────────
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState())
-                        .padding(bottom = 16.dp),
-                ) {
-                    rows.forEach { row ->
-                        when (row) {
-                            is SettingsRow.SwitchRow -> {
-                                val checked = checkedStates[row.rowKey] ?: row.initialChecked
+            HorizontalDivider(
+                thickness = 0.5.dp,
+                color = MaterialTheme.colorScheme.outlineVariant,
+            )
 
-                                // Re-register completion callback on each recompose so the
-                                // lambda always closes over the current checkedStates map.
-                                DisposableEffect(row.rowKey) {
-                                    row.bindCompletionCallback { newValue ->
-                                        checkedStates[row.rowKey] = newValue
-                                    }
-                                    onDispose { }
+            // ── Scrollable list ───────────────────────────────────────
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(bottom = 16.dp),
+            ) {
+                rows.forEach { row ->
+                    when (row) {
+                        is SettingsRow.SwitchRow -> {
+                            val checked = checkedStates[row.rowKey] ?: row.initialChecked
+
+                            // Re-register completion callback on each recompose so the
+                            // lambda always closes over the current checkedStates map.
+                            DisposableEffect(row.rowKey) {
+                                row.bindCompletionCallback { newValue ->
+                                    checkedStates[row.rowKey] = newValue
                                 }
-
-                                SwitchSettingsRow(
-                                    title = row.title,
-                                    summary = row.summary,
-                                    checked = checked,
-                                    onCheckedChange = { requested ->
-                                        val allowed = row.onBeforeToggle(requested)
-                                        if (allowed) {
-                                            checkedStates[row.rowKey] = requested
-                                        }
-                                        // If not allowed, checkedStates stays unchanged → Switch bounces back
-                                    },
-                                )
+                                onDispose { }
                             }
 
-                            is SettingsRow.ClickableRow -> {
-                                val checked = checkedStates[row.rowKey] ?: row.initialChecked
-
-                                DisposableEffect(row.rowKey) {
-                                    row.bindCompletionCallback { newValue ->
-                                        checkedStates[row.rowKey] = newValue
+                            SwitchSettingsRow(
+                                title = row.title,
+                                summary = row.summary,
+                                checked = checked,
+                                onCheckedChange = { requested ->
+                                    val allowed = row.onBeforeToggle(requested)
+                                    if (allowed) {
+                                        checkedStates[row.rowKey] = requested
                                     }
-                                    onDispose { }
-                                }
+                                    // If not allowed, checkedStates stays unchanged → Switch bounces back
+                                },
+                            )
+                        }
 
-                                ClickableSettingsRow(
-                                    title = row.title,
-                                    summary = row.summary,
-                                    showSwitch = row.showSwitch,
-                                    checked = checked,
-                                    onCheckedChange = { requested ->
-                                        val allowed = row.onBeforeToggle(requested)
-                                        if (allowed) checkedStates[row.rowKey] = requested
-                                    },
-                                    onClick = row.onClick,
-                                )
+                        is SettingsRow.ClickableRow -> {
+                            val checked = checkedStates[row.rowKey] ?: row.initialChecked
+
+                            DisposableEffect(row.rowKey) {
+                                row.bindCompletionCallback { newValue ->
+                                    checkedStates[row.rowKey] = newValue
+                                }
+                                onDispose { }
                             }
+
+                            ClickableSettingsRow(
+                                title = row.title,
+                                summary = row.summary,
+                                showSwitch = row.showSwitch,
+                                checked = checked,
+                                onCheckedChange = { requested ->
+                                    val allowed = row.onBeforeToggle(requested)
+                                    if (allowed) checkedStates[row.rowKey] = requested
+                                },
+                                onClick = row.onClick,
+                            )
                         }
                     }
                 }

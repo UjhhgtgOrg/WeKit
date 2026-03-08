@@ -76,7 +76,7 @@ object JsScriptingHook : BaseClickableFunctionHookItem(),
 
     // --- ui ---
     override fun onClick(context: Context) {
-        showComposeDialog(context, true) {
+        showComposeDialog(context) {
             AlertDialogContent(
                 title = { Text("管理规则") },
                 text = {

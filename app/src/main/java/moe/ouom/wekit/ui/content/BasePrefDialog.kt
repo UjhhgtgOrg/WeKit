@@ -49,8 +49,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import com.google.accompanist.drawablepainter.rememberDrawablePainter
 import moe.ouom.wekit.config.WeConfig
 import moe.ouom.wekit.constants.Constants
@@ -327,144 +325,135 @@ private fun DialogContent(
     var inputDialogRow by remember { mutableStateOf<PrefRow.EditText?>(null) }
     var selectDialogRow by remember { mutableStateOf<PrefRow.Select?>(null) }
 
-    Dialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(
-            usePlatformDefaultWidth = false,
-            dismissOnBackPress = true,
-            dismissOnClickOutside = true,
-        ),
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth(0.92f)
+            .fillMaxHeight(0.85f),
+        shape = RoundedCornerShape(28.dp),
+        tonalElevation = 6.dp,
+        shadowElevation = 8.dp,
     ) {
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth(0.92f)
-                .fillMaxHeight(0.85f),
-            shape = RoundedCornerShape(28.dp),
-            tonalElevation = 6.dp,
-            shadowElevation = 8.dp,
-        ) {
-            Column(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize()) {
 
-                // ── Top bar ──────────────────────────────────────────────
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 4.dp, end = 16.dp, top = 8.dp, bottom = 0.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    IconButton(onClick = onDismiss) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
-                            contentDescription = "Back",
-                        )
-                    }
-                    Spacer(Modifier.width(4.dp))
-                    Text(
-                        text = title,
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Medium,
+            // ── Top bar ──────────────────────────────────────────────
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 4.dp, end = 16.dp, top = 8.dp, bottom = 0.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                IconButton(onClick = onDismiss) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
+                        contentDescription = "Back",
                     )
                 }
-
-                HorizontalDivider(
-                    modifier = Modifier.padding(horizontal = 0.dp),
-                    thickness = 0.5.dp,
-                    color = MaterialTheme.colorScheme.outlineVariant
+                Spacer(Modifier.width(4.dp))
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Medium,
                 )
+            }
 
-                // ── Scrollable preference list ────────────────────────────
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState())
-                        .padding(bottom = 16.dp),
-                ) {
-                    rows.forEach { row ->
-                        when (row) {
-                            // ── Category header ───────────────────────────
-                            is PrefRow.Category -> {
-                                Text(
-                                    text = row.title,
-                                    color = MaterialTheme.colorScheme.primary,
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    modifier = Modifier.padding(
-                                        start = 16.dp, end = 16.dp,
-                                        top = 20.dp, bottom = 4.dp,
-                                    ),
+            HorizontalDivider(
+                modifier = Modifier.padding(horizontal = 0.dp),
+                thickness = 0.5.dp,
+                color = MaterialTheme.colorScheme.outlineVariant
+            )
+
+            // ── Scrollable preference list ────────────────────────────
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(bottom = 16.dp),
+            ) {
+                rows.forEach { row ->
+                    when (row) {
+                        // ── Category header ───────────────────────────
+                        is PrefRow.Category -> {
+                            Text(
+                                text = row.title,
+                                color = MaterialTheme.colorScheme.primary,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                modifier = Modifier.padding(
+                                    start = 16.dp, end = 16.dp,
+                                    top = 20.dp, bottom = 4.dp,
+                                ),
+                            )
+                        }
+
+                        // ── Switch ────────────────────────────────────
+                        is PrefRow.Switch -> {
+                            val visible = rowVisible(row.rowKey)
+                            val enabled = rowEnabled(row.rowKey)
+                            AnimatedVisibility(visible = visible) {
+                                SwitchRow(
+                                    row = row,
+                                    checked = switchStates[row.configKey] ?: false,
+                                    enabled = enabled,
+                                    onCheckedChange = { checked ->
+                                        switchStates[row.configKey] = checked
+                                        WeConfig.getDefaultConfig().edit()
+                                            .putBoolean(row.configKey, checked).apply()
+                                        WeLogger.d(
+                                            TAG,
+                                            "Config changed [${row.configKey}] -> $checked"
+                                        )
+                                    },
                                 )
                             }
+                        }
 
-                            // ── Switch ────────────────────────────────────
-                            is PrefRow.Switch -> {
-                                val visible = rowVisible(row.rowKey)
-                                val enabled = rowEnabled(row.rowKey)
-                                AnimatedVisibility(visible = visible) {
-                                    SwitchRow(
-                                        row = row,
-                                        checked = switchStates[row.configKey] ?: false,
-                                        enabled = enabled,
-                                        onCheckedChange = { checked ->
-                                            switchStates[row.configKey] = checked
-                                            WeConfig.getDefaultConfig().edit()
-                                                .putBoolean(row.configKey, checked).apply()
-                                            WeLogger.d(
-                                                TAG,
-                                                "Config changed [${row.configKey}] -> $checked"
-                                            )
-                                        },
-                                    )
-                                }
+                        // ── EditText ──────────────────────────────────
+                        is PrefRow.EditText -> {
+                            val visible = rowVisible(row.rowKey)
+                            val enabled = rowEnabled(row.rowKey)
+                            AnimatedVisibility(visible = visible) {
+                                SimpleRow(
+                                    title = row.title,
+                                    summary = summaryStates[row.configKey] ?: row.baseSummary,
+                                    iconName = row.iconName,
+                                    enabled = enabled,
+                                    showArrow = true,
+                                    onClick = { inputDialogRow = row },
+                                )
                             }
+                        }
 
-                            // ── EditText ──────────────────────────────────
-                            is PrefRow.EditText -> {
-                                val visible = rowVisible(row.rowKey)
-                                val enabled = rowEnabled(row.rowKey)
-                                AnimatedVisibility(visible = visible) {
-                                    SimpleRow(
-                                        title = row.title,
-                                        summary = summaryStates[row.configKey] ?: row.baseSummary,
-                                        iconName = row.iconName,
-                                        enabled = enabled,
-                                        showArrow = true,
-                                        onClick = { inputDialogRow = row },
-                                    )
-                                }
+                        // ── Select ────────────────────────────────────
+                        is PrefRow.Select -> {
+                            val visible = rowVisible(row.rowKey)
+                            val enabled = rowEnabled(row.rowKey)
+                            AnimatedVisibility(visible = visible) {
+                                SimpleRow(
+                                    title = row.title,
+                                    summary = summaryStates[row.configKey] ?: row.baseSummary,
+                                    iconName = row.iconName,
+                                    enabled = enabled,
+                                    showArrow = true,
+                                    onClick = { selectDialogRow = row },
+                                )
                             }
+                        }
 
-                            // ── Select ────────────────────────────────────
-                            is PrefRow.Select -> {
-                                val visible = rowVisible(row.rowKey)
-                                val enabled = rowEnabled(row.rowKey)
-                                AnimatedVisibility(visible = visible) {
-                                    SimpleRow(
-                                        title = row.title,
-                                        summary = summaryStates[row.configKey] ?: row.baseSummary,
-                                        iconName = row.iconName,
-                                        enabled = enabled,
-                                        showArrow = true,
-                                        onClick = { selectDialogRow = row },
-                                    )
-                                }
-                            }
-
-                            // ── Plain preference ──────────────────────────
-                            is PrefRow.Plain -> {
-                                val visible = rowVisible(row.rowKey)
-                                val enabled = rowEnabled(row.rowKey)
-                                AnimatedVisibility(visible = visible) {
-                                    SimpleRow(
-                                        title = row.title,
-                                        summary = row.summary,
-                                        iconName = row.iconName,
-                                        enabled = enabled,
-                                        showArrow = row.onClick != null,
-                                        onClick = if (row.onClick != null) {
-                                            { row.onClick.invoke() }
-                                        } else null,
-                                    )
-                                }
+                        // ── Plain preference ──────────────────────────
+                        is PrefRow.Plain -> {
+                            val visible = rowVisible(row.rowKey)
+                            val enabled = rowEnabled(row.rowKey)
+                            AnimatedVisibility(visible = visible) {
+                                SimpleRow(
+                                    title = row.title,
+                                    summary = row.summary,
+                                    iconName = row.iconName,
+                                    enabled = enabled,
+                                    showArrow = row.onClick != null,
+                                    onClick = if (row.onClick != null) {
+                                        { row.onClick.invoke() }
+                                    } else null,
+                                )
                             }
                         }
                     }

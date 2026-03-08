@@ -14,7 +14,7 @@ import moe.ouom.wekit.utils.log.WeLogger
 object ClearProfileDetails : BaseClickableFunctionHookItem() {
 
     override fun onClick(context: Context) {
-        showComposeDialog(context, true) { onDismiss ->
+        showComposeDialog(context) { onDismiss ->
             AlertDialogContent(
                 title = { Text("清空资料信息") },
                 text = { Text("确定清空吗？清空后你仍然可以重新选择资料信息") },
@@ -31,7 +31,7 @@ object ClearProfileDetails : BaseClickableFunctionHookItem() {
                         ) {
                             onSuccess { json, _ ->
                                 WeLogger.i("WeProfileCleaner", "成功，回包: $json")
-                                showComposeDialog(context, true) { onDismiss ->
+                                showComposeDialog(context) { onDismiss ->
                                     AlertDialogContent(
                                         title = { Text("发送成功, 响应结果:") },
                                         text = { Text(json) },
@@ -43,7 +43,7 @@ object ClearProfileDetails : BaseClickableFunctionHookItem() {
                             }
 
                             onFail { type, code, msg ->
-                                showComposeDialog(context, true) { onDismiss ->
+                                showComposeDialog(context) { onDismiss ->
                                     AlertDialogContent(
                                         title = { Text("发送失败, 响应结果:") },
                                         text = { Text("type: $type, code: $code, msg: $msg") },

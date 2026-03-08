@@ -88,12 +88,6 @@ libxposed-api = { module = "com.github.libxposed:api", version.ref = "libxposed"
 libxposed-service = { module = "com.github.libxposed:service", version.ref = "libxposed" }
 
 rhino-android = { module = "io.apisense:rhino-android", version.ref = "rhino" }
-kotlin-scripting-jvm = { module = "org.jetbrains.kotlin:kotlin-scripting-jvm" }
-kotlin-scripting-jvm-host = { module = "org.jetbrains.kotlin:kotlin-scripting-jvm-host" }
-kotlin-scripting-common = { module = "org.jetbrains.kotlin:kotlin-scripting-common" }
-kotlin-compiler-embeddable = { module = "org.jetbrains.kotlin:kotlin-compiler-embeddable" }
-kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android" }
-
 ksp = { module = "com.google.devtools.ksp:symbol-processing-api", version.ref = "ksp" }
 kotlin-gradle = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
 kotlinpoet-ksp = { module = "com.squareup:kotlinpoet-ksp", version.ref = "kotlinpoet" }
@@ -110,4 +104,3 @@ kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "ko
 google-devtools-ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 aboutlibraries = { id = "com.mikepenz.aboutlibraries.plugin", version.ref = "aboutlibraries" }
 aboutlibraries-android = { id = "com.mikepenz.aboutlibraries.plugin.android", version.ref = "aboutlibraries" }
-nameof = { id = "dev.ujhhgtg.nameof", version = "master-SNAPSHOT" }

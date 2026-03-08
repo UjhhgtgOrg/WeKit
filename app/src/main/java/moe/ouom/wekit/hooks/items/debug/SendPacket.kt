@@ -27,7 +27,7 @@ object SendPacket : BaseClickableFunctionHookItem() {
     private val TAG = nameof(SendPacket)
 
     override fun onClick(context: Context) {
-        showComposeDialog(context, true) { onDismiss ->
+        showComposeDialog(context) { onDismiss ->
             var uri by remember { mutableStateOf("/cgi-bin/micromsg-bin/oplog") }
             var cmdIdStr by remember { mutableStateOf("681") }
             var funcIdStr by remember { mutableStateOf("0") }
@@ -90,7 +90,7 @@ object SendPacket : BaseClickableFunctionHookItem() {
                         ) {
                             onSuccess { json, byteArray ->
                                 WeLogger.i(TAG, "success: $json")
-                                showComposeDialog(context, true) { onDismiss ->
+                                showComposeDialog(context) { onDismiss ->
                                     AlertDialogContent(
                                         title = { Text("发送成功, 响应结果:") },
                                         text = { Text("json: $json\n\nbyteArray: ${byteArray?.size ?: 0} 字节") },
@@ -102,7 +102,7 @@ object SendPacket : BaseClickableFunctionHookItem() {
                             }
                             onFail { type, code, msg ->
                                 WeLogger.e(TAG, "失败: $type, $code, $msg")
-                                showComposeDialog(context, true) { onDismiss ->
+                                showComposeDialog(context) { onDismiss ->
                                     AlertDialogContent(
                                         title = { Text("发送失败, 响应结果:") },
                                         text = { Text("type: $type, code: $code, msg: $msg") },

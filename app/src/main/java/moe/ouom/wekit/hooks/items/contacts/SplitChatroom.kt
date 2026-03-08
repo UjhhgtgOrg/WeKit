@@ -61,7 +61,7 @@ object SplitChatroom : BaseClickableFunctionHookItem() {
             return
         }
 
-        showComposeDialog(context, true) { onDismiss ->
+        showComposeDialog(context) { onDismiss ->
             SplitChatroomDialog(
                 allGroups = groups,
                 onDismiss = onDismiss,

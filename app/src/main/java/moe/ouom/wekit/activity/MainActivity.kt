@@ -66,6 +66,7 @@ import moe.ouom.wekit.host.HostInfo
 import moe.ouom.wekit.ui.utils.AppTheme
 import moe.ouom.wekit.utils.common.CheckAbiVariantModel
 import moe.ouom.wekit.utils.common.Utils
+import moe.ouom.wekit.utils.formatEpoch
 import moe.ouom.wekit.utils.getEnable
 import moe.ouom.wekit.utils.hookstatus.AbiUtils
 import moe.ouom.wekit.utils.hookstatus.HookStatus
@@ -290,11 +291,11 @@ fun AppContent(onUrlClick: (String) -> Unit) {
                         }
                         Spacer(modifier = Modifier.height(12.dp))
 
-                        InfoItem("构建 UUID", BuildConfig.BUILD_UUID)
+                        InfoItem("构建 Git 哈希", BuildConfig.GIT_HASH)
                         Spacer(modifier = Modifier.height(8.dp))
                         InfoItem(
-                            "构建日期",
-                            Utils.convertTimestampToDate(BuildConfig.BUILD_TIMESTAMP)
+                            "构建时间",
+                            formatEpoch(BuildConfig.BUILD_TIMESTAMP, true)
                         )
                     }
                 }
