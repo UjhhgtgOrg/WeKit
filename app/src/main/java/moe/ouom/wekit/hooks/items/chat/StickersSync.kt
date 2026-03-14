@@ -12,7 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import moe.ouom.wekit.ui.content.TextButton
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
 import com.highcapable.kavaref.KavaRef.Companion.asResolver
@@ -32,7 +32,7 @@ import kotlinx.serialization.json.Json
 import moe.ouom.wekit.core.dsl.dexClass
 import moe.ouom.wekit.core.dsl.dexMethod
 import moe.ouom.wekit.core.model.ClickableHookItem
-import moe.ouom.wekit.dexkit.intf.IDexFind
+import moe.ouom.wekit.dexkit.intf.IResolvesDex
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.hooks.sdk.base.WeDatabaseApi
 import moe.ouom.wekit.hooks.sdk.base.WeServiceApi
@@ -57,7 +57,7 @@ import kotlin.io.path.writeText
     path = "聊天/贴纸包同步",
     desc = "从指定路径将所有图片注册为贴纸包\n搭配 Telegram Xposed 模块 StickersSync 使用, 或使用自带此功能的 (例如 Nagram) 的第三方客户端\n注意: 每张贴纸第一次加载由于需要计算 MD5 速度较慢, 后续加载得益于缓存与并发速度将大大加快 (~2000 个贴纸仅需 4 秒)"
 )
-object StickersSync : ClickableHookItem(), IDexFind {
+object StickersSync : ClickableHookItem(), IResolvesDex {
 
     private val TAG = nameof(StickersSync)
     private const val STICKER_PACK_ID_PREFIX = "wekit.stickers.sync"
@@ -383,7 +383,7 @@ object StickersSync : ClickableHookItem(), IDexFind {
         }
     }
 
-    override fun dexFind(dexKit: DexKitBridge): Map<String, String> {
+    override fun resolveDex(dexKit: DexKitBridge): Map<String, String> {
         val descriptors = mutableMapOf<String, String>()
 
         methodGetEmojiGroupInfo.find(dexKit, descriptors) {

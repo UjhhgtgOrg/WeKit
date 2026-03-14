@@ -5,7 +5,7 @@ import android.content.Context
 import android.os.Build
 import android.view.WindowManager
 import androidx.compose.foundation.layout.Column
-import androidx.compose.material3.Button
+import moe.ouom.wekit.ui.content.Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.Slider
@@ -21,7 +21,7 @@ import dev.ujhhgtg.nameof.nameof
 import moe.ouom.wekit.config.WePrefs
 import moe.ouom.wekit.core.dsl.dexClass
 import moe.ouom.wekit.core.model.ClickableHookItem
-import moe.ouom.wekit.dexkit.intf.IDexFind
+import moe.ouom.wekit.dexkit.intf.IResolvesDex
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.ui.content.AlertDialogContent
 import moe.ouom.wekit.ui.utils.showComposeDialog
@@ -30,7 +30,7 @@ import org.luckypray.dexkit.DexKitBridge
 import kotlin.math.roundToInt
 
 @HookItem(path = "界面美化/对话框窗口级背景模糊", desc = "为模块与宿主的对话框添加窗口级模糊处理")
-object ApplyDialogBackgroundBlur : ClickableHookItem(), IDexFind {
+object ApplyDialogBackgroundBlur : ClickableHookItem(), IResolvesDex {
 
     private val TAG = nameof(ApplyDialogBackgroundBlur)
 
@@ -71,7 +71,7 @@ object ApplyDialogBackgroundBlur : ClickableHookItem(), IDexFind {
         }
     }
 
-    override fun dexFind(dexKit: DexKitBridge): Map<String, String> {
+    override fun resolveDex(dexKit: DexKitBridge): Map<String, String> {
         val descriptors = mutableMapOf<String, String>()
 
         classMmAlertDialog.find(dexKit, descriptors) {

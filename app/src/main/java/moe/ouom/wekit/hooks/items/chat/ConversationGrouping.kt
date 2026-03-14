@@ -37,7 +37,7 @@ import androidx.compose.ui.unit.dp
 import com.highcapable.kavaref.KavaRef.Companion.asResolver
 import moe.ouom.wekit.core.dsl.dexMethod
 import moe.ouom.wekit.core.model.SwitchHookItem
-import moe.ouom.wekit.dexkit.intf.IDexFind
+import moe.ouom.wekit.dexkit.intf.IResolvesDex
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.hooks.sdk.base.WeConversationApi
 import moe.ouom.wekit.ui.utils.AppTheme
@@ -46,7 +46,7 @@ import moe.ouom.wekit.ui.utils.setLifecycleOwner
 import org.luckypray.dexkit.DexKitBridge
 
 @HookItem(path = "聊天/对话分组", desc = "向主页顶部添加 Tab 栏, 将对话分组")
-object ConversationGrouping : SwitchHookItem(), IDexFind {
+object ConversationGrouping : SwitchHookItem(), IResolvesDex {
 
     override fun onLoad() {
         methodOnTabCreate.toDexMethod {
@@ -120,7 +120,7 @@ object ConversationGrouping : SwitchHookItem(), IDexFind {
 
     private val methodOnTabCreate by dexMethod()
 
-    override fun dexFind(dexKit: DexKitBridge): Map<String, String> {
+    override fun resolveDex(dexKit: DexKitBridge): Map<String, String> {
         val descriptors = mutableMapOf<String, String>()
 
         methodOnTabCreate.find(dexKit, descriptors) {

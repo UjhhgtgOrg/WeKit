@@ -3,14 +3,14 @@ package moe.ouom.wekit.hooks.items.miniapps
 import android.content.Context
 import moe.ouom.wekit.core.dsl.dexMethod
 import moe.ouom.wekit.core.model.SwitchHookItem
-import moe.ouom.wekit.dexkit.intf.IDexFind
+import moe.ouom.wekit.dexkit.intf.IResolvesDex
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.utils.enumValueOfClass
 import org.luckypray.dexkit.DexKitBridge
 import org.luckypray.dexkit.query.enums.StringMatchType
 
 @HookItem(path = "小程序/去除菜单限制", desc = "移除小程序右上角菜单的限制")
-object RemoveMiniAppMenuLimits : SwitchHookItem(), IDexFind {
+object RemoveMiniAppMenuLimits : SwitchHookItem(), IResolvesDex {
 
     private lateinit var showAndClickableEnumValue: Any
 
@@ -30,7 +30,7 @@ object RemoveMiniAppMenuLimits : SwitchHookItem(), IDexFind {
 
     private val methodGetMenuItemVisibility1 by dexMethod()
 
-    override fun dexFind(dexKit: DexKitBridge): Map<String, String> {
+    override fun resolveDex(dexKit: DexKitBridge): Map<String, String> {
         val descriptors = mutableMapOf<String, String>()
 
         methodGetMenuItemVisibility1.find(dexKit, descriptors) {

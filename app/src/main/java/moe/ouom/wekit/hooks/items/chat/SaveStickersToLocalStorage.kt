@@ -9,7 +9,7 @@ import com.highcapable.kavaref.extension.toClass
 import dev.ujhhgtg.nameof.nameof
 import moe.ouom.wekit.core.dsl.dexClass
 import moe.ouom.wekit.core.model.SwitchHookItem
-import moe.ouom.wekit.dexkit.intf.IDexFind
+import moe.ouom.wekit.dexkit.intf.IResolvesDex
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.hooks.sdk.base.model.MessageType
 import moe.ouom.wekit.hooks.sdk.ui.WeChatMessageContextMenuApi
@@ -20,7 +20,7 @@ import moe.ouom.wekit.utils.log.WeLogger
 import org.luckypray.dexkit.DexKitBridge
 
 @HookItem(path = "聊天/贴纸保存到本地", desc = "在贴纸消息菜单添加保存按钮, 允许将图片保存到本地")
-object SaveStickersToLocalStorage : SwitchHookItem(), IDexFind,
+object SaveStickersToLocalStorage : SwitchHookItem(), IResolvesDex,
     WeChatMessageContextMenuApi.IMenuItemsProvider {
 
     private val TAG = nameof(SaveStickersToLocalStorage)
@@ -35,7 +35,7 @@ object SaveStickersToLocalStorage : SwitchHookItem(), IDexFind,
         WeChatMessageContextMenuApi.removeProvider(this)
     }
 
-    override fun dexFind(dexKit: DexKitBridge): Map<String, String> {
+    override fun resolveDex(dexKit: DexKitBridge): Map<String, String> {
         val descriptors = mutableMapOf<String, String>()
 
         classEmojiFileEncryptMgr.find(dexKit, descriptors) {

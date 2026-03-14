@@ -5,7 +5,7 @@ import android.content.ContentValues
 import android.content.Context
 import android.text.InputType
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import moe.ouom.wekit.ui.content.TextButton
 import androidx.core.net.toUri
 import de.robv.android.xposed.XposedHelpers
 import dev.ujhhgtg.nameof.nameof
@@ -13,7 +13,7 @@ import moe.ouom.wekit.config.WePrefs
 import moe.ouom.wekit.core.dsl.dexClass
 import moe.ouom.wekit.core.dsl.dexMethod
 import moe.ouom.wekit.core.model.ClickableHookItem
-import moe.ouom.wekit.dexkit.intf.IDexFind
+import moe.ouom.wekit.dexkit.intf.IResolvesDex
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.hooks.sdk.base.WeDatabaseApi
 import moe.ouom.wekit.hooks.sdk.base.WeDatabaseListenerApi
@@ -21,6 +21,7 @@ import moe.ouom.wekit.hooks.sdk.base.WeNetworkApi
 import moe.ouom.wekit.hooks.sdk.base.model.MessageType
 import moe.ouom.wekit.ui.content.AlertDialogContent
 import moe.ouom.wekit.ui.content.BasePrefDialog
+import moe.ouom.wekit.ui.content.Button
 import moe.ouom.wekit.ui.utils.showComposeDialog
 import moe.ouom.wekit.utils.common.ToastUtils
 import moe.ouom.wekit.utils.log.WeLogger
@@ -32,7 +33,7 @@ import kotlin.random.Random
 @SuppressLint("DiscouragedApi")
 @HookItem(path = "红包与支付/自动抢红包", desc = "监听消息并自动拆开红包")
 object AutoOpenRedPacket : ClickableHookItem(), WeDatabaseListenerApi.IInsertListener,
-    IDexFind {
+    IResolvesDex {
 
     private val TAG = nameof(AutoOpenRedPacket)
 
@@ -278,7 +279,7 @@ object AutoOpenRedPacket : ClickableHookItem(), WeDatabaseListenerApi.IInsertLis
         ConfigDialog(context).show()
     }
 
-    override fun dexFind(dexKit: DexKitBridge): Map<String, String> {
+    override fun resolveDex(dexKit: DexKitBridge): Map<String, String> {
         val descriptors = mutableMapOf<String, String>()
 
         // 查找接收红包类
@@ -332,7 +333,7 @@ object AutoOpenRedPacket : ClickableHookItem(), WeDatabaseListenerApi.IInsertLis
                     title = { Text(text = "警告") },
                     text = { Text(text = "此功能可能导致账号异常, 确定要启用吗?") },
                     confirmButton = {
-                        TextButton(onClick = {
+                        Button(onClick = {
                             applyToggle(true)
                             onDismiss()
                         }) {
@@ -340,7 +341,7 @@ object AutoOpenRedPacket : ClickableHookItem(), WeDatabaseListenerApi.IInsertLis
                         }
                     },
                     dismissButton = {
-                        TextButton(onClick = onDismiss) {
+                        TextButton(onDismiss) {
                             Text("取消")
                         }
                     }

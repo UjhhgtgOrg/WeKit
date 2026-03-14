@@ -10,14 +10,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.material3.Button
+import moe.ouom.wekit.ui.content.Button
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import moe.ouom.wekit.ui.content.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -35,7 +35,7 @@ import dev.ujhhgtg.nameof.nameof
 import moe.ouom.wekit.config.RuntimeConfig
 import moe.ouom.wekit.core.dsl.dexMethod
 import moe.ouom.wekit.core.model.SwitchHookItem
-import moe.ouom.wekit.dexkit.intf.IDexFind
+import moe.ouom.wekit.dexkit.intf.IResolvesDex
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.ui.content.AlertDialogContent
 import moe.ouom.wekit.ui.utils.showComposeDialog
@@ -46,7 +46,7 @@ import org.luckypray.dexkit.query.enums.MatchType
 import kotlin.random.Random
 
 @HookItem(path = "聊天/表情游戏控制", desc = "自定义猜拳和骰子的结果")
-object EmojiGameControl : SwitchHookItem(), IDexFind {
+object EmojiGameControl : SwitchHookItem(), IResolvesDex {
 
     private const val MD5_MORRA = "9bd1281af3a31710a45b84d736363691"
     private const val MD5_DICE = "08f223fa83f1ca34e143d1e580252c7c"
@@ -67,7 +67,7 @@ object EmojiGameControl : SwitchHookItem(), IDexFind {
         FOUR(3, "四"), FIVE(4, "五"), SIX(5, "六")
     }
 
-    override fun dexFind(dexKit: DexKitBridge): Map<String, String> {
+    override fun resolveDex(dexKit: DexKitBridge): Map<String, String> {
         val descriptors = mutableMapOf<String, String>()
 
         methodRandom.find(dexKit, descriptors) {

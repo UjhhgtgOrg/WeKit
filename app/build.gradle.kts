@@ -177,10 +177,6 @@ kotlin {
     jvmToolchain(libs.versions.jdk.get().toInt())
 }
 
-tasks.withType<KotlinCompile>().configureEach {
-    exclude("**/scripts/**")
-}
-
 val adbProvider = androidComponents.sdkComponents.adb
 androidComponents {
     onVariants { variant ->
@@ -189,11 +185,6 @@ androidComponents {
         kotlinSources.addGeneratedSourceDirectory(
             generateMethodHashes,
             GenerateMethodHashesTask::outputDir
-        )
-
-        kotlinSources.addGeneratedSourceDirectory(
-            embedBuiltinJavaScript,
-            EmbedJsTask::outputDir
         )
     }
 
@@ -307,13 +298,13 @@ abstract class GenerateMethodHashesTask : DefaultTask() {
         val outputFile = outDir.resolve("moe/ouom/wekit/dexkit/cache/GeneratedMethodHashes.kt")
 
         val hashMap = mutableMapOf<String, String>()
-        srcDir.walk().filter { it.isFile && it.extension == "kt" && it.readText().contains("IDexFind") }.forEach { file ->
+        srcDir.walk().filter { it.isFile && it.extension == "kt" && it.readText().contains("IResolvesDex") }.forEach { file ->
             val content = file.readText()
             val packageName = Regex("""package\s+([\w.]+)""").find(content)?.groupValues?.get(1)
             val className = Regex("""(?:class|object)\s+(\w+)""").find(content)?.groupValues?.get(1) ?: return@forEach
             val fullClassName = if (packageName != null) "$packageName.$className" else className
 
-            val dexFindMatch = Regex("""override\s+fun\s+dexFind\s*\(""").find(content)
+            val dexFindMatch = Regex("""override\s+fun\s+resolveDex\s*\(""").find(content)
             if (dexFindMatch != null) {
                 val start = content.indexOf('{', dexFindMatch.range.last)
                 if (start != -1) {
@@ -348,46 +339,12 @@ val generateMethodHashes = tasks.register<GenerateMethodHashesTask>("generateMet
     outputDir.set(layout.buildDirectory.dir("generated/source/methodhashes"))
 }
 
-abstract class EmbedJsTask : DefaultTask() {
-    @get:InputFile
-    abstract val sourceJsFile: RegularFileProperty
-
-    @get:OutputDirectory
-    abstract val outputDir: DirectoryProperty
-
-    @TaskAction
-    fun generate() {
-        val jsContent = sourceJsFile.get().asFile.readText()
-        val outDir = outputDir.get().asFile
-        val outputFile = outDir.resolve("moe/ouom/wekit/hooks/items/scripting_js/BuiltinJs.kt")
-
-        val ktCode = """
-            package moe.ouom.wekit.hooks.item.scripting_js
-
-            object EmbeddedBuiltinJs {
-                const val SCRIPT: String = ""${'"'}
-$jsContent
-""${'"'}
-            }
-        """.trimIndent()
-
-        outputFile.parentFile.mkdirs()
-        outputFile.writeText(ktCode)
-    }
-}
-
-val embedBuiltinJavaScript = tasks.register<EmbedJsTask>("embedBuiltinJavaScript") {
-    group = "wekit"
-    sourceJsFile.set(file("src/main/java/moe/ouom/wekit/hooks/items/scripting_js/script.js"))
-    outputDir.set(layout.buildDirectory.dir("generated/sources/embeddedJs/kotlin"))
-}
-
 val rustProjectDir = file("src/main/rust/wekit-native")
 val rustLibName    = "libwekit_native.so"
 
 val abiToTarget = mapOf(
-    "arm64-v8a"   to "aarch64-linux-android",
-    // "x86_64"      to "x86_64-linux-android",
+    "arm64-v8a" to "aarch64-linux-android",
+    "x86_64"    to "x86_64-linux-android",
 )
 val cargoTasks = abiToTarget.map { (abi, target) ->
     tasks.register<Exec>("cargoBuild_${abi.replace('-', '_')}") {
@@ -450,7 +407,7 @@ dependencies {
 
     implementation(libs.silkdecoder)
 
-    compileOnly(libs.xposed.api)
+    compileOnly(libs.legacyxposed.api)
     compileOnly(libs.libxposed.api)
     // 哪个智障发明的 Gradle
     // 不是他 libxposed AndroidManifest package 定义冲突就冲突关你屁事啊
@@ -496,5 +453,6 @@ tasks.withType<KotlinJvmCompile>().configureEach {
     compilerOptions {
         val pluginJarPath = pluginJarTask.get().archiveFile.get().asFile.absolutePath
         freeCompilerArgs.add("-Xplugin=$pluginJarPath")
+        freeCompilerArgs.add("-opt-in=androidx.compose.material3.ExperimentalMaterial3ExpressiveApi")
     }
 }

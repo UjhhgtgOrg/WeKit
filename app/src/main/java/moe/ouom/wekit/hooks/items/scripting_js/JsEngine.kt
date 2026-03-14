@@ -14,7 +14,7 @@ object JsEngine {
     private val TAG = nameof(JsEngine)
 
     fun executeAllOnMessage(
-        rules: List<JsScript>,
+        rules: Map<String, String>,
         talker: String,
         content: String,
         type: Int,
@@ -27,13 +27,12 @@ object JsEngine {
         }
 
         for (rule in rules) {
-            WeLogger.d(TAG, "evaluating rule id=${rule.id} name='${rule.name}'")
+            WeLogger.d(TAG, "evaluating rule name='${rule.key}'")
 
-            if (!rule.enabled) continue
             try {
-                executeOnMessage(rule.script, talker, content, type, isSend)
+                executeOnMessage(rule.value, talker, content, type, isSend)
             } catch (e: Exception) {
-                WeLogger.e(TAG, "rule id=${rule.id} name='${rule.name}' threw during onMessage", e)
+                WeLogger.e(TAG, "rule name='${rule.key}' threw during onMessage", e)
             }
         }
     }
@@ -110,14 +109,13 @@ object JsEngine {
         var modifiedJson = json
 
         for (rule in JsScriptingHook.rules) {
-            if (!rule.enabled) continue
             try {
-                val result = executeOnRequest(rule.script, uri, cgiId, modifiedJson)
+                val result = executeOnRequest(rule.value, uri, cgiId, modifiedJson)
                 if (result != null) {
                     modifiedJson = result
                 }
             } catch (e: Exception) {
-                WeLogger.e(TAG, "rule id=${rule.id} name='${rule.name}' threw during onRequest", e)
+                WeLogger.e(TAG, "rule name='${rule.key}' threw during onRequest", e)
             }
         }
 
@@ -176,14 +174,13 @@ object JsEngine {
         var modifiedJson = json
 
         for (rule in JsScriptingHook.rules) {
-            if (!rule.enabled) continue
             try {
-                val result = executeOnResponse(rule.script, uri, cgiId, modifiedJson)
+                val result = executeOnResponse(rule.value, uri, cgiId, modifiedJson)
                 if (result != null) {
                     modifiedJson = result
                 }
             } catch (e: Exception) {
-                WeLogger.e(TAG, "rule id=${rule.id} name='${rule.name}' threw during onResponse", e)
+                WeLogger.e(TAG, "rule name='${rule.key}' threw during onResponse", e)
             }
         }
 

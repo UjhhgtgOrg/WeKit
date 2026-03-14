@@ -6,7 +6,7 @@ import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers
 import moe.ouom.wekit.config.WePrefs
-import moe.ouom.wekit.constants.Constants
+import moe.ouom.wekit.constants.PreferenceKeys
 import moe.ouom.wekit.hooks.core.ExceptionFactory
 import moe.ouom.wekit.utils.log.WeLogger
 import java.lang.reflect.Member
@@ -103,7 +103,7 @@ abstract class BaseHookItem {
         return XposedBridge.hookMethod(
             method,
             object :
-                XC_MethodHook(WePrefs.getIntOrDef(Constants.HOOK_PRIORITY_PREF_KEY, 50)) {
+                XC_MethodHook(WePrefs.getIntOrDef(PreferenceKeys.HOOK_PRIORITY, 50)) {
                 override fun beforeHookedMethod(param: MethodHookParam) {
                     tryExecute(param, action)
                 }
@@ -164,7 +164,7 @@ abstract class BaseHookItem {
         return XposedBridge.hookMethod(
             method,
             object :
-                XC_MethodHook(WePrefs.getIntOrDef(Constants.HOOK_PRIORITY_PREF_KEY, 50)) {
+                XC_MethodHook(WePrefs.getIntOrDef(PreferenceKeys.HOOK_PRIORITY, 50)) {
                 override fun afterHookedMethod(param: MethodHookParam) {
                     tryExecute(param, action)
                 }
@@ -234,7 +234,7 @@ abstract class BaseHookItem {
         return XposedBridge.hookMethod(
             m,
             object :
-                XC_MethodHook(WePrefs.getIntOrDef(Constants.HOOK_PRIORITY_PREF_KEY, 50)) {
+                XC_MethodHook(WePrefs.getIntOrDef(PreferenceKeys.HOOK_PRIORITY, 50)) {
                 override fun beforeHookedMethod(param: MethodHookParam) {
                     tryExecute(param, action)
                 }
@@ -258,7 +258,7 @@ abstract class BaseHookItem {
         return XposedBridge.hookMethod(
             m,
             object :
-                XC_MethodHook(WePrefs.getIntOrDef(Constants.HOOK_PRIORITY_PREF_KEY, 50)) {
+                XC_MethodHook(WePrefs.getIntOrDef(PreferenceKeys.HOOK_PRIORITY, 50)) {
                 override fun afterHookedMethod(param: MethodHookParam) {
                     tryExecute(param, action)
                 }
@@ -279,7 +279,7 @@ abstract class BaseHookItem {
             clazz,
             methodName,
             object :
-                XC_MethodHook(WePrefs.getIntOrDef(Constants.HOOK_PRIORITY_PREF_KEY, 50)) {
+                XC_MethodHook(WePrefs.getIntOrDef(PreferenceKeys.HOOK_PRIORITY, 50)) {
                 override fun beforeHookedMethod(param: MethodHookParam) {
                     tryExecute(param, action)
                 }
@@ -308,7 +308,7 @@ abstract class BaseHookItem {
             clazz,
             methodName,
             object :
-                XC_MethodHook(WePrefs.getIntOrDef(Constants.HOOK_PRIORITY_PREF_KEY, 50)) {
+                XC_MethodHook(WePrefs.getIntOrDef(PreferenceKeys.HOOK_PRIORITY, 50)) {
                 override fun afterHookedMethod(param: MethodHookParam) {
                     tryExecute(param, action)
                 }

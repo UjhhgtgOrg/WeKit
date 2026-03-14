@@ -16,14 +16,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
+import moe.ouom.wekit.ui.content.Button
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import moe.ouom.wekit.ui.content.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -35,6 +35,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import dev.ujhhgtg.nameof.nameof
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -47,7 +48,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import moe.ouom.wekit.core.model.BaseHookItem
 import moe.ouom.wekit.dexkit.cache.DexCacheManager
-import moe.ouom.wekit.dexkit.intf.IDexFind
+import moe.ouom.wekit.dexkit.intf.IResolvesDex
 import moe.ouom.wekit.utils.log.WeLogger
 import org.luckypray.dexkit.DexKitBridge
 import java.io.PrintWriter
@@ -71,13 +72,12 @@ private sealed class DialogPhase {
     data class Error(val message: String) : DialogPhase()
 }
 
-private const val TAG = "DexFinderDialog"
+private val TAG = nameof(::DexResolverDialogContent)
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun DexFinderContent(
+fun DexResolverDialogContent(
     context: Context,
-    outdatedItems: List<IDexFind>,
+    outdatedItems: List<IResolvesDex>,
     appInfo: ApplicationInfo,
     scope: CoroutineScope,
     onDismiss: () -> Unit
@@ -111,14 +111,14 @@ fun DexFinderContent(
     }
 
     suspend fun scanItem(
-        item: IDexFind,
+        item: IResolvesDex,
         dexKit: DexKitBridge,
         progressChannel: Channel<ScanProgress>
     ): ScanResult {
         val path = if (item is BaseHookItem) item.path else item::class.java.simpleName
         return try {
             progressChannel.send(ScanProgress.Start(path))
-            val descriptors = item.dexFind(dexKit)
+            val descriptors = item.resolveDex(dexKit)
             WeLogger.i(
                 TAG,
                 "Total descriptors: ${descriptors.size}, keys: ${descriptors.keys}"
@@ -127,7 +127,7 @@ fun DexFinderContent(
             progressChannel.send(ScanProgress.Complete(path))
             ScanResult.Success(path)
         } catch (e: Exception) {
-            WeLogger.e("[DexFinderDialog] Failed to scan: $path", e)
+            WeLogger.e(TAG, "Failed to scan: $path", e)
             progressChannel.send(ScanProgress.Failed(path, e))
             ScanResult.Failed(path, e)
         }

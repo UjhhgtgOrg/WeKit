@@ -12,7 +12,7 @@ import com.highcapable.kavaref.KavaRef.Companion.asResolver
 import de.robv.android.xposed.XC_MethodHook
 import moe.ouom.wekit.core.dsl.dexMethod
 import moe.ouom.wekit.core.model.SwitchHookItem
-import moe.ouom.wekit.dexkit.intf.IDexFind
+import moe.ouom.wekit.dexkit.intf.IResolvesDex
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.hooks.sdk.base.WeConversationApi
 import moe.ouom.wekit.hooks.sdk.base.model.MessageInfo
@@ -25,7 +25,7 @@ import kotlin.math.roundToInt
     path = "联系人与群组/显示群成员身份",
     desc = "在群聊中显示群成员的身份: 群主, 管理员, 成员"
 )
-object DisplayGroupMemberRoles : SwitchHookItem(), IDexFind,
+object DisplayGroupMemberRoles : SwitchHookItem(), IResolvesDex,
     WeChatMessageViewApi.ICreateViewListener {
 
     private val methodGetChatroomData by dexMethod()
@@ -119,7 +119,7 @@ object DisplayGroupMemberRoles : SwitchHookItem(), IDexFind,
         textView.text = sb
     }
 
-    override fun dexFind(dexKit: DexKitBridge): Map<String, String> {
+    override fun resolveDex(dexKit: DexKitBridge): Map<String, String> {
         val descriptors = mutableMapOf<String, String>()
 
         // this is actually get group MEMBER data

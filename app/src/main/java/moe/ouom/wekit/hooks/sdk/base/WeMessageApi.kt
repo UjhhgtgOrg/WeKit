@@ -12,7 +12,7 @@ import dev.ujhhgtg.nameof.nameof
 import moe.ouom.wekit.core.dsl.dexClass
 import moe.ouom.wekit.core.dsl.dexMethod
 import moe.ouom.wekit.core.model.ApiHookItem
-import moe.ouom.wekit.dexkit.intf.IDexFind
+import moe.ouom.wekit.dexkit.intf.IResolvesDex
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.utils.common.Utils.extractXmlAttr
 import moe.ouom.wekit.utils.common.Utils.extractXmlTag
@@ -26,14 +26,9 @@ import java.lang.reflect.Field
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
 
-/**
- * 微信消息发送 API
- * 基于: WeChat 8.0.68
- * 适配版本：WeChat 8.0.67 ~ 8.0.68
- */
 @SuppressLint("DiscouragedApi")
 @HookItem(path = "API/消息发送服务", desc = "提供文本、图片、文件、语音消息发送能力")
-object WeMessageApi : ApiHookItem(), IDexFind {
+object WeMessageApi : ApiHookItem(), IResolvesDex {
 
     // -------------------------------------------------------------------------------------
     // 基础消息类
@@ -66,12 +61,12 @@ object WeMessageApi : ApiHookItem(), IDexFind {
     // -------------------------------------------------------------------------------------
     // 语音发送组件
     // -------------------------------------------------------------------------------------
-    private val classVoiceParams by dexClass()     // 语音参数模型 (原 rc0.a)
-    private val classVoiceTask by dexClass()       // 语音发送任务 (原 uc0.v)
-    private val classVoiceNameGen by dexClass()    // 语音文件名生成 (原 py0.g1)
-    private val classVfs by dexClass()             // VFS 文件操作 (原 w6)
-    private val classPathUtil by dexClass()        // 路径计算工具 (原 h1)
-    private val classMmKernel by dexClass()          // 核心 Kernel (原 j1)
+    private val classVoiceParams by dexClass()          // 语音参数模型 (原 rc0.a)
+    private val classVoiceTask by dexClass()            // 语音发送任务 (原 uc0.v)
+    private val classVoiceNameGen by dexClass()         // 语音文件名生成 (原 py0.g1)
+    private val classVfs by dexClass()                  // VFS 文件操作 (原 w6)
+    private val classPathUtil by dexClass()             // 路径计算工具 (原 h1)
+    private val classMmKernel by dexClass()             // 核心 Kernel (原 j1)
     private val methodMmKernelGetStorage by dexMethod() // Kernel.getStorage
 
     // 查找 Service 接口 (sc0.e)
@@ -130,7 +125,7 @@ object WeMessageApi : ApiHookItem(), IDexFind {
     private const val KEY_MAP_FIELD = "dexFieldImageMetadataMap"
 
     @SuppressLint("NonUniqueDexKitData")
-    override fun dexFind(dexKit: DexKitBridge): Map<String, String> {
+    override fun resolveDex(dexKit: DexKitBridge): Map<String, String> {
         val descriptors = mutableMapOf<String, String>()
 
         // ---------------------------------------------------------------------------------
@@ -815,15 +810,19 @@ object WeMessageApi : ApiHookItem(), IDexFind {
     }
 
     private fun bindServiceFramework() {
-        val smClazz = classServiceManager.clazz
-        getServiceMethod = smClazz.declaredMethods.firstOrNull {
-            Modifier.isStatic(it.modifiers) && it.parameterCount == 1 && it.parameterTypes[0] == Class::class.java
-        }
+        getServiceMethod = classServiceManager.clazz.asResolver()
+            .firstMethod {
+                modifiers(Modifiers.STATIC)
+                parameters(Class::class)
+            }.self
 
-        val clClazz = classConfigLogic.clazz
-        getSelfAliasMethod = clClazz.declaredMethods.firstOrNull {
-            Modifier.isStatic(it.modifiers) && it.parameterCount == 0 && it.returnType == String::class.java && it.name.length <= 2
-        }
+        getSelfAliasMethod = classConfigLogic.clazz.asResolver()
+            .firstMethod {
+                name { it.length <= 2 }
+                modifiers(Modifiers.STATIC)
+                parameterCount = 0
+                returnType = String::class
+            }.self
     }
 
     private fun bindImageBusinessLogic() {

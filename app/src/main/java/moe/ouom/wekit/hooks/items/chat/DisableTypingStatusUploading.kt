@@ -4,13 +4,13 @@ import com.highcapable.kavaref.KavaRef.Companion.asResolver
 import dev.ujhhgtg.nameof.nameof
 import moe.ouom.wekit.core.dsl.dexClass
 import moe.ouom.wekit.core.model.SwitchHookItem
-import moe.ouom.wekit.dexkit.intf.IDexFind
+import moe.ouom.wekit.dexkit.intf.IResolvesDex
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.utils.log.WeLogger
 import org.luckypray.dexkit.DexKitBridge
 
 @HookItem(path = "聊天/禁止上传正在输入状态", desc = "禁止应用上传 '正在输入...' 状态")
-object DisableTypingStatusUploading : SwitchHookItem(), IDexFind {
+object DisableTypingStatusUploading : SwitchHookItem(), IResolvesDex {
 
     private val TAG = nameof(DisableTypingStatusUploading)
     private val classMmTypingSendReq by dexClass()
@@ -23,7 +23,7 @@ object DisableTypingStatusUploading : SwitchHookItem(), IDexFind {
             }
     }
 
-    override fun dexFind(dexKit: DexKitBridge): Map<String, String> {
+    override fun resolveDex(dexKit: DexKitBridge): Map<String, String> {
         val descriptors = mutableMapOf<String, String>()
 
         classMmTypingSendReq.find(dexKit, descriptors) {

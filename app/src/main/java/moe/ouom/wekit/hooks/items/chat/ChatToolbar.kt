@@ -34,7 +34,7 @@ import com.highcapable.kavaref.extension.toClass
 import dev.ujhhgtg.nameof.nameof
 import moe.ouom.wekit.core.dsl.dexMethod
 import moe.ouom.wekit.core.model.SwitchHookItem
-import moe.ouom.wekit.dexkit.intf.IDexFind
+import moe.ouom.wekit.dexkit.intf.IResolvesDex
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.ui.utils.AppTheme
 import moe.ouom.wekit.ui.utils.MainActivityLifecycleOwnerProvider
@@ -45,7 +45,7 @@ import org.luckypray.dexkit.DexKitBridge
 
 @SuppressLint("StaticFieldLeak")
 @HookItem(path = "聊天/聊天工具栏", desc = "在输入框上方添加工具栏")
-object ChatToolbar : SwitchHookItem(), IDexFind {
+object ChatToolbar : SwitchHookItem(), IResolvesDex {
 
     private val TAG = nameof(ChatToolbar)
     private const val VIEW_TAG = "wekit_chat_toolbar"
@@ -130,7 +130,7 @@ object ChatToolbar : SwitchHookItem(), IDexFind {
             }
     }
 
-    override fun dexFind(dexKit: DexKitBridge): Map<String, String> {
+    override fun resolveDex(dexKit: DexKitBridge): Map<String, String> {
         val descriptors = mutableMapOf<String, String>()
 
         methodAppPanelInitAppGrid.find(dexKit, descriptors) {

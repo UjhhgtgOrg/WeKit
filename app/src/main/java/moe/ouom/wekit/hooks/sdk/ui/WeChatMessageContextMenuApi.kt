@@ -7,7 +7,7 @@ import com.highcapable.kavaref.KavaRef.Companion.asResolver
 import moe.ouom.wekit.core.dsl.dexClass
 import moe.ouom.wekit.core.dsl.dexMethod
 import moe.ouom.wekit.core.model.ApiHookItem
-import moe.ouom.wekit.dexkit.intf.IDexFind
+import moe.ouom.wekit.dexkit.intf.IResolvesDex
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.hooks.sdk.base.WeMessageApi
 import moe.ouom.wekit.hooks.sdk.base.model.MessageInfo
@@ -16,7 +16,7 @@ import org.luckypray.dexkit.DexKitBridge
 
 @SuppressLint("StaticFieldLeak")
 @HookItem(path = "API/聊天界面消息菜单扩展", desc = "为聊天界面消息长按菜单提供添加菜单项功能")
-object WeChatMessageContextMenuApi : ApiHookItem(), IDexFind {
+object WeChatMessageContextMenuApi : ApiHookItem(), IResolvesDex {
 
     interface IMenuItemsProvider {
         fun getMenuItems(): List<MenuItem>
@@ -168,7 +168,7 @@ object WeChatMessageContextMenuApi : ApiHookItem(), IDexFind {
         }
     }
 
-    override fun dexFind(dexKit: DexKitBridge): Map<String, String> {
+    override fun resolveDex(dexKit: DexKitBridge): Map<String, String> {
         val descriptors = mutableMapOf<String, String>()
 
         methodCreateMenu.find(dexKit, descriptors) {

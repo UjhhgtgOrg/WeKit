@@ -6,7 +6,7 @@ import com.highcapable.kavaref.KavaRef.Companion.asResolver
 import dev.ujhhgtg.nameof.nameof
 import moe.ouom.wekit.core.dsl.dexMethod
 import moe.ouom.wekit.core.model.SwitchHookItem
-import moe.ouom.wekit.dexkit.intf.IDexFind
+import moe.ouom.wekit.dexkit.intf.IResolvesDex
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.hooks.sdk.base.WeDatabaseApi
 import moe.ouom.wekit.hooks.sdk.base.WeMessageApi
@@ -17,13 +17,13 @@ import java.util.regex.Pattern
 import kotlin.random.Random
 
 @HookItem(path = "聊天/阻止消息撤回 3", desc = "有撤回提示")
-object AntiRevokeMsg3 : SwitchHookItem(), IDexFind {
+object AntiRevokeMsg3 : SwitchHookItem(), IResolvesDex {
 
     private val TAG = nameof(AntiRevokeMsg3)
 
     private val methodXmlParser by dexMethod()
 
-    override fun dexFind(dexKit: DexKitBridge): Map<String, String> {
+    override fun resolveDex(dexKit: DexKitBridge): Map<String, String> {
         val descriptors = mutableMapOf<String, String>()
 
         methodXmlParser.find(dexKit, descriptors = descriptors) {

@@ -14,7 +14,7 @@ import dev.ujhhgtg.nameof.nameof
 import moe.ouom.wekit.core.dsl.dexMethod
 import moe.ouom.wekit.core.model.ApiHookItem
 import moe.ouom.wekit.dexkit.DexMethodDescriptor
-import moe.ouom.wekit.dexkit.intf.IDexFind
+import moe.ouom.wekit.dexkit.intf.IResolvesDex
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.ui.content.MainSettingsDialog
 import moe.ouom.wekit.utils.log.WeLogger
@@ -23,7 +23,7 @@ import java.lang.reflect.Modifier
 
 @SuppressLint("DiscouragedApi")
 @HookItem(path = "API/设置模块入口")
-object WeSettingsInjector : ApiHookItem(), IDexFind {
+object WeSettingsInjector : ApiHookItem(), IResolvesDex {
 
     private val methodSetKey by dexMethod()
     private val methodSetTitle by dexMethod()
@@ -37,7 +37,7 @@ object WeSettingsInjector : ApiHookItem(), IDexFind {
     private const val PREFERENCE_CLASS_NAME = "com.tencent.mm.ui.base.preference.Preference"
 
     @SuppressLint("NonUniqueDexKitData")
-    override fun dexFind(dexKit: DexKitBridge): Map<String, String> {
+    override fun resolveDex(dexKit: DexKitBridge): Map<String, String> {
         val descriptors = mutableMapOf<String, String>()
 
         // 查找 Preference 类

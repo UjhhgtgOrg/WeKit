@@ -2,7 +2,7 @@ package moe.ouom.wekit.hooks.items.profile
 
 import android.content.Context
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import moe.ouom.wekit.ui.content.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf

@@ -31,7 +31,6 @@ private val TAG = nameof(::showComposeDialog)
 //
 // note that you should use AlertDialogContent instead of AlertDialog inside 'content' to avoid
 // creating multiple windows
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 fun showComposeDialog(
     context: Context? = null,
     dismissable: Boolean = true,

@@ -2,7 +2,7 @@ package moe.ouom.wekit.hooks.items.debug
 
 import android.content.Context
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import moe.ouom.wekit.ui.content.TextButton
 import moe.ouom.wekit.core.model.ClickableHookItem
 import moe.ouom.wekit.dexkit.cache.DexCacheManager
 import moe.ouom.wekit.hooks.core.annotation.HookItem

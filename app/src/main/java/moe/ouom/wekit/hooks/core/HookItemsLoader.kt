@@ -9,15 +9,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import moe.ouom.wekit.config.RuntimeConfig
 import moe.ouom.wekit.config.WePrefs
-import moe.ouom.wekit.constants.Constants.DISABLE_DEX_LOCATE_PREF_KEY
+import moe.ouom.wekit.constants.PreferenceKeys.NO_DEX_RESOLVE
 import moe.ouom.wekit.core.model.ApiHookItem
 import moe.ouom.wekit.core.model.BaseHookItem
 import moe.ouom.wekit.core.model.ClickableHookItem
 import moe.ouom.wekit.core.model.SwitchHookItem
 import moe.ouom.wekit.dexkit.cache.DexCacheManager
-import moe.ouom.wekit.dexkit.intf.IDexFind
+import moe.ouom.wekit.dexkit.intf.IResolvesDex
 import moe.ouom.wekit.host.HostInfo
-import moe.ouom.wekit.ui.content.DexFinderContent
+import moe.ouom.wekit.ui.content.DexResolverDialogContent
 import moe.ouom.wekit.ui.utils.showComposeDialog
 import moe.ouom.wekit.utils.common.SyncUtils
 import moe.ouom.wekit.utils.log.WeLogger
@@ -47,13 +47,13 @@ object HookItemsLoader {
         val allHookItems = HookItemFactory.getItems()
 
         // 筛选出所有需要进行 Dex 查找的项
-        val allDexFindItems = allHookItems.filterIsInstance<IDexFind>()
+        val allDexResolvingItems = allHookItems.filterIsInstance<IResolvesDex>()
 
         // 检查哪些项的缓存已经过期
-        val outdatedItems = DexCacheManager.getOutdatedItems(allDexFindItems)
+        val outdatedItems = DexCacheManager.getOutdatedItems(allDexResolvingItems)
 
         // 筛选出理论上缓存有效的项
-        val potentiallyValidItems = allDexFindItems.filterNot { outdatedItems.contains(it) }
+        val potentiallyValidItems = allDexResolvingItems.filterNot { outdatedItems.contains(it) }
 
         WeLogger.i(
             TAG,
@@ -76,7 +76,7 @@ object HookItemsLoader {
 
         allHookItems.forEach { hookItem ->
             // 如果该项需要 Dex 查找，且属于 损坏/过期 列表，则直接跳过，不尝试加载
-            if (hookItem is IDexFind && allBrokenItems.contains(hookItem)) {
+            if (hookItem is IResolvesDex && allBrokenItems.contains(hookItem)) {
                 WeLogger.w(
                     TAG,
                     "Skipping ${(hookItem as? BaseHookItem)?.path} due to missing or invalid cache"
@@ -98,7 +98,6 @@ object HookItemsLoader {
                 }
 
                 is ApiHookItem -> {
-                    // API 类通常不需要 DexFind 或者是硬编码，通常总是允许尝试
                     isEnabled = process == hookItem.targetProcess
                 }
             }
@@ -109,34 +108,27 @@ object HookItemsLoader {
         }
 
         // 执行加载（此时列表里只有 缓存有效 或 不需要缓存 的项）
-        WeLogger.i(
-            TAG,
-            "Executing load for ${enabledItems.size} ready items in process: $process"
-        )
         loadAllItems(enabledItems)
     }
 
-    /**
-     * 异步处理损坏或过期的项
-     */
     private fun handleBrokenItemsAsync(
         process: Int,
         appInfo: ApplicationInfo,
-        brokenItems: List<IDexFind>
+        brokenItems: List<IResolvesDex>
     ) {
-        val disableVersionAdaptation = WePrefs.getBoolOrFalse(DISABLE_DEX_LOCATE_PREF_KEY)
+        val noDexResolve = WePrefs.getBoolOrFalse(NO_DEX_RESOLVE)
 
-        if (disableVersionAdaptation) {
+        if (noDexResolve) {
             WeLogger.w(
                 TAG,
-                "Version adaptation disabled. ${brokenItems.size} items will not run."
+                "dex resolution disabled. ${brokenItems.size} items will not load"
             )
             return
         }
 
         WeLogger.i(
             TAG,
-            "Launching background thread to repair ${brokenItems.size} items"
+            "launching background thread to repair ${brokenItems.size} items"
         )
 
         Thread {
@@ -162,9 +154,9 @@ object HookItemsLoader {
                     }
 
                     Handler(Looper.getMainLooper()).post {
-                        WeLogger.i(TAG, "Showing DexFinderDialog for repair")
+                        WeLogger.i(TAG, "Showing DexResolver for repair")
                         showComposeDialog(activity) {
-                            DexFinderContent(
+                            DexResolverDialogContent(
                                 activity,
                                 brokenItems,
                                 appInfo,
@@ -187,8 +179,8 @@ object HookItemsLoader {
      * 从缓存加载 descriptor
      * @return 加载失败的项列表
      */
-    private fun loadDescriptorsFromCache(items: List<IDexFind>): List<IDexFind> {
-        val failedItems = mutableListOf<IDexFind>()
+    private fun loadDescriptorsFromCache(items: List<IResolvesDex>): List<IResolvesDex> {
+        val failedItems = mutableListOf<IResolvesDex>()
 
         items.forEach { item ->
             try {
@@ -221,9 +213,6 @@ object HookItemsLoader {
         return failedItems
     }
 
-    /**
-     * 加载所有已筛选通过的 HookItem
-     */
     private fun loadAllItems(items: List<BaseHookItem>) {
         items.forEach { hookItem ->
             runCatching {

@@ -8,7 +8,6 @@ import androidx.compose.runtime.Composable
 import moe.ouom.wekit.ui.utils.theme.darkScheme
 import moe.ouom.wekit.ui.utils.theme.lightScheme
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun AppTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),

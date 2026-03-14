@@ -1,7 +1,7 @@
 package moe.ouom.wekit.hooks.sdk.protocol
 
 import moe.ouom.wekit.config.WePrefs
-import moe.ouom.wekit.constants.Constants
+import moe.ouom.wekit.constants.PreferenceKeys
 import moe.ouom.wekit.hooks.sdk.protocol.intf.IWePkgInterceptor
 import moe.ouom.wekit.utils.WeProtoData
 import moe.ouom.wekit.utils.log.WeLogger
@@ -15,7 +15,7 @@ object WePkgManager {
     fun removeInterceptor(interceptor: IWePkgInterceptor) = listeners.remove(interceptor)
 
     internal fun handleRequestTamper(uri: String, cgiId: Int, reqBytes: ByteArray): ByteArray? {
-        if (WePrefs.getBoolOrFalse(Constants.VERBOSE_LOG_PREF_KEY)) {
+        if (WePrefs.getBoolOrFalse(PreferenceKeys.VERBOSE_LOG)) {
             val data = WeProtoData()
             data.fromBytes(reqBytes)
             WeLogger.logChunkedI(
@@ -32,7 +32,7 @@ object WePkgManager {
     }
 
     internal fun handleResponseTamper(uri: String, cgiId: Int, respBytes: ByteArray): ByteArray? {
-        if (WePrefs.getBoolOrFalse(Constants.VERBOSE_LOG_PREF_KEY)) {
+        if (WePrefs.getBoolOrFalse(PreferenceKeys.VERBOSE_LOG)) {
             val data = WeProtoData()
             data.fromBytes(respBytes)
             WeLogger.logChunkedI(

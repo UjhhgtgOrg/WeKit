@@ -12,7 +12,7 @@ import com.highcapable.kavaref.KavaRef.Companion.asResolver
 import de.robv.android.xposed.XC_MethodHook
 import moe.ouom.wekit.core.dsl.dexClass
 import moe.ouom.wekit.core.model.SwitchHookItem
-import moe.ouom.wekit.dexkit.intf.IDexFind
+import moe.ouom.wekit.dexkit.intf.IResolvesDex
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.hooks.sdk.base.WeMessageApi
 import moe.ouom.wekit.hooks.sdk.base.WeServiceApi
@@ -28,7 +28,7 @@ import kotlin.math.exp
 
 @SuppressLint("StaticFieldLeak")
 @HookItem(path = "聊天/左划引用消息", desc = "在消息上左划以引用")
-object SwipeToQuote : SwitchHookItem(), IDexFind,
+object SwipeToQuote : SwitchHookItem(), IResolvesDex,
     WeChatMessageViewApi.ICreateViewListener {
 
     private val cache = LruCache<Pair<String, Long>, Boolean>()
@@ -205,7 +205,7 @@ object SwipeToQuote : SwitchHookItem(), IDexFind,
 
     private val classChattingUiFootComponent by dexClass()
 
-    override fun dexFind(dexKit: DexKitBridge): Map<String, String> {
+    override fun resolveDex(dexKit: DexKitBridge): Map<String, String> {
         val descriptors = mutableMapOf<String, String>()
 
         classChattingUiFootComponent.find(dexKit, descriptors) {

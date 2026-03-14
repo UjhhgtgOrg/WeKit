@@ -89,6 +89,13 @@ object NotificationEvolved : SwitchHookItem() {
         }
     }
 
+    fun logStackTrace(tag: String = TAG) {
+        val trace = Thread.currentThread().stackTrace
+            .drop(2) // remove getStackTrace() and logStackTrace() itself
+            .joinToString("\n") { "  at ${it.className}.${it.methodName}(${it.fileName}:${it.lineNumber})" }
+        WeLogger.d(tag, "Stack trace:\n$trace")
+    }
+
     private val MULTI_MESSAGE_REGEX = Regex("""^\[\d+条].+?: (.*)$""")
 
     override fun onLoad() {
@@ -134,6 +141,8 @@ object NotificationEvolved : SwitchHookItem() {
         Notification.Builder::class.asResolver()
             .firstMethod { name = "build" }
             .hookBefore { param ->
+                logStackTrace()
+
                 val builder = param.thisObject as Notification.Builder
                 val notification = builder.asResolver().firstField { type = Notification::class }
                     .get() as Notification

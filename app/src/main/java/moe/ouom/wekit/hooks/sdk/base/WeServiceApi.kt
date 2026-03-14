@@ -3,13 +3,13 @@ package moe.ouom.wekit.hooks.sdk.base
 import moe.ouom.wekit.core.dsl.dexClass
 import moe.ouom.wekit.core.dsl.dexMethod
 import moe.ouom.wekit.core.model.ApiHookItem
-import moe.ouom.wekit.dexkit.intf.IDexFind
+import moe.ouom.wekit.dexkit.intf.IResolvesDex
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 import org.luckypray.dexkit.DexKitBridge
 import java.lang.reflect.Modifier
 
 @HookItem(path = "API/微信服务管理服务", desc = "为其他功能提供获取并使用微信服务的能力")
-object WeServiceApi : ApiHookItem(), IDexFind {
+object WeServiceApi : ApiHookItem(), IResolvesDex {
 
     private val methodServiceManagerGetService by dexMethod()
     private val classEmojiFeatureService by dexClass()
@@ -45,7 +45,7 @@ object WeServiceApi : ApiHookItem(), IDexFind {
         return methodApiManagerGetApi.method.invoke(apiManager, clazz.interfaces[0])!!
     }
 
-    override fun dexFind(dexKit: DexKitBridge): Map<String, String> {
+    override fun resolveDex(dexKit: DexKitBridge): Map<String, String> {
         val descriptors = mutableMapOf<String, String>()
 
         methodServiceManagerGetService.find(dexKit, descriptors) {

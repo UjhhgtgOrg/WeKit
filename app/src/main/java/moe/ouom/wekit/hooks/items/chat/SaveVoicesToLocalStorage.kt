@@ -9,7 +9,7 @@ import dev.ujhhgtg.nameof.nameof
 import moe.ouom.wekit.core.dsl.dexClass
 import moe.ouom.wekit.core.dsl.dexMethod
 import moe.ouom.wekit.core.model.SwitchHookItem
-import moe.ouom.wekit.dexkit.intf.IDexFind
+import moe.ouom.wekit.dexkit.intf.IResolvesDex
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.hooks.sdk.base.WeServiceApi
 import moe.ouom.wekit.hooks.sdk.base.model.MessageType
@@ -31,7 +31,7 @@ import kotlin.io.path.inputStream
     path = "聊天/语音保存到本地",
     desc = "在语音消息菜单添加保存按钮, 允许将语音文件保存到本地"
 )
-object SaveVoicesToLocalStorage : SwitchHookItem(), IDexFind,
+object SaveVoicesToLocalStorage : SwitchHookItem(), IResolvesDex,
     WeChatMessageContextMenuApi.IMenuItemsProvider {
 
     private val TAG = nameof(SaveVoicesToLocalStorage)
@@ -62,7 +62,7 @@ object SaveVoicesToLocalStorage : SwitchHookItem(), IDexFind,
         WeChatMessageContextMenuApi.removeProvider(this)
     }
 
-    override fun dexFind(dexKit: DexKitBridge): Map<String, String> {
+    override fun resolveDex(dexKit: DexKitBridge): Map<String, String> {
         val descriptors = mutableMapOf<String, String>()
 
         classVoiceLogic.find(dexKit, descriptors) {

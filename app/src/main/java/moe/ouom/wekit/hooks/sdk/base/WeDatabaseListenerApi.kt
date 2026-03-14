@@ -7,7 +7,7 @@ import com.highcapable.kavaref.extension.toClass
 import de.robv.android.xposed.XposedHelpers
 import dev.ujhhgtg.nameof.nameof
 import moe.ouom.wekit.config.WePrefs
-import moe.ouom.wekit.constants.Constants
+import moe.ouom.wekit.constants.PreferenceKeys
 import moe.ouom.wekit.constants.WeChatVersion
 import moe.ouom.wekit.core.model.ApiHookItem
 import moe.ouom.wekit.hooks.core.annotation.HookItem
@@ -98,8 +98,8 @@ object WeDatabaseListenerApi : ApiHookItem() {
     // ==================== 私有辅助方法 ====================
 
     private fun shouldLogDatabase(): Boolean {
-        return WePrefs.getBoolOrFalse(Constants.VERBOSE_LOG_PREF_KEY) &&
-                WePrefs.getBoolOrFalse(Constants.DB_VERBOSE_LOG_PREF_KEY)
+        return WePrefs.getBoolOrFalse(PreferenceKeys.VERBOSE_LOG) &&
+                WePrefs.getBoolOrFalse(PreferenceKeys.DB_VERBOSE_LOG)
     }
 
     private fun formatArgs(args: Array<out Any?>): String {

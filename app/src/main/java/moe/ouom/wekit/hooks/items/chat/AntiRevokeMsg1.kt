@@ -2,15 +2,15 @@ package moe.ouom.wekit.hooks.items.chat
 
 import moe.ouom.wekit.core.dsl.dexMethod
 import moe.ouom.wekit.core.model.SwitchHookItem
-import moe.ouom.wekit.dexkit.intf.IDexFind
+import moe.ouom.wekit.dexkit.intf.IResolvesDex
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 import org.luckypray.dexkit.DexKitBridge
 
 @HookItem(path = "聊天/阻止消息撤回 1", desc = "无撤回提示")
-object AntiRevokeMsg1 : SwitchHookItem(), IDexFind {
+object AntiRevokeMsg1 : SwitchHookItem(), IResolvesDex {
     private val methodRevokeMsg by dexMethod()
 
-    override fun dexFind(dexKit: DexKitBridge): Map<String, String> {
+    override fun resolveDex(dexKit: DexKitBridge): Map<String, String> {
         val descriptors = mutableMapOf<String, String>()
         methodRevokeMsg.find(dexKit, descriptors = descriptors) {
             matcher {

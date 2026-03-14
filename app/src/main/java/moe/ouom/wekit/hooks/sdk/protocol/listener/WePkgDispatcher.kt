@@ -9,7 +9,7 @@ import de.robv.android.xposed.XposedHelpers
 import dev.ujhhgtg.nameof.nameof
 import moe.ouom.wekit.core.dsl.dexClass
 import moe.ouom.wekit.core.model.ApiHookItem
-import moe.ouom.wekit.dexkit.intf.IDexFind
+import moe.ouom.wekit.dexkit.intf.IResolvesDex
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.hooks.sdk.protocol.WePkgHelper
 import moe.ouom.wekit.hooks.sdk.protocol.WePkgManager
@@ -19,7 +19,7 @@ import java.lang.reflect.Proxy
 import java.util.concurrent.ConcurrentHashMap
 
 @HookItem(path = "API/数据包拦截与篡改服务", desc = "响应数据包拦截与篡改")
-object WePkgDispatcher : ApiHookItem(), IDexFind {
+object WePkgDispatcher : ApiHookItem(), IResolvesDex {
 
     private val TAG = nameof(WePkgDispatcher)
     private val classOnGYNetEnd by dexClass()
@@ -176,7 +176,7 @@ object WePkgDispatcher : ApiHookItem(), IDexFind {
         }
     }
 
-    override fun dexFind(dexKit: DexKitBridge): Map<String, String> {
+    override fun resolveDex(dexKit: DexKitBridge): Map<String, String> {
         val descriptors = mutableMapOf<String, String>()
 
         classOnGYNetEnd.find(dexKit, descriptors, true) {

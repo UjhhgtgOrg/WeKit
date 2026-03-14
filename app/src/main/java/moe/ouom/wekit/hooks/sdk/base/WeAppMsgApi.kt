@@ -5,7 +5,7 @@ import dev.ujhhgtg.nameof.nameof
 import moe.ouom.wekit.core.dsl.dexClass
 import moe.ouom.wekit.core.dsl.dexMethod
 import moe.ouom.wekit.core.model.ApiHookItem
-import moe.ouom.wekit.dexkit.intf.IDexFind
+import moe.ouom.wekit.dexkit.intf.IResolvesDex
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.utils.log.WeLogger
 import org.luckypray.dexkit.DexKitBridge
@@ -14,7 +14,7 @@ import java.lang.reflect.Modifier
 
 @SuppressLint("DiscouragedApi")
 @HookItem(path = "API/AppMsg 发送服务", desc = "提供 XML 卡片消息发送能力")
-object WeAppMsgApi : ApiHookItem(), IDexFind {
+object WeAppMsgApi : ApiHookItem(), IResolvesDex {
 
     private val classAppMsgContent by dexClass() // op0.q
     private val classAppMsgLogic by dexClass()   // com.tencent.mm.pluginsdk.model.app.k0
@@ -29,7 +29,7 @@ object WeAppMsgApi : ApiHookItem(), IDexFind {
     private val TAG = nameof(WeAppMsgApi)
 
     @SuppressLint("NonUniqueDexKitData")
-    override fun dexFind(dexKit: DexKitBridge): Map<String, String> {
+    override fun resolveDex(dexKit: DexKitBridge): Map<String, String> {
         val descriptors = mutableMapOf<String, String>()
 
         // 查找 AppMsgContent (op0.q)

@@ -22,26 +22,20 @@ object WeLauncher {
         val currentProcessName = SyncUtils.getProcessName()
         WeLogger.i(TAG, "launching in processName=$currentProcessName, type=$processType)")
 
-        runCatching {
-            ParcelableFixer.init(cl, WeLauncher::class.java.classLoader!!)
-            WeLogger.i(TAG, "ParcelableFixer installed.")
-        }.onFailure { WeLogger.e(TAG, "Failed to install ParcelableFixer", it) }
+        ParcelableFixer.init(cl, WeLauncher::class.java.classLoader!!)
+        WeLogger.i(TAG, "ParcelableFixer installed")
 
-        runCatching {
-            val pInfo = context.packageManager.getPackageInfo(context.packageName, 0)
-            DexCacheManager.init(requireNotNull(pInfo.versionName))
-        }.onFailure { WeLogger.e(TAG, "failed to load version info", it) }
+        val pInfo = context.packageManager.getPackageInfo(context.packageName, 0)
+        DexCacheManager.init(requireNotNull(pInfo.versionName))
 
         if (processType == SyncUtils.PROC_MAIN) {
-            runCatching {
-                val appContext = context.applicationContext ?: context
-                ActivityProxy.initForStubActivity(appContext)
-                WeLogger.i(TAG, "Activity Proxy Hooks installed successfully (Main Process).")
-            }.onFailure { WeLogger.e(TAG, "Failed to install Activity Proxy Hooks", it) }
+            val appContext = context.applicationContext ?: context
+            ActivityProxy.initForStubActivity(appContext)
+            WeLogger.i(TAG, "ActivityProxy installed")
 
-            initMainProcessHooks(cl)
+            initMainProcessHooks()
         } else {
-            WeLogger.i(TAG, "Skipping UI hooks for non-main process: $currentProcessName")
+            WeLogger.i(TAG, "skipping UI hooks for non-main process: $currentProcessName")
         }
 
         runCatching {
@@ -49,30 +43,26 @@ object WeLauncher {
         }.onFailure { WeLogger.e(TAG, "failed to load hooks", it) }
     }
 
-    private fun initMainProcessHooks(cl: ClassLoader) {
+    private fun initMainProcessHooks() {
         WeLogger.i(TAG, "Initializing Main Process Hooks...")
 
         val launcherUiClass = LAUNCHER_UI_CLASS_NAME.toClass()
 
-        runCatching {
-            XposedHelpers.findAndHookMethod(launcherUiClass, "onResume", object : XC_MethodHook() {
-                override fun afterHookedMethod(param: MethodHookParam) {
-                    val activity = param.thisObject as Activity
-                    ModuleRes.init(activity, PackageConstants.PACKAGE_NAME_SELF)
-                }
-            })
-        }.onFailure { WeLogger.e(TAG, "failed to hook LauncherUI.onResume", it) }
+        XposedHelpers.findAndHookMethod(launcherUiClass, "onResume", object : XC_MethodHook() {
+            override fun afterHookedMethod(param: MethodHookParam) {
+                val activity = param.thisObject as Activity
+                ModuleRes.init(activity, PackageConstants.PACKAGE_NAME_SELF)
+            }
+        })
 
-        runCatching {
-            XposedHelpers.findAndHookMethod(launcherUiClass, "onCreate", Bundle::class.java, object : XC_MethodHook() {
-                override fun afterHookedMethod(param: MethodHookParam) {
-                    val activity = param.thisObject as Activity
-                    RuntimeConfig.setLauncherUiActivity(activity)
-                    val sharedPreferences = activity.getSharedPreferences("com.tencent.mm_preferences", 0)
-                    RuntimeConfig.setMmPrefs(sharedPreferences)
-                }
-            })
-        }.onFailure { WeLogger.e(TAG, "failed to hook LauncherUI.onCreate", it) }
+        XposedHelpers.findAndHookMethod(launcherUiClass, "onCreate", Bundle::class.java, object : XC_MethodHook() {
+            override fun afterHookedMethod(param: MethodHookParam) {
+                val activity = param.thisObject as Activity
+                RuntimeConfig.setLauncherUiActivity(activity)
+                val sharedPreferences = activity.getSharedPreferences("com.tencent.mm_preferences", 0)
+                RuntimeConfig.setMmPrefs(sharedPreferences)
+            }
+        })
     }
 
     private const val LAUNCHER_UI_CLASS_NAME = "com.tencent.mm.ui.LauncherUI"

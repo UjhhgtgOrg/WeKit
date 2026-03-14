@@ -8,7 +8,7 @@ import de.robv.android.xposed.XposedHelpers
 import moe.ouom.wekit.core.dsl.dexClass
 import moe.ouom.wekit.core.dsl.dexMethod
 import moe.ouom.wekit.core.model.SwitchHookItem
-import moe.ouom.wekit.dexkit.intf.IDexFind
+import moe.ouom.wekit.dexkit.intf.IResolvesDex
 import moe.ouom.wekit.utils.log.WeLogger
 import org.json.JSONObject
 import org.luckypray.dexkit.DexKitBridge
@@ -20,7 +20,7 @@ import org.luckypray.dexkit.DexKitBridge
 // 下面这一行在写功能的时候必须保留，否则 ksp 将无法标记此类，这里为了防止被扫描所以注释掉了
 //@HookItem(path = "example/示例写法", desc = "展示新架构的简化写法")
 class SimpleExample :
-    SwitchHookItem() /* 这里也可以继承 BaseClickableFunctionHookItem */, IDexFind {
+    SwitchHookItem() /* 这里也可以继承 BaseClickableFunctionHookItem */, IResolvesDex {
 
     // DSL: Dex 方法委托（自动生成 key）
     private val methodTargetMethod by dexMethod()
@@ -41,7 +41,7 @@ class SimpleExample :
      * 5. 使用 allowMultiple=true 可以允许多个结果
      * 6. 使用 delegate.key 作为 Map 的键（自动生成）
      */
-    override fun dexFind(dexKit: DexKitBridge): Map<String, String> {
+    override fun resolveDex(dexKit: DexKitBridge): Map<String, String> {
         val descriptors = mutableMapOf<String, String>()
 
         // 查找目标方法

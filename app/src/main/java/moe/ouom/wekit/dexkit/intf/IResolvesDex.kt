@@ -8,13 +8,14 @@ import org.luckypray.dexkit.DexKitBridge
  * Dex 查找接口
  * 实现此接口的 HookItem 将支持自包含的 Dex 方法查找
  */
-interface IDexFind {
+interface IResolvesDex {
+
     /**
      * 执行 Dex 查找
      * @param dexKit DexKitBridge 实例
      * @return Map<Key, descriptor字符串>
      */
-    fun dexFind(dexKit: DexKitBridge): Map<String, String>
+    fun resolveDex(dexKit: DexKitBridge): Map<String, String>
 
     /**
      * 从缓存加载 descriptors

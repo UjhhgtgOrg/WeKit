@@ -10,14 +10,14 @@ import dev.ujhhgtg.nameof.nameof
 import moe.ouom.wekit.core.dsl.dexClass
 import moe.ouom.wekit.core.dsl.dexMethod
 import moe.ouom.wekit.core.model.ApiHookItem
-import moe.ouom.wekit.dexkit.intf.IDexFind
+import moe.ouom.wekit.dexkit.intf.IResolvesDex
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.utils.log.WeLogger
 import org.luckypray.dexkit.DexKitBridge
 import java.util.concurrent.CopyOnWriteArrayList
 
 @HookItem(path = "API/首页菜单服务", desc = "提供向首页右上角菜单添加菜单项的能力")
-object WeHomeScreenPopupMenuApi : ApiHookItem(), IDexFind {
+object WeHomeScreenPopupMenuApi : ApiHookItem(), IResolvesDex {
 
     interface IMenuItemsProvider {
         fun getMenuItems(param: XC_MethodHook.MethodHookParam): List<MenuItem>
@@ -142,7 +142,7 @@ object WeHomeScreenPopupMenuApi : ApiHookItem(), IDexFind {
         }
     }
 
-    override fun dexFind(dexKit: DexKitBridge): Map<String, String> {
+    override fun resolveDex(dexKit: DexKitBridge): Map<String, String> {
         val descriptors = mutableMapOf<String, String>()
 
         methodAddItem.find(dexKit, descriptors) {

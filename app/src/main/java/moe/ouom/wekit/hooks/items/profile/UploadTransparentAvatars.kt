@@ -3,17 +3,17 @@ package moe.ouom.wekit.hooks.items.profile
 import android.graphics.Bitmap
 import moe.ouom.wekit.core.dsl.dexMethod
 import moe.ouom.wekit.core.model.SwitchHookItem
-import moe.ouom.wekit.dexkit.intf.IDexFind
+import moe.ouom.wekit.dexkit.intf.IResolvesDex
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.utils.log.WeLogger
 import org.luckypray.dexkit.DexKitBridge
 
 @HookItem(path = "个人资料/上传透明头像", desc = "头像上传时使用 PNG 格式保持透明")
-object UploadTransparentAvatars : SwitchHookItem(), IDexFind {
+object UploadTransparentAvatars : SwitchHookItem(), IResolvesDex {
 
     private val methodSaveBitmap by dexMethod()
 
-    override fun dexFind(dexKit: DexKitBridge): Map<String, String> {
+    override fun resolveDex(dexKit: DexKitBridge): Map<String, String> {
         val descriptors = mutableMapOf<String, String>()
 
         methodSaveBitmap.find(dexKit, descriptors = descriptors) {

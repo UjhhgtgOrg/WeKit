@@ -2,9 +2,9 @@ package moe.ouom.wekit.hooks.items.payment
 
 import android.content.Context
 import android.widget.TextView
-import androidx.compose.material3.Button
+import moe.ouom.wekit.ui.content.Button
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import moe.ouom.wekit.ui.content.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -14,14 +14,14 @@ import com.highcapable.kavaref.KavaRef.Companion.asResolver
 import moe.ouom.wekit.config.WePrefs
 import moe.ouom.wekit.core.dsl.dexMethod
 import moe.ouom.wekit.core.model.ClickableHookItem
-import moe.ouom.wekit.dexkit.intf.IDexFind
+import moe.ouom.wekit.dexkit.intf.IResolvesDex
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.ui.content.AlertDialogContent
 import moe.ouom.wekit.ui.utils.showComposeDialog
 import org.luckypray.dexkit.DexKitBridge
 
 @HookItem(path = "红包与支付/修改显示余额", desc = "伪装钱包余额文字")
-object ModifyWalletBalanceDisplay : ClickableHookItem(), IDexFind {
+object ModifyWalletBalanceDisplay : ClickableHookItem(), IResolvesDex {
 
     private const val KEY_BALANCE = "fake_wallet_balance"
 
@@ -51,7 +51,7 @@ object ModifyWalletBalanceDisplay : ClickableHookItem(), IDexFind {
         }
     }
 
-    override fun dexFind(dexKit: DexKitBridge): Map<String, String> {
+    override fun resolveDex(dexKit: DexKitBridge): Map<String, String> {
         val descriptors = mutableMapOf<String, String>()
 
         methodUpdateBalanceDisplay.find(dexKit, descriptors) {

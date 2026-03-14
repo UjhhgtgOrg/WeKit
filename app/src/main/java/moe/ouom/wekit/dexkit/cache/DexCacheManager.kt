@@ -2,12 +2,13 @@ package moe.ouom.wekit.dexkit.cache
 
 import dev.ujhhgtg.nameof.nameof
 import moe.ouom.wekit.config.WePrefs
-import moe.ouom.wekit.constants.Constants
+import moe.ouom.wekit.constants.PreferenceKeys
 import moe.ouom.wekit.core.model.BaseHookItem
-import moe.ouom.wekit.dexkit.intf.IDexFind
+import moe.ouom.wekit.dexkit.intf.IResolvesDex
 import moe.ouom.wekit.utils.io.PathUtils
 import moe.ouom.wekit.utils.log.WeLogger
 import org.json.JSONObject
+import org.luckypray.dexkit.DexKitBridge
 import java.nio.file.Path
 import java.security.MessageDigest
 import kotlin.io.path.createDirectories
@@ -51,7 +52,7 @@ object DexCacheManager {
                 clearAllCache()
 
                 // 重置"禁用版本适配"配置，确保新版本能够正常适配
-                WePrefs.putBool(Constants.DISABLE_DEX_LOCATE_PREF_KEY, false)
+                WePrefs.putBool(PreferenceKeys.NO_DEX_RESOLVE, false)
                 WeLogger.i(
                     TAG,
                     "Reset disable_version_adaptation to false due to version change"
@@ -68,7 +69,7 @@ object DexCacheManager {
      * @param item 实现了 IDexFind 的 HookItem
      * @return true 表示缓存有效，false 表示需要重新查找
      */
-    fun isItemCacheValid(item: IDexFind): Boolean {
+    fun isItemCacheValid(item: IResolvesDex): Boolean {
         if (item !is BaseHookItem) {
             WeLogger.w(TAG, "Item is not BaseHookItem, cannot get path")
             return false
@@ -139,7 +140,7 @@ object DexCacheManager {
      * 用于检测方法逻辑是否发生变化
      * 使用编译时生成的hash值，避免运行时通过classLoader获取资源失败的问题
      */
-    private fun calculateMethodHash(item: IDexFind): String {
+    private fun calculateMethodHash(item: IResolvesDex): String {
         try {
             val clazz = item::class.java
             val className = clazz.name
@@ -156,7 +157,8 @@ object DexCacheManager {
                 "No generated hash for $className, using method signature fallback"
             )
             val method =
-                clazz.getDeclaredMethod("dexFind", org.luckypray.dexkit.DexKitBridge::class.java)
+                clazz.getDeclaredMethod("resolveDex", DexKitBridge::class.java)
+
             val signature = buildString {
                 append(method.declaringClass.name)
                 append("::")
@@ -175,7 +177,7 @@ object DexCacheManager {
         }
     }
 
-    fun saveItemCache(item: IDexFind, data: Map<String, Any>) {
+    fun saveItemCache(item: IResolvesDex, data: Map<String, Any>) {
         if (item !is BaseHookItem) {
             WeLogger.w(TAG, "Item is not BaseHookItem, cannot get path")
             return
@@ -200,7 +202,7 @@ object DexCacheManager {
         }
     }
 
-    fun loadItemCache(item: IDexFind): Map<String, Any>? {
+    fun loadItemCache(item: IResolvesDex): Map<String, Any>? {
         if (item !is BaseHookItem) {
             WeLogger.w(TAG, "Item is not BaseHookItem, cannot get path")
             return null
@@ -248,7 +250,7 @@ object DexCacheManager {
         return cacheDir/fileName
     }
 
-    fun getOutdatedItems(items: List<IDexFind>): List<IDexFind> {
+    fun getOutdatedItems(items: List<IResolvesDex>): List<IResolvesDex> {
         return items.filter { !isItemCacheValid(it) }
     }
 }

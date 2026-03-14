@@ -6,13 +6,13 @@ import dev.ujhhgtg.nameof.nameof
 import moe.ouom.wekit.core.dsl.dexClass
 import moe.ouom.wekit.core.dsl.dexMethod
 import moe.ouom.wekit.core.model.ApiHookItem
-import moe.ouom.wekit.dexkit.intf.IDexFind
+import moe.ouom.wekit.dexkit.intf.IResolvesDex
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.utils.log.WeLogger
 import org.luckypray.dexkit.DexKitBridge
 
 @HookItem(path = "API/对话服务", desc = "为其他功能提供对话管理能力")
-object WeConversationApi : ApiHookItem(), IDexFind {
+object WeConversationApi : ApiHookItem(), IResolvesDex {
 
     private val TAG = nameof(WeConversationApi)
     val classConversationStorage by dexClass()
@@ -55,15 +55,16 @@ object WeConversationApi : ApiHookItem(), IDexFind {
             "SELECT username FROM rconversation WHERE unReadCount>0 OR unReadMuteCount>0",
             arrayOf<String>()
         ) as Cursor
-        while (cursor.moveToNext()) {
-            val talker = cursor.getString(0)
+        do {
+            val convId = cursor.getString(0)
             try {
-                methodUpdateUnreadByTalker.method.invoke(conversationStorage, talker)
-                WeLogger.d(TAG, "marked $talker as read")
+                methodUpdateUnreadByTalker.method.invoke(conversationStorage, convId)
+                WeLogger.d(TAG, "marked $convId as read")
             } catch (ex: Exception) {
-                WeLogger.w(TAG, "exception while updating unread count for $talker", ex)
+                WeLogger.w(TAG, "exception while updating unread count for $convId", ex)
             }
         }
+        while (cursor.moveToNext())
         cursor.close()
     }
 
@@ -157,7 +158,7 @@ object WeConversationApi : ApiHookItem(), IDexFind {
         setConversationsVisibility(true, visibleTalkers)
     }
 
-    override fun dexFind(dexKit: DexKitBridge): Map<String, String> {
+    override fun resolveDex(dexKit: DexKitBridge): Map<String, String> {
         val descriptors = mutableMapOf<String, String>()
 
         classConversationStorage.find(dexKit, descriptors) {

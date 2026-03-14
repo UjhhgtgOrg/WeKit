@@ -3,7 +3,7 @@ package moe.ouom.wekit.core.dsl
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XposedBridge
 import moe.ouom.wekit.config.WePrefs
-import moe.ouom.wekit.constants.Constants
+import moe.ouom.wekit.constants.PreferenceKeys
 import moe.ouom.wekit.core.model.ApiHookItem
 import moe.ouom.wekit.hooks.core.ExceptionFactory
 import moe.ouom.wekit.utils.log.WeLogger
@@ -52,7 +52,7 @@ class DexMethodHookBuilder(
      */
     fun execute() {
         val p = priority ?: WePrefs.getIntOrDef(
-            Constants.HOOK_PRIORITY_PREF_KEY,
+            PreferenceKeys.HOOK_PRIORITY,
             50
         )
 

@@ -6,7 +6,7 @@ import com.highcapable.kavaref.KavaRef.Companion.asResolver
 import de.robv.android.xposed.XC_MethodHook
 import moe.ouom.wekit.core.dsl.dexMethod
 import moe.ouom.wekit.core.model.ApiHookItem
-import moe.ouom.wekit.dexkit.intf.IDexFind
+import moe.ouom.wekit.dexkit.intf.IResolvesDex
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.utils.log.WeLogger
 import org.json.JSONObject
@@ -16,7 +16,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 
 @SuppressLint("StaticFieldLeak")
 @HookItem(path = "API/视频号分享菜单扩展", desc = "为视频号分享菜单提供添加菜单项功能")
-object WeShortVideosShareMenuApi : ApiHookItem(), IDexFind {
+object WeShortVideosShareMenuApi : ApiHookItem(), IResolvesDex {
 
     interface IMenuItemsProvider {
         fun getMenuItems(param: XC_MethodHook.MethodHookParam): List<MenuItem>
@@ -135,7 +135,7 @@ object WeShortVideosShareMenuApi : ApiHookItem(), IDexFind {
         }
     }
 
-    override fun dexFind(dexKit: DexKitBridge): Map<String, String> {
+    override fun resolveDex(dexKit: DexKitBridge): Map<String, String> {
         val descriptors = mutableMapOf<String, String>()
 
         methodCreateMenu.find(dexKit, descriptors) {

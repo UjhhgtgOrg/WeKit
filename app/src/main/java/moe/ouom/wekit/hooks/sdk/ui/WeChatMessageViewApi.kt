@@ -6,7 +6,7 @@ import de.robv.android.xposed.XC_MethodHook
 import dev.ujhhgtg.nameof.nameof
 import moe.ouom.wekit.core.dsl.dexMethod
 import moe.ouom.wekit.core.model.ApiHookItem
-import moe.ouom.wekit.dexkit.intf.IDexFind
+import moe.ouom.wekit.dexkit.intf.IResolvesDex
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.hooks.sdk.base.WeMessageApi
 import moe.ouom.wekit.hooks.sdk.base.model.MessageInfo
@@ -15,7 +15,7 @@ import org.luckypray.dexkit.DexKitBridge
 import java.util.concurrent.CopyOnWriteArrayList
 
 @HookItem(path = "API/消息 View 创建监听服务", desc = "为其他功能提供消息 View 创建监听能力")
-object WeChatMessageViewApi : ApiHookItem(), IDexFind {
+object WeChatMessageViewApi : ApiHookItem(), IResolvesDex {
 
     interface ICreateViewListener {
         fun onCreateView(
@@ -86,7 +86,7 @@ object WeChatMessageViewApi : ApiHookItem(), IDexFind {
         }
     }
 
-    override fun dexFind(dexKit: DexKitBridge): Map<String, String> {
+    override fun resolveDex(dexKit: DexKitBridge): Map<String, String> {
         val descriptors = mutableMapOf<String, String>()
 
         methodChatItemOnBindView.find(dexKit, descriptors) {

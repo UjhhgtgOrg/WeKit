@@ -4,12 +4,12 @@ import com.highcapable.kavaref.KavaRef.Companion.asResolver
 import moe.ouom.wekit.core.dsl.dexClass
 import moe.ouom.wekit.core.dsl.dexMethod
 import moe.ouom.wekit.core.model.SwitchHookItem
-import moe.ouom.wekit.dexkit.intf.IDexFind
+import moe.ouom.wekit.dexkit.intf.IResolvesDex
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 import org.luckypray.dexkit.DexKitBridge
 
 @HookItem(path = "聊天/引用消息直达", desc = "点击被引用消息时直接跳转至对应消息")
-object QuotedMessageDirectJump : SwitchHookItem(), IDexFind {
+object QuotedMessageDirectJump : SwitchHookItem(), IResolvesDex {
 
     private val methodClickEvent by dexMethod()
     private val methodClickToPositionEvent by dexMethod()
@@ -57,7 +57,7 @@ object QuotedMessageDirectJump : SwitchHookItem(), IDexFind {
         }
     }
 
-    override fun dexFind(dexKit: DexKitBridge): Map<String, String> {
+    override fun resolveDex(dexKit: DexKitBridge): Map<String, String> {
         val descriptors = mutableMapOf<String, String>()
 
         methodClickEvent.find(dexKit, descriptors) {

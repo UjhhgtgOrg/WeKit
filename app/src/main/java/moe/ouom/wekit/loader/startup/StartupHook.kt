@@ -17,6 +17,11 @@ import kotlin.io.path.listDirectoryEntries
 
 object StartupHook {
 
+    fun initializeAfterAppCreate(ctx: Context) {
+        execStartupInit(ctx)
+        deleteDirIfNecessary(ctx)
+    }
+
     fun execStartupInit(ctx: Context) {
         execPostStartupInit(ctx)
         deleteDirIfNecessary(ctx)
@@ -28,11 +33,6 @@ object StartupHook {
         LibXposedApiByteCodeGenerator.init()
         NativeLoader.initNative()
         WeLauncher.init(ctx.classLoader, ctx)
-    }
-
-    fun initializeAfterAppCreate(ctx: Context) {
-        execStartupInit(ctx)
-        deleteDirIfNecessary(ctx)
     }
 
     private fun deleteDirIfNecessary(ctx: Context) {

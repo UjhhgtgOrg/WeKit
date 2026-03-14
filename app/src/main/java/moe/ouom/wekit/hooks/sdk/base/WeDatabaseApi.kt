@@ -7,7 +7,7 @@ import dev.ujhhgtg.nameof.nameof
 import moe.ouom.wekit.core.dsl.dexClass
 import moe.ouom.wekit.core.dsl.dexMethod
 import moe.ouom.wekit.core.model.ApiHookItem
-import moe.ouom.wekit.dexkit.intf.IDexFind
+import moe.ouom.wekit.dexkit.intf.IResolvesDex
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.hooks.sdk.base.model.SelfProfileField
 import moe.ouom.wekit.hooks.sdk.base.model.WeContact
@@ -24,7 +24,7 @@ import java.lang.reflect.Modifier
  */
 @SuppressLint("DiscouragedApi")
 @HookItem(path = "API/数据库服务", desc = "提供数据库直接查询能力")
-object WeDatabaseApi : ApiHookItem(), IDexFind {
+object WeDatabaseApi : ApiHookItem(), IResolvesDex {
 
     val classMmKernel by dexClass()
     private val methodGetStorage by dexMethod()
@@ -176,7 +176,7 @@ object WeDatabaseApi : ApiHookItem(), IDexFind {
         const val GROUP_MEMBERS = "SELECT memberlist FROM chatroom WHERE chatroomname = '%s'"
     }
 
-    override fun dexFind(dexKit: DexKitBridge): Map<String, String> {
+    override fun resolveDex(dexKit: DexKitBridge): Map<String, String> {
         val descriptors = mutableMapOf<String, String>()
 
         classMmKernel.find(dexKit, descriptors) {

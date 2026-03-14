@@ -8,14 +8,14 @@ import de.robv.android.xposed.XC_MethodHook
 import dev.ujhhgtg.nameof.nameof
 import moe.ouom.wekit.core.dsl.dexMethod
 import moe.ouom.wekit.core.model.ApiHookItem
-import moe.ouom.wekit.dexkit.intf.IDexFind
+import moe.ouom.wekit.dexkit.intf.IResolvesDex
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.utils.log.WeLogger
 import org.luckypray.dexkit.DexKitBridge
 import java.lang.reflect.Modifier
 
 @HookItem(path = "API/朋友圈菜单增强扩展", desc = "为朋友圈消息长按菜单提供添加菜单项功能")
-object WeMomentsContextMenuApi : ApiHookItem(), IDexFind {
+object WeMomentsContextMenuApi : ApiHookItem(), IResolvesDex {
 
     private val TAG = nameof(WeMomentsContextMenuApi)
 
@@ -52,7 +52,7 @@ object WeMomentsContextMenuApi : ApiHookItem(), IDexFind {
     private val methodGetSnsInfoStorage by dexMethod()
 
     @SuppressLint("NonUniqueDexKitData")
-    override fun dexFind(dexKit: DexKitBridge): Map<String, String> {
+    override fun resolveDex(dexKit: DexKitBridge): Map<String, String> {
         val descriptors = mutableMapOf<String, String>()
 
         methodOnCreateMenu.find(dexKit, descriptors) {

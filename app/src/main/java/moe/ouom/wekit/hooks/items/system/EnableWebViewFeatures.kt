@@ -6,12 +6,12 @@ import com.highcapable.kavaref.KavaRef.Companion.asResolver
 import com.highcapable.kavaref.extension.toClass
 import moe.ouom.wekit.core.dsl.dexMethod
 import moe.ouom.wekit.core.model.SwitchHookItem
-import moe.ouom.wekit.dexkit.intf.IDexFind
+import moe.ouom.wekit.dexkit.intf.IResolvesDex
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 import org.luckypray.dexkit.DexKitBridge
 
 @HookItem(path = "系统与隐私/强制启用 WebView 菜单", desc = "强制显示 WebView 页面右上角菜单按钮")
-object EnableWebViewFeatures : SwitchHookItem(), IDexFind {
+object EnableWebViewFeatures : SwitchHookItem(), IResolvesDex {
 
     private const val WEBVIEW_UI_CLASS_NAME = "com.tencent.mm.plugin.webview.ui.tools.WebViewUI"
 
@@ -55,7 +55,7 @@ object EnableWebViewFeatures : SwitchHookItem(), IDexFind {
         }
     }
 
-    override fun dexFind(dexKit: DexKitBridge): Map<String, String> {
+    override fun resolveDex(dexKit: DexKitBridge): Map<String, String> {
         val descriptors = mutableMapOf<String, String>()
 
         methodInitWebViewFeatures.find(dexKit, descriptors) {

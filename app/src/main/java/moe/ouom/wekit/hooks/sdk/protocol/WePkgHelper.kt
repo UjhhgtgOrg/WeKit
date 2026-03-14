@@ -8,7 +8,7 @@ import de.robv.android.xposed.XposedHelpers
 import moe.ouom.wekit.core.dsl.dexClass
 import moe.ouom.wekit.core.dsl.dexMethod
 import moe.ouom.wekit.core.model.ApiHookItem
-import moe.ouom.wekit.dexkit.intf.IDexFind
+import moe.ouom.wekit.dexkit.intf.IResolvesDex
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.hooks.sdk.protocol.intf.WeReqCallback
 import moe.ouom.wekit.utils.ProtoJsonBuilder
@@ -24,7 +24,7 @@ import java.lang.reflect.Modifier
 import java.lang.reflect.Proxy
 
 @HookItem(path = "API/网络数据包服务")
-object WePkgHelper : ApiHookItem(), IDexFind {
+object WePkgHelper : ApiHookItem(), IResolvesDex {
 
     // 核心 Protobuf 类
     val classProtoBase by dexClass()
@@ -74,7 +74,7 @@ object WePkgHelper : ApiHookItem(), IDexFind {
     }
 
     @SuppressLint("NonUniqueDexKitData")
-    override fun dexFind(dexKit: DexKitBridge): Map<String, String> {
+    override fun resolveDex(dexKit: DexKitBridge): Map<String, String> {
         val descriptors = mutableMapOf<String, String>()
 
         // 查找 Protobuf 基类

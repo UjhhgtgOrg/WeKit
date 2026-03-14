@@ -2,7 +2,7 @@ package moe.ouom.wekit.hooks.items.contacts
 
 import moe.ouom.wekit.core.dsl.dexMethod
 import moe.ouom.wekit.core.model.SwitchHookItem
-import moe.ouom.wekit.dexkit.intf.IDexFind
+import moe.ouom.wekit.dexkit.intf.IResolvesDex
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.hooks.sdk.base.WeDatabaseApi
 import org.luckypray.dexkit.DexKitBridge
@@ -11,7 +11,7 @@ import org.luckypray.dexkit.DexKitBridge
     path = "联系人与群组/禁用置顶聊天折叠",
     desc = "隐藏 '折叠置顶聊天' 选项\n启用本功能后, 需重启应用 2 次以使更改完全生效"
 )
-object DisablePinnedChatsCollapsing : SwitchHookItem(), IDexFind {
+object DisablePinnedChatsCollapsing : SwitchHookItem(), IResolvesDex {
 
     private val methodAddCollapseChatItem by dexMethod()
     private val methodIfShouldAddCollapseChatItem by dexMethod()
@@ -35,7 +35,7 @@ object DisablePinnedChatsCollapsing : SwitchHookItem(), IDexFind {
         }
     }
 
-    override fun dexFind(dexKit: DexKitBridge): Map<String, String> {
+    override fun resolveDex(dexKit: DexKitBridge): Map<String, String> {
         val descriptors = mutableMapOf<String, String>()
 
         methodAddCollapseChatItem.find(dexKit, descriptors) {

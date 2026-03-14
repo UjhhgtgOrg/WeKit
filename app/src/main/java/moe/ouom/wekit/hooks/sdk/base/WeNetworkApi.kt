@@ -3,7 +3,7 @@ package moe.ouom.wekit.hooks.sdk.base
 import android.annotation.SuppressLint
 import moe.ouom.wekit.core.dsl.dexMethod
 import moe.ouom.wekit.core.model.ApiHookItem
-import moe.ouom.wekit.dexkit.intf.IDexFind
+import moe.ouom.wekit.dexkit.intf.IResolvesDex
 import moe.ouom.wekit.hooks.core.annotation.HookItem
 import moe.ouom.wekit.utils.log.WeLogger
 import org.luckypray.dexkit.DexKitBridge
@@ -12,7 +12,7 @@ import java.lang.reflect.Modifier
 
 @SuppressLint("DiscouragedApi")
 @HookItem(path = "API/网络请求服务", desc = "提供通用发包能力")
-object WeNetworkApi : ApiHookItem(), IDexFind {
+object WeNetworkApi : ApiHookItem(), IResolvesDex {
 
     private val methodGetNetSceneQueue by dexMethod()
 
@@ -119,7 +119,7 @@ object WeNetworkApi : ApiHookItem(), IDexFind {
     }
 
     // Dex 查找逻辑
-    override fun dexFind(dexKit: DexKitBridge): Map<String, String> {
+    override fun resolveDex(dexKit: DexKitBridge): Map<String, String> {
         val descriptors = mutableMapOf<String, String>()
 
         // 查找 NetSceneQueue 类

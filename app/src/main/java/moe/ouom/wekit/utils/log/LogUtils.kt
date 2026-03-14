@@ -2,7 +2,7 @@ package moe.ouom.wekit.utils.log
 
 import de.robv.android.xposed.XposedBridge
 import moe.ouom.wekit.config.WePrefs
-import moe.ouom.wekit.constants.Constants
+import moe.ouom.wekit.constants.PreferenceKeys
 import moe.ouom.wekit.loader.core.NativeLoader
 import moe.ouom.wekit.utils.formatEpoch
 import moe.ouom.wekit.utils.io.FileUtils
@@ -68,7 +68,7 @@ object LogUtils {
 
     private fun addLog(fileName: String, desc: String?, content: Any?, isError: Boolean) {
         try {
-            if (NativeLoader.isInitialized() && !WePrefs.getBoolOrFalse(Constants.ENABLE_LOG_PREF_KEY)
+            if (NativeLoader.isInitialized() && !WePrefs.getBoolOrFalse(PreferenceKeys.ENABLE_LOG)
             ) {
                 return
             }
